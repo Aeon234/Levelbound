@@ -203,7 +203,7 @@ local elementDefaults = {
 		{
 			kind = "LEVEL",
 			visibility = "HOVER",
-			anchor = "INSIDE_CENTER",
+			anchor = "INSIDE_LEFT",
 			x = 0,
 			y = 0,
 			font = FONT,
@@ -214,7 +214,7 @@ local elementDefaults = {
 		{
 			kind = "PERCENT",
 			visibility = "HOVER",
-			anchor = "INSIDE_CENTER",
+			anchor = "INSIDE_RIGHT",
 			x = 0,
 			y = 0,
 			font = FONT,
@@ -227,7 +227,7 @@ local elementDefaults = {
 		{
 			kind = "NAME",
 			visibility = "HOVER",
-			anchor = "INSIDE_CENTER",
+			anchor = "INSIDE_LEFT",
 			x = 0,
 			y = 0,
 			font = FONT,
@@ -238,7 +238,7 @@ local elementDefaults = {
 		{
 			kind = "PERCENT",
 			visibility = "HOVER",
-			anchor = "INSIDE_CENTER",
+			anchor = "INSIDE_RIGHT",
 			x = 0,
 			y = 0,
 			font = FONT,

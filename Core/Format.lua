@@ -82,7 +82,11 @@ local resolvers = {
 	end,
 
 	NAME = function(snapshot)
-		return snapshot.standing or snapshot.label or DASH
+		return snapshot.label or DASH
+	end,
+
+	STANDING = function(snapshot)
+		return snapshot.standing or DASH
 	end,
 
 	VALUE = function(snapshot)
@@ -178,5 +182,5 @@ end
 
 ---@return string[] kinds offered for every other progress type
 function Format:OtherKinds()
-	return { "NAME", "VALUE", "PERCENT", "REMAINING" }
+	return { "NAME", "STANDING", "VALUE", "PERCENT", "REMAINING" }
 end

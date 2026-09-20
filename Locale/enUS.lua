@@ -33,6 +33,7 @@ L["Time to level"] = "Time to level"
 
 L["kind.LEVEL"] = "Level"
 L["kind.NAME"] = "Name"
+L["kind.STANDING"] = "Standing"
 L["kind.VALUE"] = "Current / max"
 L["kind.PERCENT"] = "Percentage"
 L["kind.REMAINING"] = "Remaining"
