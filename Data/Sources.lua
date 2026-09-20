@@ -189,6 +189,17 @@ function Model:Source(id)
 	return self.sources[id]
 end
 
+---@return string[] order every type id, whether visible or not
+function Model:Order()
+	local order = {}
+
+	for index, id in ipairs(ORDER) do
+		order[index] = id
+	end
+
+	return order
+end
+
 ---@return string[] ids visible now, in the fixed order
 function Model:VisibleOrder()
 	local visible = {}
