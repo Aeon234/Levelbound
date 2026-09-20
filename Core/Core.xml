@@ -1,0 +1,8 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/">
+	<Script file="Core.lua" />
+	<Script file="Callbacks.lua" />
+	<Script file="Events.lua" />
+	<Script file="Capabilities.lua" />
+	<Script file="Profile.lua" />
+	<Script file="Bootstrap.lua" />
+</Ui>

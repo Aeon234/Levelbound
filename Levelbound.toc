@@ -1,0 +1,21 @@
+## Interface: 120100, 16001
+## Title: Levelbound
+## Notes: Experience and progress bars with party XP markers.
+## Author: Aeon
+## Version: @project-version@
+
+## SavedVariables: LevelboundDB
+## SavedVariablesPerCharacter: LevelboundDBChar
+
+## OptionalDeps: AeonUI
+
+## Category: Quests & Leveling
+
+## X-Curse-Project-ID:
+## X-Wago-ID:
+
+Libs\embeds.xml
+
+Locale\Locale.xml
+Core\Core.xml
+Media\Media.xml
