@@ -20,6 +20,7 @@ local FLAT = [[Interface\Buttons\WHITE8X8]]
 ---@field bars table<string, LBBar>
 ---@field separators Texture[]
 ---@field rects table<string, LBBarRect>
+---@field hasBars boolean?
 local BarGroup = {
 	bars = {},
 	separators = {},
@@ -350,7 +351,9 @@ function BarGroup:Refresh(animated)
 		end
 	end
 
-	frame:SetShown(#ids > 0)
+	self.hasBars = #ids > 0
+
+	LB.Visibility:Refresh(false)
 end
 
 ---@param id string

@@ -19,11 +19,14 @@ local FADE = 0.5
 ---@field rested StatusBar
 ---@field background StatusBar
 ---@field driver Frame
+---@field alphaDriver Frame
 ---@field level number last drawn level
 ---@field values number[]
 ---@field sweeping boolean? lvl up sweep animation running
+---@field fading boolean?
 ---@field pending number[]? target the sweep settles on
 ---@field hovered boolean?
+---@field textSuppressed boolean?
 ---@field snapshot LBSnapshot?
 ---@field textPool any?
 ---@field texts LBTextEntry[]?
@@ -80,6 +83,7 @@ function Bar:Create(parent, id)
 	bar.level = 0
 	bar.values = { 0, 0, 0 }
 	bar.driver = CreateFrame("Frame", nil, bar)
+	bar.alphaDriver = CreateFrame("Frame", nil, bar)
 
 	bar.background = CreateLayer(bar, LEVEL_BACKGROUND)
 	bar.rested = CreateLayer(bar, LEVEL_RESTED)
@@ -101,6 +105,7 @@ end
 function BarMixin:OnEnter()
 	self.hovered = true
 
+	LB.Visibility:SetHovered(self.id)
 	LB.TextElement:SetHovered(self, true)
 	LB.Marker:SetHovered(self, true)
 
@@ -112,6 +117,7 @@ end
 function BarMixin:OnLeave()
 	self.hovered = false
 
+	LB.Visibility:SetHovered(nil)
 	LB.TextElement:SetHovered(self, false)
 	LB.Marker:SetHovered(self, false)
 	LB.Tooltip:Hide()
@@ -317,9 +323,13 @@ end
 function BarMixin:FadeOut(onFinished)
 	local from = self:GetAlpha()
 
+	self.fading = true
+
 	LB:Tween(self, FADE, function(eased)
 		self:SetAlpha(from * (1 - eased))
 	end, function()
+		self.fading = nil
+
 		self:Hide()
 		self:SetAlpha(1)
 
@@ -331,6 +341,9 @@ end
 
 function BarMixin:Appear()
 	LB:StopTween(self)
+
+	self.fading = nil
+
 	self:SetAlpha(1)
 	self:Show()
 end

@@ -4,6 +4,7 @@
 	<Script file="Gain.lua" />
 	<Script file="Tooltip.lua" />
 	<Script file="Bar.lua" />
+	<Script file="Visibility.lua" />
 	<Script file="Preview.lua" />
 	<Script file="BarGroup.lua" />
 </Ui>

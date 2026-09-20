@@ -20,6 +20,7 @@ local addonName = ...
 ---@field TextElement LBTextElement
 ---@field Marker LBMarker
 ---@field Gain LBGain
+---@field Visibility LBVisibility
 ---@field Tooltip LBTooltip
 ---@field Format LBFormat
 ---@field Comms LBComms

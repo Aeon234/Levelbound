@@ -126,8 +126,9 @@ function TextElement:SetHovered(bar, hovered)
 
 	for _, entry in ipairs(texts) do
 		local visibility = entry.definition.visibility
+		local shown = visibility == "ALWAYS" or (visibility == "HOVER" and hovered)
 
-		entry.fontString:SetShown(visibility == "ALWAYS" or (visibility == "HOVER" and hovered))
+		entry.fontString:SetShown(shown and not bar.textSuppressed)
 	end
 end
 
