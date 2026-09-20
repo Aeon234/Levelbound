@@ -25,6 +25,9 @@ frame:SetScript("OnEvent", function(self, event, ...)
 		LB.Capabilities:Resolve()
 		LB.Media:Register()
 		LB.BarGroup:Create()
+		LB.Session:Reset()
+		LB.Session:RefreshAFK()
+		LB.TimePlayed:RequestOnce()
 	elseif event == "PLAYER_ENTERING_WORLD" then
 		LB.Model:Seed()
 	end

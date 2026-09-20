@@ -12,6 +12,8 @@ local addonName = ...
 ---@field Events LBEvents
 ---@field Profile LBProfile
 ---@field Media LBMedia
+---@field Session LBSession
+---@field TimePlayed LBTimePlayed
 ---@field Settings table?
 local LB = select(2, ...)
 

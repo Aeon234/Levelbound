@@ -25,6 +25,8 @@ local Events = LB.Events
 ---@field visible boolean
 ---@field subscribed boolean
 ---@field perCharacter boolean
+---@field delta number gain since the last Progress fire
+---@field seeded boolean first read is a baseline only
 ---@field factionID number? for rep
 ---@field atMaxLevel boolean? for xp
 
@@ -79,7 +81,28 @@ end
 
 ---@return boolean changed
 function SourceMixin:Refresh()
-	return self:Read(self.snapshot) == true
+	local snapshot = self.snapshot
+	local before, beforeMax = snapshot.cur, snapshot.max
+	local changed = self:Read(snapshot) == true
+
+	if not self.seeded then
+		self.seeded = true
+		self.delta = 0
+
+		return changed
+	end
+
+	if changed then
+		local after = snapshot.cur
+
+		if after >= before then
+			self.delta = self.delta + (after - before)
+		else
+			self.delta = self.delta + math.max(beforeMax - before, 0) + after
+		end
+	end
+
+	return changed
 end
 
 ---@param event string
@@ -135,6 +158,8 @@ function Source:New(id, spec)
 	source.id = id
 	source.available = false
 	source.visible = false
+	source.delta = 0
+	source.seeded = false
 	source.snapshot = {
 		cur = 0,
 		max = 0,
@@ -237,6 +262,8 @@ function Model:OnSourceEvent(source, event, ...)
 	if source:OnEvent(event, ...) then
 		Events:Coalesce("progress:" .. source.id, function()
 			Callbacks:Fire("Progress", source.id)
+
+			source.delta = 0
 		end)
 	end
 

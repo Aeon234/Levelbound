@@ -1,5 +1,7 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/">
 	<Script file="Sources.lua" />
+	<Script file="Session.lua" />
+	<Script file="TimePlayed.lua" />
 	<Script file="XP.lua" />
 	<Script file="PetXP.lua" />
 	<Script file="Reputation.lua" />
