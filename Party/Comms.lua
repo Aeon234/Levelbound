@@ -1,0 +1,253 @@
+local LB = select(2, ...)
+
+local MAJOR = 1
+local SEQUENCE_MAX = 65536
+local MERGE = 0.2
+local REPLY_DELAY = 1
+
+local FLAG_MAX_LEVEL = 1
+
+---@class LBPartyState
+---@field sequence integer
+---@field level integer
+---@field xp integer
+---@field xpMax integer
+---@field flags integer
+---@field atMaxLevel boolean
+
+---@class LBComms
+---@field sequence integer outgoing counter
+---@field restricted boolean
+---@field pending boolean
+---@field owed boolean request arrived while restricted and is owed an answer
+local Comms = {
+	sequence = 0,
+	restricted = false,
+	pending = false,
+	owed = false,
+}
+LB.Comms = Comms
+
+---@param incoming integer
+---@param known integer
+---@return boolean
+function Comms:IsNewer(incoming, known)
+	local difference = (incoming - known) % SEQUENCE_MAX
+
+	return difference > 0 and difference < (SEQUENCE_MAX / 2)
+end
+
+---out of range; every rejection is silent
+---@param text string
+---@return LBPartyState? state nil when the message is malformed, a different major version, or
+function Comms.Parse(text)
+	if type(text) ~= "string" then
+		return nil
+	end
+
+	local major = text:match("^(%d+):")
+
+	if tonumber(major) ~= MAJOR then
+		return nil
+	end
+
+	local sequence, level, xp, xpMax, flags = text:match("^%d+:(%d+):(%d+):(%d+):(%d+):(%d+)")
+
+	sequence, level, xp, xpMax, flags =
+		tonumber(sequence), tonumber(level), tonumber(xp), tonumber(xpMax), tonumber(flags)
+
+	if not sequence or not level or not xp or not xpMax or not flags then
+		return nil
+	end
+
+	if sequence < 0 or sequence >= SEQUENCE_MAX then
+		return nil
+	end
+
+	if level < 1 or level > (GetMaxPlayerLevel() or 0) then
+		return nil
+	end
+
+	if xpMax <= 0 or xp < 0 or xp > xpMax then
+		return nil
+	end
+
+	return {
+		sequence = sequence,
+		level = level,
+		xp = xp,
+		xpMax = xpMax,
+		flags = flags,
+		atMaxLevel = bit.band(flags, FLAG_MAX_LEVEL) ~= 0,
+	}
+end
+
+---@param text string
+---@return boolean
+function Comms.IsRequest(text)
+	return text == MAJOR .. ":R"
+end
+
+---@return string? message nil when there is nothing worth sending
+function Comms:Encode()
+	local snapshot = LB.Model:Get("xp")
+
+	if not snapshot or snapshot.max <= 0 then
+		return nil
+	end
+
+	self.sequence = (self.sequence + 1) % SEQUENCE_MAX
+
+	local flags = snapshot.atCap and FLAG_MAX_LEVEL or 0
+
+	return ("%d:%d:%d:%d:%d:%d"):format(MAJOR, self.sequence, snapshot.level or 0, snapshot.cur, snapshot.max, flags)
+end
+
+---@return string? channel nil when not in a party the protocol should use
+function Comms:Channel()
+	if IsInRaid() then
+		return nil
+	end
+
+	if IsInGroup(LE_PARTY_CATEGORY_INSTANCE) then
+		return "INSTANCE_CHAT"
+	end
+
+	if IsInGroup(LE_PARTY_CATEGORY_HOME) then
+		return "PARTY"
+	end
+
+	return nil
+end
+
+---@return boolean
+function Comms:IsRestricted()
+	if C_ChatInfo.InChatMessagingLockdown and C_ChatInfo.InChatMessagingLockdown() then
+		return true
+	end
+
+	if C_RestrictedActions and C_RestrictedActions.IsAddOnRestrictionActive then
+		return C_RestrictedActions.IsAddOnRestrictionActive(Enum.AddOnRestrictionType.Chat) == true
+	end
+
+	return false
+end
+
+---@param message string
+---@return boolean sent
+function Comms:Transmit(message)
+	local channel = self:Channel()
+
+	if not channel then
+		return false
+	end
+
+	local result = C_ChatInfo.SendAddonMessage(LB.MESSAGE_PREFIX, message, channel)
+
+	if result == Enum.SendAddonMessageResult.AddOnMessageLockdown then
+		self.restricted = true
+		self.pending = true
+
+		return false
+	end
+
+	return result == nil or result == Enum.SendAddonMessageResult.Success
+end
+
+---@param immediate boolean? skip the merge window, for a login or a group join
+function Comms:Send(immediate)
+	if not self:Channel() then
+		return
+	end
+
+	if self.restricted or self:IsRestricted() then
+		self.restricted = true
+		self.pending = true
+
+		return
+	end
+
+	if immediate then
+		local message = self:Encode()
+
+		if message then
+			self:Transmit(message)
+		end
+
+		return
+	end
+
+	LB.Events:Merge("party:send", MERGE, function()
+		local message = Comms:Encode()
+
+		if message then
+			Comms:Transmit(message)
+		end
+	end)
+end
+
+function Comms:SendRequest()
+	if not self:Channel() or self.restricted then
+		return
+	end
+
+	C_ChatInfo.SendAddonMessage(LB.MESSAGE_PREFIX, MAJOR .. ":R", self:Channel())
+end
+
+function Comms:AnswerRequest()
+	if self.restricted then
+		self.owed = true
+
+		return
+	end
+
+	C_Timer.After(math.random() * REPLY_DELAY, function()
+		Comms:Send(true)
+	end)
+end
+
+---@param state boolean
+function Comms:OnRestrictionChanged(state)
+	if state then
+		self.restricted = true
+
+		return
+	end
+
+	self.restricted = false
+
+	if self.pending or self.owed then
+		self.pending = false
+		self.owed = false
+
+		self:Send(true)
+	end
+end
+
+---@param prefix string
+---@param text string
+---@param channel string
+---@param sender string
+function Comms:OnMessage(prefix, text, channel, sender)
+	if prefix ~= LB.MESSAGE_PREFIX then
+		return
+	end
+
+	if not LB.Roster:IsMember(sender) then
+		return
+	end
+
+	if self.IsRequest(text) then
+		self:AnswerRequest()
+
+		return
+	end
+
+	local state = self.Parse(text)
+
+	if not state then
+		return
+	end
+
+	LB.Roster:Upsert(sender, state)
+end

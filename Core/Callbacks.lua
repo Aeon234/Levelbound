@@ -127,7 +127,7 @@ function Callbacks:Fire(name, ...)
 		local entry = entries[index]
 
 		if not entry.dead then
-			entry.handler(entry.owner, ...)
+			xpcall(entry.handler, CallErrorHandler, entry.owner, ...)
 		end
 	end
 

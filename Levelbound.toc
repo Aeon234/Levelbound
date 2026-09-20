@@ -20,4 +20,5 @@ Locale\Locale.xml
 Core\Core.xml
 Media\Media.xml
 Data\Data.xml
+Party\Party.xml
 UI\UI.xml

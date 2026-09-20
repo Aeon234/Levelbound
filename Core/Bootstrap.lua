@@ -41,5 +41,6 @@ frame:SetScript("OnEvent", function(self, event, ...)
 		LB.Comms:SendRequest()
 	elseif event == "PLAYER_ENTERING_WORLD" and not LB.failed then
 		LB.Model:Seed()
+		LB.Roster:Reconcile()
 	end
 end)
