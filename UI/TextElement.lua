@@ -32,6 +32,8 @@ local ANCHORS = {
 ---@field fontString FontString
 ---@field definition LBTextElement
 
+local FONT_TEMPLATE = "GameFontNormal"
+
 ---@param fontString FontString
 local function Reset(_, fontString)
 	fontString:Hide()
@@ -52,7 +54,7 @@ local function PoolFor(bar)
 	local texts = bar.texts or {}
 
 	if not bar.textPool then
-		bar.textPool = CreateFontStringPool(bar, "OVERLAY", 7, nil, Reset)
+		bar.textPool = CreateFontStringPool(bar, "OVERLAY", 7, FONT_TEMPLATE, Reset)
 	end
 
 	bar.texts = texts

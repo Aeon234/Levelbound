@@ -16,10 +16,19 @@ frame:SetScript("OnEvent", function(self, event, ...)
 
 		self:UnregisterEvent(event)
 
-		LB.Profile:Initialize()
+		local ok, err = pcall(LB.Profile.Initialize, LB.Profile)
+
+		if not ok then
+			LB.failed = true
+
+			LB:Warn(LB.L["saved settings failed to load, so the bars are off for this session."])
+			LB:Warn(tostring(err))
+
+			return
+		end
 
 		C_ChatInfo.RegisterAddonMessagePrefix(LB.MESSAGE_PREFIX)
-	elseif event == "PLAYER_LOGIN" then
+	elseif event == "PLAYER_LOGIN" and not LB.failed then
 		self:UnregisterEvent(event)
 
 		LB.Capabilities:Resolve()
@@ -28,7 +37,9 @@ frame:SetScript("OnEvent", function(self, event, ...)
 		LB.Session:Reset()
 		LB.Session:RefreshAFK()
 		LB.TimePlayed:RequestOnce()
-	elseif event == "PLAYER_ENTERING_WORLD" then
+		LB.Roster:Reconcile()
+		LB.Comms:SendRequest()
+	elseif event == "PLAYER_ENTERING_WORLD" and not LB.failed then
 		LB.Model:Seed()
 	end
 end)

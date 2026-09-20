@@ -49,3 +49,7 @@ L["House favor"] = "House favor"
 L["A paragon reward is waiting."] = "A paragon reward is waiting."
 L["Ready to upgrade"] = "Ready to upgrade"
 L["Standing"] = "Standing"
+
+L["the %s bar hit an error and is off for this session."] = "the %s bar hit an error and is off for this session."
+
+L["saved settings failed to load, so the bars are off for this session."] = "saved settings failed to load, so the bars are off for this session."

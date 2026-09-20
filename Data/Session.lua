@@ -95,9 +95,9 @@ function Session:TimeToLevel()
 end
 
 function Session:RefreshAFK()
-	local afk = LB:Readable(UnitIsAFK("player"), nil)
+	local afk = UnitIsAFK("player")
 
-	if afk == nil then
+	if issecretvalue(afk) then
 		return
 	end
 

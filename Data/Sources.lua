@@ -25,6 +25,7 @@ local Events = LB.Events
 ---@field visible boolean
 ---@field subscribed boolean
 ---@field perCharacter boolean
+---@field failed boolean disabled for the session after an error
 ---@field delta number gain since the last Progress fire
 ---@field seeded boolean first read is a baseline only
 ---@field factionID number? for rep
@@ -257,9 +258,38 @@ local function Unsubscribe(source)
 end
 
 ---@param source LBSource
+---@param reason string
+function Model:Disable(source, reason)
+	if source.failed then
+		return
+	end
+
+	source.failed = true
+	source.available = false
+	source.subscribed = false
+
+	Unsubscribe(source)
+	LB:Warn(LB.L["the %s bar hit an error and is off for this session."], source.id)
+	LB:Warn(reason)
+end
+
+---@param source LBSource
 ---@param event string
 function Model:OnSourceEvent(source, event, ...)
-	if source:OnEvent(event, ...) then
+	if source.failed then
+		return
+	end
+
+	local ok, changed = pcall(source.OnEvent, source, event, ...)
+
+	if not ok then
+		self:Disable(source, tostring(changed))
+		self:Sync()
+
+		return
+	end
+
+	if changed then
 		Events:Coalesce("progress:" .. source.id, function()
 			Callbacks:Fire("Progress", source.id)
 
@@ -274,21 +304,41 @@ function Model:OnSourceEvent(source, event, ...)
 	end
 end
 
+---@param source LBSource
+---@return boolean ok
+function Model:SafeRead(source)
+	local ok, err = pcall(source.Refresh, source)
+
+	if not ok then
+		self:Disable(source, tostring(err))
+	end
+
+	return ok
+end
+
 function Model:Sync()
 	local changed = false
 
 	for _, id in ipairs(ORDER) do
 		local source = self.sources[id]
 
-		if source then
-			source.available = source:IsAvailable()
+		if source and not source.failed then
+			local ok, available = pcall(source.IsAvailable, source)
 
+			if ok then
+				source.available = available
+			else
+				self:Disable(source, tostring(available))
+			end
+		end
+
+		if source then
 			local wanted = source.available and source:IsEnabled()
 
 			if wanted and not source.subscribed then
 				source.subscribed = true
 				Subscribe(source)
-				source:Refresh()
+				self:SafeRead(source)
 			elseif not wanted and source.subscribed then
 				source.subscribed = false
 				Unsubscribe(source)
@@ -312,11 +362,17 @@ function Model:Seed()
 	for _, id in ipairs(ORDER) do
 		local source = self.sources[id]
 
-		if source then
-			source.available = source:IsAvailable()
+		if source and not source.failed then
+			local ok, available = pcall(source.IsAvailable, source)
 
-			if source.available and source:IsEnabled() then
-				source:Refresh()
+			if not ok then
+				self:Disable(source, tostring(available))
+			else
+				source.available = available
+
+				if available and source:IsEnabled() then
+					self:SafeRead(source)
+				end
 			end
 		end
 	end

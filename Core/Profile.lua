@@ -287,6 +287,23 @@ end
 local characterKey = nil
 
 ---@return string
+local function RealmKey()
+	local realm = GetNormalizedRealmName() or GetRealmName()
+
+	if realm and realm ~= "" then
+		return (realm:gsub("[%s'%-]", ""))
+	end
+
+	local mode = C_GameRules and C_GameRules.GetActiveGameMode and C_GameRules.GetActiveGameMode()
+
+	if mode then
+		return "Mode" .. tostring(mode)
+	end
+
+	return UNKNOWN
+end
+
+---@return string
 function Profile:CharacterKey()
 	if characterKey then
 		return characterKey
@@ -300,13 +317,7 @@ function Profile:CharacterKey()
 		return DEFAULT_PROFILE
 	end
 
-	local realm = GetNormalizedRealmName()
-
-	if realm == "" then
-		realm = UNKNOWN
-	end
-
-	characterKey = name .. "-" .. realm:gsub("[%s'%-]", "")
+	characterKey = name .. "-" .. RealmKey()
 
 	return characterKey
 end

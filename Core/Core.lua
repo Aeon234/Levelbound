@@ -20,14 +20,21 @@ local addonName = ...
 ---@field TextElement LBTextElement
 ---@field Tooltip LBTooltip
 ---@field Format LBFormat
+---@field Comms LBComms
+---@field Roster LBRoster
 ---@field Session LBSession
 ---@field TimePlayed LBTimePlayed
+---@field failed boolean?
 ---@field Settings table?
 local LB = select(2, ...)
 
 LB.name = addonName
 LB.title = C_AddOns.GetAddOnMetadata(addonName, "Title") or addonName
 LB.version = C_AddOns.GetAddOnMetadata(addonName, "Version") or UNKNOWN
+
+if LB.version:find("@", 1, true) then
+	LB.version = "dev"
+end
 
 LB.MESSAGE_PREFIX = "Levelbound"
 
@@ -168,6 +175,16 @@ function LB:PrintDiagnostics()
 	self:Print("capabilities: %s", table.concat(capabilities, ", "))
 
 	local layout = self.Profile:Get("layout")
+
+	if not layout then
+		self:Warn(
+			"no active profile: saved data did not initialise. LevelboundDB=%s active=%s",
+			tostring(LevelboundDB ~= nil),
+			tostring(self.Profile.active ~= nil)
+		)
+
+		return
+	end
 
 	self:Print(
 		"layout %s  %dx%d  fullscreen %s  strata %s",
