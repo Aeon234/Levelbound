@@ -12,6 +12,14 @@ local addonName = ...
 ---@field Events LBEvents
 ---@field Profile LBProfile
 ---@field Media LBMedia
+---@field Model LBModel
+---@field Source LBSourceFactory
+---@field Preview LBPreview
+---@field BarGroup LBBarGroup
+---@field Bar LBBarFactory
+---@field TextElement LBTextElement
+---@field Tooltip LBTooltip
+---@field Format LBFormat
 ---@field Session LBSession
 ---@field TimePlayed LBTimePlayed
 ---@field Settings table?
@@ -145,9 +153,86 @@ function LB:OpenSettings(section)
 	self:Warn(self.L["the settings window is not available yet."])
 end
 
+function LB:PrintDiagnostics()
+	self:Print("v%s  profile %q", self.version, self.Profile.activeName or "?")
+
+	local capabilities = {}
+
+	for name, present in pairs(self.can) do
+		if present then
+			capabilities[#capabilities + 1] = name
+		end
+	end
+
+	table.sort(capabilities)
+	self:Print("capabilities: %s", table.concat(capabilities, ", "))
+
+	local layout = self.Profile:Get("layout")
+
+	self:Print(
+		"layout %s  %dx%d  fullscreen %s  strata %s",
+		layout.mode,
+		layout.width,
+		layout.height,
+		layout.fullscreen,
+		layout.strata
+	)
+
+	for _, id in ipairs(self.Model:Order()) do
+		local source = self.Model:Source(id)
+
+		if source then
+			local snapshot = source.snapshot
+			local state = source.visible and "shown" or (source.available and "available" or "absent")
+
+			self:Print(
+				"  %-10s %-9s %s / %s  quest %s  rested %s",
+				id,
+				state,
+				tostring(snapshot.cur),
+				tostring(snapshot.max),
+				tostring(snapshot.overlays.quest),
+				tostring(snapshot.overlays.rested)
+			)
+		end
+	end
+
+	self:Print(
+		"session %s elapsed, %s gained, rate %s, to level %s",
+		tostring(math.floor(self.Session:Elapsed())),
+		tostring(self.Session.xp),
+		tostring(self.Session:Rate()),
+		tostring(self.Session:TimeToLevel())
+	)
+	self:Print(
+		"time played: level %s, total %s, requested %s",
+		tostring(self.TimePlayed:LevelTime()),
+		tostring(self.TimePlayed:TotalTime()),
+		tostring(self.TimePlayed.requested)
+	)
+end
+
 SLASH_LEVELBOUND1 = "/levelbound"
 SLASH_LEVELBOUND2 = "/lb"
 
-SlashCmdList.LEVELBOUND = function()
+SlashCmdList.LEVELBOUND = function(message)
+	local command = (message or ""):lower():match("^%s*(%S*)")
+
+	if command == "debug" then
+		LB:PrintDiagnostics()
+
+		return
+	end
+
+	if command == "preview" then
+		if LB.Preview:IsActive() then
+			LB.Preview:Exit()
+		else
+			LB.Preview:Enter()
+		end
+
+		return
+	end
+
 	LB:OpenSettings()
 end
