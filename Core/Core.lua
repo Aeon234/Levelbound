@@ -19,6 +19,7 @@ local addonName = ...
 ---@field Bar LBBarFactory
 ---@field TextElement LBTextElement
 ---@field Marker LBMarker
+---@field Gain LBGain
 ---@field Tooltip LBTooltip
 ---@field Format LBFormat
 ---@field Comms LBComms

@@ -83,7 +83,7 @@ end
 ---@return boolean changed
 function SourceMixin:Refresh()
 	local snapshot = self.snapshot
-	local before, beforeMax = snapshot.cur, snapshot.max
+	local before, beforeMax, beforeLevel = snapshot.cur, snapshot.max, snapshot.level
 	local changed = self:Read(snapshot) == true
 
 	if not self.seeded then
@@ -95,11 +95,12 @@ function SourceMixin:Refresh()
 
 	if changed then
 		local after = snapshot.cur
+		local rolled = snapshot.max ~= beforeMax or (snapshot.level or 0) > (beforeLevel or 0)
 
-		if after >= before then
-			self.delta = self.delta + (after - before)
-		else
+		if after < before and rolled then
 			self.delta = self.delta + math.max(beforeMax - before, 0) + after
+		else
+			self.delta = self.delta + (after - before)
 		end
 	end
 

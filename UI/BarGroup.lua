@@ -325,6 +325,7 @@ function BarGroup:Refresh(animated)
 			local source = LB.Model:Source(id)
 
 			self.rects[id] = nil
+			LB.Gain:Release(bar)
 
 			if source and source.atMaxLevel then
 				bar:FadeOut()
@@ -359,6 +360,7 @@ function BarGroup:Update(id)
 
 	if bar and snapshot and bar:IsShown() then
 		bar:SetSnapshot(snapshot, true)
+		LB.Gain:OnProgress(bar)
 	end
 end
 
