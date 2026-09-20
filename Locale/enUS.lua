@@ -7,9 +7,6 @@ local function FallBackToKey(_, key)
 	return key
 end
 
--- enUS is the base locale and always loads first, so it owns the table. Later locale files
--- overwrite the keys they translate; anything untranslated falls back to the key itself,
--- which is written as the English sentence.
 ---@class LBLocale : table<string, string>
 local L = setmetatable({}, { __index = FallBackToKey })
 LB.L = L
@@ -22,3 +19,28 @@ L["a profile named %q already exists."] = "a profile named %q already exists."
 L["the last profile cannot be deleted."] = "the last profile cannot be deleted."
 L["your character name could not be read, so the account-wide profile is in use."] =
 	"your character name could not be read, so the account-wide profile is in use."
+
+L["Remaining"] = "Remaining"
+L["Rested"] = "Rested"
+L["Quests ready"] = "Quests ready"
+L["After turn-in"] = "After turn-in"
+L["Quests in log"] = "Quests in log"
+L["Past the level-up"] = "Past the level-up"
+L["Time this level"] = "Time this level"
+L["Session"] = "Session"
+L["XP per hour"] = "XP per hour"
+L["Time to level"] = "Time to level"
+
+L["kind.LEVEL"] = "Level"
+L["kind.NAME"] = "Name"
+L["kind.VALUE"] = "Current / max"
+L["kind.PERCENT"] = "Percentage"
+L["kind.REMAINING"] = "Remaining"
+L["kind.PERCENT_WITH_QUESTS"] = "Percentage after turn-in"
+L["kind.RESTED"] = "Rested"
+L["kind.QUEST_XP"] = "Completed-quest XP"
+L["kind.SESSION_TIME"] = "Session time"
+L["kind.LEVEL_TIME"] = "Time this level"
+L["kind.TOTAL_TIME"] = "Total time played"
+L["kind.XP_PER_HOUR"] = "XP per hour"
+L["kind.TIME_TO_LEVEL"] = "Time to level"

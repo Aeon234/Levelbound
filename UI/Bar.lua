@@ -23,6 +23,10 @@ local FADE = 0.5
 ---@field values number[]
 ---@field sweeping boolean? lvl up sweep animation running
 ---@field pending number[]? target the sweep settles on
+---@field hovered boolean?
+---@field snapshot LBSnapshot?
+---@field textPool any?
+---@field texts LBTextEntry[]?
 local BarMixin = {}
 LB.BarMixin = BarMixin
 
@@ -80,9 +84,31 @@ function Bar:Create(parent, id)
 	bar.fill = CreateLayer(bar, LEVEL_FILL)
 
 	bar.background:SetValue(1)
+
+	bar:EnableMouse(true)
+	bar:SetScript("OnEnter", bar.OnEnter)
+	bar:SetScript("OnLeave", bar.OnLeave)
+
 	bar:ApplyAppearance()
 
 	return bar
+end
+
+function BarMixin:OnEnter()
+	self.hovered = true
+
+	LB.TextElement:SetHovered(self, true)
+
+	if self.snapshot then
+		LB.Tooltip:Show(self, self.snapshot)
+	end
+end
+
+function BarMixin:OnLeave()
+	self.hovered = false
+
+	LB.TextElement:SetHovered(self, false)
+	LB.Tooltip:Hide()
 end
 
 ---@param width number
@@ -151,6 +177,8 @@ function BarMixin:ApplyAppearance()
 	SetFlat(self.background, appearance.background)
 
 	self.background:SetValue(1)
+
+	LB.TextElement:Apply(self)
 end
 
 ---@param fill number
@@ -215,6 +243,10 @@ end
 ---@param snapshot LBSnapshot
 ---@param animate boolean?
 function BarMixin:SetSnapshot(snapshot, animate)
+	self.snapshot = snapshot
+
+	LB.TextElement:Update(self, snapshot)
+
 	local fill, quest, rested = LB.Model:Fractions(snapshot)
 	local level = snapshot.level or 0
 	local levelled = self.level > 0 and level > self.level
