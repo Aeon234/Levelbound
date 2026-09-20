@@ -370,6 +370,14 @@ Callbacks:Register("Layout", BarGroup, function()
 	BarGroup:Refresh(true)
 end)
 
+Callbacks:Register("Party", BarGroup, function()
+	local bar = BarGroup.bars.xp
+
+	if bar and bar:IsShown() then
+		LB.Marker:Apply(bar)
+	end
+end)
+
 Callbacks:Register("Settings", BarGroup, function()
 	BarGroup:Refresh(false)
 end)

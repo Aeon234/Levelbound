@@ -1,5 +1,6 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/">
 	<Script file="TextElement.lua" />
+	<Script file="Marker.lua" />
 	<Script file="Tooltip.lua" />
 	<Script file="Bar.lua" />
 	<Script file="Preview.lua" />

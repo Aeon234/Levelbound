@@ -27,6 +27,9 @@ local FADE = 0.5
 ---@field snapshot LBSnapshot?
 ---@field textPool any?
 ---@field texts LBTextEntry[]?
+---@field markerPool any?
+---@field markers table?
+---@field markerShown table<string, Frame>?
 local BarMixin = {}
 LB.BarMixin = BarMixin
 
@@ -99,6 +102,7 @@ function BarMixin:OnEnter()
 	self.hovered = true
 
 	LB.TextElement:SetHovered(self, true)
+	LB.Marker:SetHovered(self, true)
 
 	if self.snapshot then
 		LB.Tooltip:Show(self, self.snapshot)
@@ -109,6 +113,7 @@ function BarMixin:OnLeave()
 	self.hovered = false
 
 	LB.TextElement:SetHovered(self, false)
+	LB.Marker:SetHovered(self, false)
 	LB.Tooltip:Hide()
 end
 
@@ -276,6 +281,7 @@ function BarMixin:SetSnapshot(snapshot, animate)
 	end
 
 	LB.TextElement:Update(self, snapshot)
+	LB.Marker:Apply(self)
 
 	local fill, quest, rested = LB.Model:Fractions(snapshot)
 	local level = snapshot.level or 0
