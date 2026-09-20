@@ -108,7 +108,7 @@ local SCHEMA_VERSION = 1
 ---@field global { minimapButton: { hide: boolean }, requestTimePlayed: boolean }
 
 ---@class LBCharacterDatabase
----@field optIn { endeavor: boolean, travel: boolean }
+---@field optIn { endeavor: boolean, travelers: boolean }
 ---@field useCharacterProfile boolean
 
 local GAIN_GREEN = { 0.226, 1.0, 0.006 }
@@ -146,7 +146,7 @@ local defaults = {
 		background = { 0, 0, 0, 0.5 },
 		typeColors = {
 			house = { 0.851, 0.710, 0.435 },
-			travel = { 0.035, 0.647, 0.733 },
+			travelers = { 0.035, 0.647, 0.733 },
 			endeavor = { 0.294, 0.365, 0.106 },
 		},
 		standingColors = {},
@@ -180,7 +180,7 @@ local defaults = {
 			reputation = GAIN_GREEN,
 			house = GAIN_GREEN,
 			endeavor = GAIN_GREEN,
-			travel = GAIN_GREEN,
+			travelers = GAIN_GREEN,
 			honor = GAIN_GREEN,
 			azerite = GAIN_GREEN,
 		},
@@ -262,7 +262,7 @@ local globalDefaults = {
 
 ---@type LBCharacterDatabase
 local characterDefaults = {
-	optIn = { endeavor = false, travel = false },
+	optIn = { endeavor = false, travelers = false },
 	useCharacterProfile = false,
 }
 
@@ -600,13 +600,13 @@ function Profile:SetUseCharacterProfile(enabled)
 	self:Activate(self:ResolveName())
 end
 
----@param key "endeavor" | "travel"
+---@param key "endeavor" | "travelers"
 ---@return boolean
 function Profile:OptedIn(key)
 	return self.char.optIn[key] == true
 end
 
----@param key "endeavor" | "travel"
+---@param key "endeavor" | "travelers"
 ---@param enabled boolean
 function Profile:SetOptIn(key, enabled)
 	if self.char.optIn[key] == enabled then

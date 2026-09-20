@@ -44,3 +44,8 @@ L["kind.LEVEL_TIME"] = "Time this level"
 L["kind.TOTAL_TIME"] = "Total time played"
 L["kind.XP_PER_HOUR"] = "XP per hour"
 L["kind.TIME_TO_LEVEL"] = "Time to level"
+
+L["House favor"] = "House favor"
+L["A paragon reward is waiting."] = "A paragon reward is waiting."
+L["Ready to upgrade"] = "Ready to upgrade"
+L["Standing"] = "Standing"

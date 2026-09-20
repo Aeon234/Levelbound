@@ -12,7 +12,7 @@ LB.Capabilities = Capabilities
 ---@field house boolean housing favor data
 ---@field housingDashboard boolean the housing dashboard click action
 ---@field endeavor boolean neighborhood initiative data
----@field travel boolean Trading Post travel points data
+---@field travelers boolean Trading Post traveler points data
 ---@field azerite boolean Azerite item data
 ---@field honor boolean honor data and Blizzard's watch rule
 ---@field pvpWindow boolean the PvP window click action
@@ -31,7 +31,7 @@ function Capabilities:Resolve()
 	can.house = C_Housing ~= nil and C_Housing.GetTrackedHouseGuid ~= nil
 	can.housingDashboard = HousingFramesUtil ~= nil and HousingFramesUtil.ToggleHousingDashboard ~= nil
 	can.endeavor = C_NeighborhoodInitiative ~= nil and C_NeighborhoodInitiative.GetNeighborhoodInitiativeInfo ~= nil
-	can.travel = C_PerksActivities ~= nil and C_PerksActivities.GetPerksActivitiesInfo ~= nil
+	can.travelers = C_PerksActivities ~= nil and C_PerksActivities.GetPerksActivitiesInfo ~= nil
 	can.azerite = C_AzeriteItem ~= nil and C_AzeriteItem.FindActiveAzeriteItem ~= nil
 	can.honor = UnitHonor ~= nil and IsWatchingHonorAsXP ~= nil
 	can.pvpWindow = TogglePVPUI ~= nil

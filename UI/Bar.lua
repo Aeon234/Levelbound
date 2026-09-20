@@ -88,6 +88,7 @@ function Bar:Create(parent, id)
 	bar:EnableMouse(true)
 	bar:SetScript("OnEnter", bar.OnEnter)
 	bar:SetScript("OnLeave", bar.OnLeave)
+	bar:SetScript("OnMouseUp", bar.OnMouseUp)
 
 	bar:ApplyAppearance()
 
@@ -109,6 +110,19 @@ function BarMixin:OnLeave()
 
 	LB.TextElement:SetHovered(self, false)
 	LB.Tooltip:Hide()
+end
+
+---@param button string
+function BarMixin:OnMouseUp(button)
+	if button ~= "LeftButton" or not LB.Profile:Get("tooltip.clickActions") then
+		return
+	end
+
+	local source = LB.Model:Source(self.id)
+
+	if source and source.Click then
+		source:Click()
+	end
 end
 
 ---@param width number
@@ -149,6 +163,16 @@ function BarMixin:FillColors()
 		end
 
 		return appearance.xpGradient[1] or WHITE, appearance.xpGradient[2]
+	end
+
+	if self.id == "petxp" then
+		return appearance.xpGradient[1] or WHITE, appearance.xpGradient[2]
+	end
+
+	local snapshot = self.snapshot
+
+	if snapshot and snapshot.color then
+		return snapshot.color, nil
 	end
 
 	return appearance.typeColors[self.id] or appearance.xpGradient[1] or WHITE, nil
@@ -243,7 +267,13 @@ end
 ---@param snapshot LBSnapshot
 ---@param animate boolean?
 function BarMixin:SetSnapshot(snapshot, animate)
+	local recolour = self.snapshot == nil or self.snapshot.color ~= snapshot.color
+
 	self.snapshot = snapshot
+
+	if recolour then
+		self:ApplyAppearance()
+	end
 
 	LB.TextElement:Update(self, snapshot)
 

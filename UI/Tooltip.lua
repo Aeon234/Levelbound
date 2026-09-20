@@ -85,12 +85,25 @@ function Tooltip:Generic(tip, snapshot, source)
 	local Format = LB.Format
 
 	tip:AddLine(Format:Value("NAME", snapshot, source))
+
+	if snapshot.standing and snapshot.standing ~= "" and snapshot.standing ~= snapshot.label then
+		Line(tip, L["Standing"], snapshot.standing)
+	end
+
 	Line(
 		tip,
 		XP,
 		("%s (%s)"):format(Format:Value("VALUE", snapshot, source), Format:Value("PERCENT", snapshot, source))
 	)
 	Line(tip, L["Remaining"], Format:Value("REMAINING", snapshot, source))
+
+	if snapshot.flags.readyToUpgrade then
+		tip:AddLine(L["Ready to upgrade"], 0, 1, 0)
+	end
+
+	if source and source.Tooltip then
+		source:Tooltip(tip)
+	end
 end
 
 ---@param bar LBBar

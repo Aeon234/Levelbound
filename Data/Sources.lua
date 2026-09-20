@@ -25,6 +25,8 @@ local Events = LB.Events
 ---@field visible boolean
 ---@field subscribed boolean
 ---@field perCharacter boolean
+---@field factionID number? for rep
+---@field atMaxLevel boolean? for xp
 
 ---@class LBSourceSpec
 ---@field Read fun(self: LBSource, snapshot: LBSnapshot): boolean
@@ -117,7 +119,7 @@ local Model = {
 }
 LB.Model = Model
 
-local ORDER = { "xp", "petxp", "reputation", "house", "endeavor", "travel", "honor", "azerite" }
+local ORDER = { "xp", "petxp", "reputation", "house", "endeavor", "travelers", "honor", "azerite" }
 
 ---@class LBSourceFactory
 local Source = {}

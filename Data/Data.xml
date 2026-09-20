@@ -1,4 +1,11 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/">
 	<Script file="Sources.lua" />
 	<Script file="XP.lua" />
+	<Script file="PetXP.lua" />
+	<Script file="Reputation.lua" />
+	<Script file="House.lua" />
+	<Script file="Endeavor.lua" />
+	<Script file="TravelerPoints.lua" />
+	<Script file="Honor.lua" />
+	<Script file="Azerite.lua" />
 </Ui>
