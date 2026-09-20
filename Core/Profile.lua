@@ -138,7 +138,7 @@ local defaults = {
 		azerite = true,
 	},
 	appearance = {
-		texture = "Blizzard",
+		texture = "Solid",
 		xpGradient = { { 0.335, 0.388, 1.0 }, { 0.773, 0.380, 1.0 } },
 		xpUseClassColor = false,
 		questColor = { 1.0, 0.589, 0.0 },

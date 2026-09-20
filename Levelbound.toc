@@ -19,3 +19,5 @@ Libs\embeds.xml
 Locale\Locale.xml
 Core\Core.xml
 Media\Media.xml
+Data\Data.xml
+UI\UI.xml

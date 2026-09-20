@@ -99,6 +99,39 @@ function LB:MergeDefaults(target, defaults)
 	end
 end
 
+---@param frame Frame
+---@param duration number seconds
+---@param apply fun(eased: number)
+---@param onFinished fun()?
+function LB:Tween(frame, duration, apply, onFinished)
+	local elapsed = 0
+
+	frame:SetScript("OnUpdate", function(_, delta)
+		elapsed = elapsed + delta
+
+		local progress = duration > 0 and (elapsed / duration) or 1
+		local done = progress >= 1
+
+		if done then
+			progress = 1
+			frame:SetScript("OnUpdate", nil)
+		end
+
+		local inverse = 1 - progress
+
+		apply(1 - inverse * inverse * inverse)
+
+		if done and onFinished then
+			onFinished()
+		end
+	end)
+end
+
+---@param frame Frame
+function LB:StopTween(frame)
+	frame:SetScript("OnUpdate", nil)
+end
+
 ---@param section string? section to open at
 function LB:OpenSettings(section)
 	if self.Settings then

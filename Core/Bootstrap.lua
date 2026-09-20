@@ -4,6 +4,7 @@ local frame = CreateFrame("Frame")
 
 frame:RegisterEvent("ADDON_LOADED")
 frame:RegisterEvent("PLAYER_LOGIN")
+frame:RegisterEvent("PLAYER_ENTERING_WORLD")
 
 frame:SetScript("OnEvent", function(self, event, ...)
 	if event == "ADDON_LOADED" then
@@ -23,5 +24,8 @@ frame:SetScript("OnEvent", function(self, event, ...)
 
 		LB.Capabilities:Resolve()
 		LB.Media:Register()
+		LB.BarGroup:Create()
+	elseif event == "PLAYER_ENTERING_WORLD" then
+		LB.Model:Seed()
 	end
 end)
