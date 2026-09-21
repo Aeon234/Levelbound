@@ -4,7 +4,6 @@ local Callbacks = LB.Callbacks
 
 local SEPARATOR = 2
 local REFLOW = 0.25
-local SPARK_PREVIEW = 1
 
 local FLAT = [[Interface\Buttons\WHITE8X8]]
 
@@ -43,7 +42,7 @@ end
 ---@param id string
 ---@return LBSnapshot?
 local function SnapshotFor(id)
-	if LB.Preview:IsActive() then
+	if LB.Preview:Covers(id) then
 		return LB.Preview:Snapshot(id)
 	end
 
@@ -403,7 +402,7 @@ function BarGroup:Update(id)
 	local snapshot = SnapshotFor(id)
 
 	if bar and snapshot and bar:IsShown() then
-		bar:SetSnapshot(snapshot, true)
+		bar:SetSnapshot(snapshot, true, not LB.Preview:Covers(id))
 		LB.Gain:OnProgress(bar)
 	end
 end
@@ -430,7 +429,7 @@ Callbacks:Register("Settings", BarGroup, function(_, path)
 	if type(path) == "string" and path:find("^appearance%.spark") then
 		for _, bar in pairs(BarGroup.bars) do
 			if bar:IsShown() then
-				bar:FlashSpark(SPARK_PREVIEW)
+				bar:FlashSpark()
 			end
 		end
 	end

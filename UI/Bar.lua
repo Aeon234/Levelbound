@@ -9,13 +9,18 @@ local FLAT = [[Interface\Buttons\WHITE8X8]]
 local WHITE = { 1, 1, 1, 1 }
 
 local SWEEP_UP = 0.25
-local SWEEP_DOWN = 0.35
+
+local FILL_RATE = 0.25
+local FILL_MIN = 0.5
+local FILL_MAX = 2
+local LEVEL_RATE = 0.5
 local FADE = 0.5
 
 local SPARK_WIDTH = 2
 local GLOW_WIDTH = 16
 local GLOW_ALPHA = 0.4
-local SPARK_FADE = 0.5
+local SPIKE_ALPHA = 0.5
+local PULSE = 0.5
 
 ---@class LBBar : Frame
 ---@field id string
@@ -24,8 +29,8 @@ local SPARK_FADE = 0.5
 ---@field rested StatusBar
 ---@field background StatusBar
 ---@field spark Texture
----@field glowLeft Texture
----@field glowRight Texture
+---@field glow Texture
+---@field spike Texture
 ---@field border LBBorderFrame?
 ---@field driver Frame
 ---@field alphaDriver Frame
@@ -36,7 +41,7 @@ local SPARK_FADE = 0.5
 ---@field pending number[]? target the sweep settles on
 ---@field hovered boolean?
 ---@field sparkEnabled boolean?
----@field sparkAlpha number
+---@field sparkElapsed number?
 ---@field sparkDriver Frame
 ---@field textSuppressed boolean?
 ---@field snapshot LBSnapshot?
@@ -97,7 +102,6 @@ function Bar:Create(parent, id)
 	bar.driver = CreateFrame("Frame", nil, bar)
 	bar.alphaDriver = CreateFrame("Frame", nil, bar)
 	bar.sparkDriver = CreateFrame("Frame", nil, bar)
-	bar.sparkAlpha = 0
 
 	bar.background = CreateLayer(bar, LEVEL_BACKGROUND)
 	bar.rested = CreateLayer(bar, LEVEL_RESTED)
@@ -107,10 +111,10 @@ function Bar:Create(parent, id)
 	bar.background:SetValue(1)
 
 	bar.spark = bar.fill:CreateTexture(nil, "OVERLAY", nil, 1)
-	bar.glowLeft = bar.fill:CreateTexture(nil, "OVERLAY")
-	bar.glowRight = bar.fill:CreateTexture(nil, "OVERLAY")
+	bar.glow = bar.fill:CreateTexture(nil, "OVERLAY")
+	bar.spike = bar.fill:CreateTexture(nil, "OVERLAY")
 
-	for _, texture in ipairs({ bar.spark, bar.glowLeft, bar.glowRight }) do
+	for _, texture in ipairs({ bar.spark, bar.glow, bar.spike }) do
 		texture:SetTexture(FLAT)
 		texture:SetBlendMode("ADD")
 		texture:Hide()
@@ -245,7 +249,6 @@ end
 function BarMixin:ApplySpark(spark)
 	local edge = self.fill:GetStatusBarTexture()
 	local r, g, b, a = Unpack(spark.color)
-	local glow = a * GLOW_ALPHA
 
 	self.sparkEnabled = spark.enabled
 
@@ -255,54 +258,107 @@ function BarMixin:ApplySpark(spark)
 	PixelUtil.SetWidth(self.spark, SPARK_WIDTH)
 	self.spark:SetVertexColor(r, g, b, a)
 
-	self.glowLeft:ClearAllPoints()
-	self.glowLeft:SetPoint("TOPRIGHT", edge, "TOPRIGHT")
-	self.glowLeft:SetPoint("BOTTOMRIGHT", edge, "BOTTOMRIGHT")
-	self.glowLeft:SetWidth(GLOW_WIDTH / 2)
-	self.glowLeft:SetGradient("HORIZONTAL", CreateColor(r, g, b, 0), CreateColor(r, g, b, glow))
+	self.glow:SetWidth(GLOW_WIDTH)
+	self.glow:SetGradient("HORIZONTAL", CreateColor(r, g, b, 0), CreateColor(r, g, b, a))
 
-	self.glowRight:ClearAllPoints()
-	self.glowRight:SetPoint("TOPLEFT", edge, "TOPRIGHT")
-	self.glowRight:SetPoint("BOTTOMLEFT", edge, "BOTTOMRIGHT")
-	self.glowRight:SetWidth(GLOW_WIDTH / 2)
-	self.glowRight:SetGradient("HORIZONTAL", CreateColor(r, g, b, glow), CreateColor(r, g, b, 0))
+	self.spike:ClearAllPoints()
+	self.spike:SetPoint("TOPLEFT", edge, "TOPRIGHT")
+	self.spike:SetPoint("BOTTOMLEFT", edge, "BOTTOMRIGHT")
+	self.spike:SetGradient("HORIZONTAL", CreateColor(r, g, b, a), CreateColor(r, g, b, 0))
 
-	self:UpdateSpark()
+	if self.sparkElapsed then
+		self:PaintSpark(self.sparkElapsed)
+	else
+		self:UpdateSpark()
+	end
 end
 
 function BarMixin:UpdateSpark()
 	local fill = self.values[1]
-	local shown = self.sparkEnabled and self.sparkAlpha > 0 and fill > 0 and fill < 1 or false
+	local shown = self.sparkEnabled and self.sparkElapsed ~= nil and fill > 0 and fill < 1 or false
 
 	self.spark:SetShown(shown)
-	self.glowLeft:SetShown(shown)
-	self.glowRight:SetShown(shown)
+	self.glow:SetShown(shown)
+	self.spike:SetShown(shown)
 end
 
----@param alpha number
-function BarMixin:SetSparkAlpha(alpha)
-	self.sparkAlpha = alpha
+---@param elapsed number seconds into the pulse
+---@return number glowAlpha
+---@return number glowShift pixels the glow has slid past the edge
+---@return number spikeAlpha
+---@return number spikeScale fraction of the glow width the spike reaches
+function Bar:SparkKeyframe(elapsed)
+	local t = math.max(elapsed, 0)
+	local glowAlpha, spikeAlpha, spikeScale = 0.8, 0, 0.25
 
-	self.spark:SetAlpha(alpha)
-	self.glowLeft:SetAlpha(alpha)
-	self.glowRight:SetAlpha(alpha)
+	if t < 0.1 then
+		glowAlpha = 0.8 * t / 0.1
+	elseif t > 0.35 then
+		glowAlpha = 0.8 * math.max(1 - (t - 0.35) / 0.15, 0)
+	end
+
+	local slide = math.min(t / 0.25, 1)
+	local glowShift = 8 * (1 - (1 - slide) * (1 - slide))
+
+	if t >= 0.15 and t < 0.25 then
+		local p = (t - 0.15) / 0.1
+
+		spikeAlpha = 0.5 * p * p
+		spikeScale = 0.25 + (1.4 - 0.25) * p
+	elseif t >= 0.25 then
+		local p = math.min((t - 0.25) / 0.2, 1)
+
+		spikeAlpha = 0.5 * math.max(1 - (t - 0.25) / 0.25, 0)
+		spikeScale = 1.4 * (1 - 0.5 * p * p)
+	end
+
+	return glowAlpha, glowShift, spikeAlpha, spikeScale
+end
+
+---@param elapsed number
+function BarMixin:PaintSpark(elapsed)
+	local glowAlpha, glowShift, spikeAlpha, spikeScale = Bar:SparkKeyframe(elapsed)
+	local edge = self.fill:GetStatusBarTexture()
+
+	self.spark:SetAlpha(glowAlpha / 0.8)
+
+	self.glow:ClearAllPoints()
+	self.glow:SetPoint("TOPRIGHT", edge, "TOPRIGHT", glowShift, 0)
+	self.glow:SetPoint("BOTTOMRIGHT", edge, "BOTTOMRIGHT", glowShift, 0)
+	self.glow:SetAlpha(glowAlpha / 0.8 * GLOW_ALPHA)
+
+	self.spike:SetWidth(math.max(GLOW_WIDTH * spikeScale, 1))
+	self.spike:SetAlpha(spikeAlpha / 0.5 * SPIKE_ALPHA)
+
 	self:UpdateSpark()
 end
 
----@param hold number seconds at full strength before the fade (length of the push)
-function BarMixin:FlashSpark(hold)
+---@param driver Frame
+---@param delta number
+local function SparkOnUpdate(driver, delta)
+	local bar = driver:GetParent() --[[@as LBBar]]
+	local elapsed = (bar.sparkElapsed or 0) + delta
+
+	if elapsed >= PULSE then
+		driver:SetScript("OnUpdate", nil)
+		bar.sparkElapsed = nil
+		bar:UpdateSpark()
+
+		return
+	end
+
+	bar.sparkElapsed = elapsed
+	bar:PaintSpark(elapsed)
+end
+
+function BarMixin:FlashSpark()
 	if not self.sparkEnabled then
 		return
 	end
 
-	LB:StopTween(self.sparkDriver)
-	self:SetSparkAlpha(1)
-
-	LB:Tween(self.sparkDriver, hold, function() end, function()
-		LB:Tween(self.sparkDriver, SPARK_FADE, function(eased)
-			self:SetSparkAlpha(1 - eased)
-		end)
-	end)
+	self.sparkElapsed = 0
+	self:PaintSpark(0)
+	self.sparkDriver:SetScript("OnUpdate", SparkOnUpdate)
 end
 
 ---@param fill number
@@ -317,12 +373,31 @@ function BarMixin:SetValues(fill, quest, rested)
 	self:UpdateSpark()
 end
 
+---@param progress number
+---@return number
+local function SineOut(progress)
+	return math.sin(progress * math.pi / 2)
+end
+
+---@param progress number
+---@return number
+local function Linear(progress)
+	return progress
+end
+
+---@param delta number fraction of the bar the fill moves
+---@return number seconds
+function Bar:FillDuration(delta)
+	return math.min(math.max(math.abs(delta) / FILL_RATE, FILL_MIN), FILL_MAX)
+end
+
 ---@param fill number
 ---@param quest number
 ---@param rested number
 ---@param duration number
 ---@param onFinished fun()?
-function BarMixin:TweenValues(fill, quest, rested, duration, onFinished)
+---@param ease (fun(progress: number): number)?
+function BarMixin:TweenValues(fill, quest, rested, duration, onFinished, ease)
 	local from = { self.values[1], self.values[2], self.values[3] }
 	local to = { fill, quest, rested }
 
@@ -332,7 +407,15 @@ function BarMixin:TweenValues(fill, quest, rested, duration, onFinished)
 			from[2] + (to[2] - from[2]) * eased,
 			from[3] + (to[3] - from[3]) * eased
 		)
-	end, onFinished)
+	end, onFinished, ease)
+end
+
+---@param fill number
+---@param quest number
+---@param rested number
+---@param onFinished fun()?
+function BarMixin:GainTo(fill, quest, rested, onFinished)
+	self:TweenValues(fill, quest, rested, Bar:FillDuration(fill - self.values[1]), onFinished, SineOut)
 end
 
 ---@param fill number
@@ -347,7 +430,7 @@ function BarMixin:LevelUp(fill, quest, rested)
 
 	self.sweeping = true
 
-	self:TweenValues(1, 1, 1, SWEEP_UP, function()
+	self:TweenValues(1, 1, 1, (1 - self.values[1]) / LEVEL_RATE, function()
 		self:SetValues(0, 0, 0)
 
 		local target = self.pending
@@ -359,15 +442,17 @@ function BarMixin:LevelUp(fill, quest, rested)
 			return
 		end
 
-		self:TweenValues(target[1], target[2], target[3], SWEEP_DOWN, function()
+		self:FlashSpark()
+		self:GainTo(target[1], target[2], target[3], function()
 			self.sweeping = false
 		end)
-	end)
+	end, Linear)
 end
 
 ---@param snapshot LBSnapshot
 ---@param animate boolean?
-function BarMixin:SetSnapshot(snapshot, animate)
+---@param gained boolean? real progress arrived, rather than a redraw or a swap to or from sample data
+function BarMixin:SetSnapshot(snapshot, animate, gained)
 	local recolour = self.snapshot == nil or self.snapshot.color ~= snapshot.color
 
 	self.snapshot = snapshot
@@ -381,7 +466,7 @@ function BarMixin:SetSnapshot(snapshot, animate)
 
 	local fill, quest, rested = LB.Model:Fractions(snapshot)
 	local level = snapshot.level or 0
-	local levelled = self.level > 0 and level > self.level
+	local levelled = gained == true and self.level > 0 and level > self.level
 
 	self.level = level
 
@@ -395,7 +480,7 @@ function BarMixin:SetSnapshot(snapshot, animate)
 	end
 
 	if levelled then
-		self:FlashSpark(SWEEP_UP + SWEEP_DOWN)
+		self:FlashSpark()
 		self:LevelUp(fill, quest, rested)
 
 		return
@@ -407,11 +492,17 @@ function BarMixin:SetSnapshot(snapshot, animate)
 		return
 	end
 
-	if fill > self.values[1] then
-		self:FlashSpark(SWEEP_UP)
+	if not gained then
+		self:TweenValues(fill, quest, rested, SWEEP_UP)
+
+		return
 	end
 
-	self:TweenValues(fill, quest, rested, SWEEP_UP)
+	if fill > self.values[1] then
+		self:FlashSpark()
+	end
+
+	self:GainTo(fill, quest, rested)
 end
 
 ---@param onFinished fun()?

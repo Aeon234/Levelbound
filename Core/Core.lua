@@ -125,7 +125,8 @@ end
 ---@param duration number seconds
 ---@param apply fun(eased: number)
 ---@param onFinished fun()?
-function LB:Tween(frame, duration, apply, onFinished)
+---@param ease (fun(progress: number): number)?
+function LB:Tween(frame, duration, apply, onFinished, ease)
 	local elapsed = 0
 
 	frame:SetScript("OnUpdate", function(_, delta)
@@ -139,9 +140,13 @@ function LB:Tween(frame, duration, apply, onFinished)
 			frame:SetScript("OnUpdate", nil)
 		end
 
-		local inverse = 1 - progress
+		if ease then
+			apply(ease(progress))
+		else
+			local inverse = 1 - progress
 
-		apply(1 - inverse * inverse * inverse)
+			apply(1 - inverse * inverse * inverse)
+		end
 
 		if done and onFinished then
 			onFinished()

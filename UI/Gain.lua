@@ -251,7 +251,7 @@ end
 function Gain:OnProgress(bar)
 	local source = LB.Model:Source(bar.id)
 
-	if not source or LB.Preview:IsActive() then
+	if not source or LB.Preview:Covers(bar.id) then
 		return
 	end
 

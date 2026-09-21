@@ -7,9 +7,11 @@ local SAMPLE_RESTED = 1400
 
 ---@class LBPreview
 ---@field active boolean
+---@field editing boolean the settings window is open
 ---@field snapshots table<string, LBSnapshot>
 local Preview = {
 	active = false,
+	editing = false,
 	snapshots = {},
 }
 LB.Preview = Preview
@@ -69,6 +71,23 @@ function Preview:Enter()
 	end
 
 	self.active = true
+
+	LB.Callbacks:Fire("Layout")
+end
+
+---@param id string
+---@return boolean
+function Preview:Covers(id)
+	return self.active or (self.editing and id == "xp")
+end
+
+---@param editing boolean
+function Preview:SetEditing(editing)
+	if self.editing == editing then
+		return
+	end
+
+	self.editing = editing
 
 	LB.Callbacks:Fire("Layout")
 end
