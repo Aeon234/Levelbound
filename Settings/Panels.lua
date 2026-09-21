@@ -500,6 +500,16 @@ Panels.sections = {
 			Button(L["Copy Current Profile"], L["Copy"], function()
 				StaticPopup_Show("LEVELBOUND_COPY_PROFILE")
 			end),
+			Button(L["Export Profile"], L["Export"], function()
+				local encoded = LB.Profile:Export(LB.Profile.activeName)
+
+				if encoded then
+					StaticPopup_Show("LEVELBOUND_EXPORT_PROFILE", LB.Profile.activeName, nil, encoded)
+				end
+			end),
+			Button(L["Import Profile"], L["Import"], function()
+				StaticPopup_Show("LEVELBOUND_IMPORT_PROFILE")
+			end),
 			Button(L["Delete Current Profile"], DELETE, function()
 				StaticPopup_Show("LEVELBOUND_DELETE_PROFILE", LB.Profile.activeName)
 			end),

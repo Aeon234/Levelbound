@@ -23,6 +23,11 @@ L["the settings window is not available yet."] = "the settings window is not ava
 L["saved settings failed to load, so the bars are off for this session."] =
 	"saved settings failed to load, so the bars are off for this session."
 L["the %s bar hit an error and is off for this session."] = "the %s bar hit an error and is off for this session."
+L["that is not a Levelbound profile string, or it was cut short."] =
+	"that is not a Levelbound profile string, or it was cut short."
+L["that profile string was made by a newer version of Levelbound."] =
+	"that profile string was made by a newer version of Levelbound."
+L["that profile string has no profile in it."] = "that profile string has no profile in it."
 
 -- Progress types (Data/House.lua, settings window)
 L["Pet Experience"] = "Pet Experience"
@@ -201,9 +206,16 @@ L["Manage"] = "Manage"
 L["New Profile"] = "New Profile"
 L["Copy Current Profile"] = "Copy Current Profile"
 L["Copy"] = "Copy"
+L["Export Profile"] = "Export Profile"
+L["Export"] = "Export"
+L["Import Profile"] = "Import Profile"
+L["Import"] = "Import"
 L["Delete Current Profile"] = "Delete Current Profile"
 L["Reset This Profile"] = "Reset This Profile"
 L["Name the new profile"] = "Name the new profile"
 L["Name the copy"] = "Name the copy"
+L["Copy this string to share the profile %q."] = "Copy this string to share the profile %q."
+L["Paste a Levelbound profile string."] = "Paste a Levelbound profile string."
+L["Name the imported profile"] = "Name the imported profile"
 L["Delete the profile %q? This cannot be undone."] = "Delete the profile %q? This cannot be undone."
 L["Reset every setting in the profile %q?"] = "Reset every setting in the profile %q?"

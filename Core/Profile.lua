@@ -5,6 +5,8 @@ local L = LB.L
 local DEFAULT_PROFILE = "Default"
 local FONT = LB.DEFAULT_FONT
 local SCHEMA_VERSION = 1
+local EXPORT_FORMAT = 1
+local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 
 ---@alias LBColor number[]
 ---@alias LBAnchor
@@ -551,6 +553,148 @@ function Profile:Copy(source, name)
 	end
 
 	self.db.profiles[name] = LB:CopyTable(self.db.profiles[source])
+	self:Activate(name)
+
+	return true
+end
+
+---@class LBExportPayload
+---@field addon string
+---@field version integer the schema version the profile was saved under
+---@field name string the name it was exported under
+---@field profile LBProfileData
+
+---@param target table
+---@param template table
+local function Sanitize(target, template)
+	for key, value in pairs(template) do
+		local current = target[key]
+
+		if current ~= nil and type(current) ~= type(value) then
+			target[key] = LB:CopyTable(value)
+		elseif type(current) == "table" then
+			Sanitize(current, value)
+		end
+	end
+end
+
+---@param name string
+---@return string? encoded nil when the profile is missing or encoding failed
+function Profile:Export(name)
+	local profile = self.db.profiles[name]
+
+	if not profile then
+		return nil
+	end
+
+	---@type LBExportPayload
+	local payload = {
+		addon = LB.name,
+		version = SCHEMA_VERSION,
+		name = name,
+		profile = profile,
+	}
+
+	local ok, encoded = pcall(function()
+		return C_EncodingUtil.EncodeBase64(C_EncodingUtil.CompressString(C_EncodingUtil.SerializeCBOR(payload)))
+	end)
+
+	if not ok or type(encoded) ~= "string" then
+		return nil
+	end
+
+	return EXPORT_PREFIX .. encoded
+end
+
+---@param encoded string
+---@return LBExportPayload? payload nil after warning why the string was refused
+function Profile:Decode(encoded)
+	local text = (encoded or ""):trim()
+	local format = text:match("^LB!(%d+)!")
+
+	if not format then
+		LB:Warn(L["that is not a Levelbound profile string, or it was cut short."])
+
+		return nil
+	end
+
+	if tonumber(format) ~= EXPORT_FORMAT then
+		LB:Warn(L["that profile string was made by a newer version of Levelbound."])
+
+		return nil
+	end
+
+	local ok, decoded = pcall(C_EncodingUtil.DecodeBase64, text:sub(#EXPORT_PREFIX + 1))
+	local decompressed, payload
+
+	if ok and type(decoded) == "string" then
+		ok, decompressed = pcall(C_EncodingUtil.DecompressString, decoded)
+	end
+
+	if ok and type(decompressed) == "string" then
+		ok, payload = pcall(C_EncodingUtil.DeserializeCBOR, decompressed)
+	end
+
+	if not ok or type(payload) ~= "table" or payload.addon ~= LB.name then
+		LB:Warn(L["that is not a Levelbound profile string, or it was cut short."])
+
+		return nil
+	end
+
+	if type(payload.version) ~= "number" or payload.version > SCHEMA_VERSION then
+		LB:Warn(L["that profile string was made by a newer version of Levelbound."])
+
+		return nil
+	end
+
+	if type(payload.profile) ~= "table" or type(payload.name) ~= "string" then
+		LB:Warn(L["that profile string has no profile in it."])
+
+		return nil
+	end
+
+	return payload
+end
+
+---@param name string the name an import would like
+---@return string name free of every existing profile
+function Profile:FreeName(name)
+	local base = (name or ""):trim()
+
+	if base == "" then
+		base = DEFAULT_PROFILE
+	end
+
+	if not self:Exists(base) then
+		return base
+	end
+
+	local index = 2
+
+	while self:Exists(("%s (%d)"):format(base, index)) do
+		index = index + 1
+	end
+
+	return ("%s (%d)"):format(base, index)
+end
+
+---@param payload LBExportPayload from Profile:Decode
+---@param name string
+---@return boolean imported
+function Profile:Import(payload, name)
+	if not ValidateNewName(name) then
+		return false
+	end
+
+	local profile = LB:CopyTable(payload.profile)
+	local staging = { version = payload.version, profiles = { [name] = profile }, profileKeys = {}, global = {} }
+
+	---@cast staging LBDatabase
+	self:Migrate(staging)
+
+	Sanitize(profile, defaults)
+
+	self.db.profiles[name] = profile
 	self:Activate(name)
 
 	return true

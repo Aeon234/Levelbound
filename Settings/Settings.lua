@@ -74,6 +74,70 @@ StaticPopupDialogs.LEVELBOUND_COPY_PROFILE = {
 	end,
 }
 
+StaticPopupDialogs.LEVELBOUND_EXPORT_PROFILE = {
+	text = L["Copy this string to share the profile %q."],
+	button1 = CLOSE,
+	hasEditBox = 1,
+	maxLetters = 0,
+	editBoxWidth = 350,
+	timeout = 0,
+	whileDead = 1,
+	hideOnEscape = 1,
+	OnShow = function(dialog, encoded)
+		local box = dialog.GetEditBox and dialog:GetEditBox() or dialog.editBox
+
+		if box then
+			box:SetText(encoded or "")
+			box:HighlightText()
+			box:SetFocus()
+		end
+	end,
+}
+
+StaticPopupDialogs.LEVELBOUND_IMPORT_PROFILE = {
+	text = L["Paste a Levelbound profile string."],
+	button1 = ACCEPT,
+	button2 = CANCEL,
+	hasEditBox = 1,
+	maxLetters = 0,
+	editBoxWidth = 350,
+	timeout = 0,
+	whileDead = 1,
+	hideOnEscape = 1,
+	OnAccept = function(dialog)
+		local payload = LB.Profile:Decode(EditBoxText(dialog))
+
+		if payload then
+			StaticPopup_Show("LEVELBOUND_NAME_IMPORT", nil, nil, payload)
+		end
+	end,
+}
+
+StaticPopupDialogs.LEVELBOUND_NAME_IMPORT = {
+	text = L["Name the imported profile"],
+	button1 = ACCEPT,
+	button2 = CANCEL,
+	hasEditBox = 1,
+	maxLetters = 32,
+	timeout = 0,
+	whileDead = 1,
+	hideOnEscape = 1,
+	OnShow = function(dialog, payload)
+		local box = dialog.GetEditBox and dialog:GetEditBox() or dialog.editBox
+
+		if box and payload then
+			box:SetText(LB.Profile:FreeName(payload.name))
+			box:HighlightText()
+		end
+	end,
+	OnAccept = function(dialog, payload)
+		if payload then
+			LB.Profile:Import(payload, EditBoxText(dialog))
+			LB.Settings:Refresh()
+		end
+	end,
+}
+
 StaticPopupDialogs.LEVELBOUND_DELETE_PROFILE = {
 	text = L["Delete the profile %q? This cannot be undone."],
 	button1 = ACCEPT,
