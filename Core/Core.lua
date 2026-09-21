@@ -15,6 +15,7 @@ local addonName = ...
 ---@field Model LBModel
 ---@field Source LBSourceFactory
 ---@field Preview LBPreview
+---@field Broker LBBroker
 ---@field BarGroup LBBarGroup
 ---@field Bar LBBarFactory
 ---@field TextElement LBTextElement

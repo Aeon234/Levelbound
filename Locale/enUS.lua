@@ -31,6 +31,10 @@ L["Neighborhood Endeavor"] = "Neighborhood Endeavor"
 L["Travel Points"] = "Travel Points"
 L["Azerite"] = "Azerite"
 
+-- Minimap button and addon compartment (Core/Broker.lua)
+L["Left-click: open settings"] = "Left-click: open settings"
+L["Right-click: preview all bars"] = "Right-click: preview all bars"
+
 -- Tooltip (UI/Tooltip.lua, Data/Reputation.lua)
 L["Remaining"] = "Remaining"
 L["Rested"] = "Rested"

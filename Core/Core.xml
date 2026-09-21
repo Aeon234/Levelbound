@@ -5,5 +5,6 @@
 	<Script file="Capabilities.lua" />
 	<Script file="Profile.lua" />
 	<Script file="Format.lua" />
+	<Script file="Broker.lua" />
 	<Script file="Bootstrap.lua" />
 </Ui>

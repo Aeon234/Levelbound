@@ -1,5 +1,6 @@
 ## Interface: 120100, 16001
 ## Title: Levelbound
+## IconTexture: Interface\AddOns\Levelbound\Media\Textures\GainArrowUp-Green
 ## Notes: Experience and progress bars with party XP markers.
 ## Author: Aeon
 ## Version: @project-version@
