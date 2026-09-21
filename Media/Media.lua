@@ -32,7 +32,7 @@ local fonts = {
 }
 
 local borders = {
-	["Levelbound Ring"] = PATH .. [[Borders\RingBorderWhite.tga]],
+	["Levelbound Thick"] = PATH .. [[Borders\ThickBorderWhite.tga]],
 	["Levelbound Ring Medium"] = PATH .. [[Borders\RingBorderMediumWhite.tga]],
 	["Levelbound Ring Thick"] = PATH .. [[Borders\RingBorderThickWhite.tga]],
 }

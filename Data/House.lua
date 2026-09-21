@@ -51,7 +51,7 @@ LB.Source:New("house", {
 		snapshot.cur = cur
 		snapshot.max = max
 		snapshot.level = level
-		snapshot.label = LB.L["House favor"]
+		snapshot.label = LB.L["Housing Exp"]
 		snapshot.flags.readyToUpgrade = ready
 		snapshot.atCap = ready
 

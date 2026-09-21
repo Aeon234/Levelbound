@@ -11,6 +11,7 @@ local EPSILON = 0.01
 ---@field hasTarget boolean
 ---@field blocked boolean pet battle/vehiclke
 ---@field hovered string? id of the bar under the cursor
+---@field editing boolean?
 
 ---@class LBVisibility
 ---@field state LBVisibilityState
@@ -54,7 +55,7 @@ function Visibility:Resolve(settings, state, id)
 	local hovered = state.hovered == id
 	local alpha = 1
 
-	if settings.fadeUntilHovered and not hovered then
+	if settings.fadeUntilHovered and not hovered and not state.editing then
 		local full = (settings.fullInCombat and state.inCombat) or (settings.fullWithTarget and state.hasTarget)
 
 		if not full then
@@ -72,26 +73,27 @@ function Visibility:Resolve(settings, state, id)
 	return alpha, dimmed
 end
 
----@param bar LBBar
+---@param region Frame
+---@param driver Frame
 ---@param alpha number
 ---@param animated boolean?
-local function SetAlpha(bar, alpha, animated)
-	local from = bar:GetAlpha()
+local function SetAlpha(region, driver, alpha, animated)
+	local from = region:GetAlpha()
 
 	if math.abs(from - alpha) < EPSILON then
 		return
 	end
 
-	LB:StopTween(bar.alphaDriver)
+	LB:StopTween(driver)
 
 	if not animated then
-		bar:SetAlpha(alpha)
+		region:SetAlpha(alpha)
 
 		return
 	end
 
-	LB:Tween(bar.alphaDriver, FADE, function(eased)
-		bar:SetAlpha(from + (alpha - from) * eased)
+	LB:Tween(driver, FADE, function(eased)
+		region:SetAlpha(from + (alpha - from) * eased)
 	end)
 end
 
@@ -113,15 +115,29 @@ function Visibility:Apply(animated)
 		return
 	end
 
+	local brightest = 0
+
 	for id, bar in pairs(group.bars) do
 		if bar:IsShown() and not bar.fading then
 			local alpha, dimmed = self:Resolve(settings, self.state, id)
 
 			bar.textSuppressed = dimmed
 			LB.TextElement:SetHovered(bar, bar.hovered == true)
-			SetAlpha(bar, alpha, animated)
+			SetAlpha(bar, bar.alphaDriver, alpha, animated)
+			brightest = math.max(brightest, alpha)
 		end
 	end
+
+	if group.border then
+		SetAlpha(group.border, group.border, brightest, animated)
+	end
+end
+
+---@param editing boolean
+function Visibility:SetEditing(editing)
+	self.state.editing = editing
+
+	self:Apply(true)
 end
 
 ---@param id string? the bar under the cursor, or nil when the cursor left one

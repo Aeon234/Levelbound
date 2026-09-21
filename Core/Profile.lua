@@ -75,7 +75,7 @@ local SCHEMA_VERSION = 1
 ---@field background LBColor
 ---@field typeColors table<string, LBColor>
 ---@field standingColors table<string, LBColor> overrides on Blizzard's FACTION_BAR_COLORS
----@field border { style: string, color: LBColor }
+---@field border { style: string, color: LBColor, customColor: boolean }
 ---@field spark { enabled: boolean, color: LBColor }
 
 ---@class LBTextSettings
@@ -155,7 +155,7 @@ local defaults = {
 			endeavor = { 0.294, 0.365, 0.106 },
 		},
 		standingColors = {},
-		border = { style = "NONE", color = { 1, 1, 1, 1 } },
+		border = { style = "NONE", color = { 1, 1, 1, 1 }, customColor = false },
 		spark = { enabled = false, color = { 1, 1, 1, 1 } },
 	},
 	text = {
@@ -183,11 +183,11 @@ local defaults = {
 			xp = GAIN_GREEN,
 			petxp = GAIN_GREEN,
 			reputation = GAIN_GREEN,
-			house = GAIN_GREEN,
-			endeavor = GAIN_GREEN,
-			travelers = GAIN_GREEN,
-			honor = GAIN_GREEN,
-			azerite = GAIN_GREEN,
+			house = { 228 / 255, 138 / 255, 15 / 255 },
+			endeavor = { 253 / 255, 199 / 255, 9 / 255 },
+			travelers = { 1 / 255, 178 / 255, 193 / 255 },
+			honor = { 184 / 255, 24 / 255, 0 },
+			azerite = { 247 / 255, 237 / 255, 145 / 255 },
 		},
 		text = { font = FONT, size = 12, color = { 1, 1, 1, 1 }, outline = "OUTLINE", side = "RIGHT", x = 0, y = 0 },
 	},

@@ -271,10 +271,20 @@ function Gain:Preview()
 
 	self.previewing = true
 
+	if group.settling then
+		return
+	end
+
 	for _, bar in pairs(group.bars) do
 		if bar:IsShown() then
 			self:Show(bar, PREVIEW_AMOUNT, true)
 		end
+	end
+end
+
+function Gain:OnLayoutSettled()
+	if self.previewing then
+		self:Preview()
 	end
 end
 

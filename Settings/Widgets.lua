@@ -29,6 +29,7 @@ local FLAT = [[Interface\Buttons\WHITE8X8]]
 ---@field full boolean?
 ---@field alone boolean?
 ---@field gate (fun(): boolean)?
+---@field enabled (fun(): boolean)?
 
 ---@class LBWidgets
 local Widgets = {}
@@ -48,6 +49,7 @@ local CHECKER_ATLAS = "colorpicker-checkerboard"
 local HIGHLIGHT_ALPHA = 0.15
 
 local swatches = {}
+local rows = {}
 
 ---@param swatch any Blizzard's colour swatch button, skinned below
 local function PaintSwatch(swatch)
@@ -226,9 +228,22 @@ end
 
 LevelboundSettingsRowMixin = {}
 
+---@param frame any
+local function Evaluate(frame)
+	if frame.EvaluateState then
+		frame:EvaluateState()
+	end
+
+	if frame.ColorSwatch and frame.IsEnabled then
+		frame.ColorSwatch:SetEnabled(frame:IsEnabled())
+	end
+end
+
 function LevelboundSettingsRowMixin:OnLoad()
 	self.slots = { {}, {} }
 	self.shown = {}
+
+	rows[self] = true
 end
 
 ---@param side 1 | 2
@@ -282,6 +297,7 @@ function LevelboundSettingsRowMixin:Attach(side, initializer, full)
 
 	frame:Show()
 	frame:Init(initializer)
+	Evaluate(frame)
 	Fit(self, frame, full)
 
 	self.shown[side] = frame
@@ -456,6 +472,22 @@ end
 ---@param section string
 ---@return table? initializer the element this row added to the layout
 function Widgets:Add(category, layout, row, index, section)
+	local initializer = self:Create(category, layout, row, index, section)
+
+	if initializer and row.enabled then
+		initializer:AddModifyPredicate(row.enabled)
+	end
+
+	return initializer
+end
+
+---@param category table
+---@param layout table
+---@param row LBSettingRow
+---@param index integer
+---@param section string
+---@return table? initializer
+function Widgets:Create(category, layout, row, index, section)
 	if row.type == "HEADER" then
 		local initializer = CreateSettingsListSectionHeaderInitializer(row.label)
 
@@ -572,6 +604,14 @@ Callbacks:Register("Settings", Widgets, function()
 	for swatch in pairs(swatches) do
 		if swatch:IsShown() then
 			PaintSwatch(swatch)
+		end
+	end
+
+	for row in pairs(rows) do
+		if row:IsShown() then
+			for _, frame in pairs(row.shown) do
+				Evaluate(frame)
+			end
 		end
 	end
 end)

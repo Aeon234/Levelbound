@@ -12,12 +12,21 @@ local SWEEP_UP = 0.25
 local SWEEP_DOWN = 0.35
 local FADE = 0.5
 
+local SPARK_WIDTH = 2
+local GLOW_WIDTH = 16
+local GLOW_ALPHA = 0.4
+local SPARK_FADE = 0.5
+
 ---@class LBBar : Frame
 ---@field id string
 ---@field fill StatusBar
 ---@field quest StatusBar
 ---@field rested StatusBar
 ---@field background StatusBar
+---@field spark Texture
+---@field glowLeft Texture
+---@field glowRight Texture
+---@field border LBBorderFrame?
 ---@field driver Frame
 ---@field alphaDriver Frame
 ---@field level number last drawn level
@@ -26,6 +35,9 @@ local FADE = 0.5
 ---@field fading boolean?
 ---@field pending number[]? target the sweep settles on
 ---@field hovered boolean?
+---@field sparkEnabled boolean?
+---@field sparkAlpha number
+---@field sparkDriver Frame
 ---@field textSuppressed boolean?
 ---@field snapshot LBSnapshot?
 ---@field textPool any?
@@ -84,6 +96,8 @@ function Bar:Create(parent, id)
 	bar.values = { 0, 0, 0 }
 	bar.driver = CreateFrame("Frame", nil, bar)
 	bar.alphaDriver = CreateFrame("Frame", nil, bar)
+	bar.sparkDriver = CreateFrame("Frame", nil, bar)
+	bar.sparkAlpha = 0
 
 	bar.background = CreateLayer(bar, LEVEL_BACKGROUND)
 	bar.rested = CreateLayer(bar, LEVEL_RESTED)
@@ -91,6 +105,16 @@ function Bar:Create(parent, id)
 	bar.fill = CreateLayer(bar, LEVEL_FILL)
 
 	bar.background:SetValue(1)
+
+	bar.spark = bar.fill:CreateTexture(nil, "OVERLAY", nil, 1)
+	bar.glowLeft = bar.fill:CreateTexture(nil, "OVERLAY")
+	bar.glowRight = bar.fill:CreateTexture(nil, "OVERLAY")
+
+	for _, texture in ipairs({ bar.spark, bar.glowLeft, bar.glowRight }) do
+		texture:SetTexture(FLAT)
+		texture:SetBlendMode("ADD")
+		texture:Hide()
+	end
 
 	bar:EnableMouse(true)
 	bar:SetScript("OnEnter", bar.OnEnter)
@@ -213,7 +237,72 @@ function BarMixin:ApplyAppearance()
 
 	self.background:SetValue(1)
 
+	self:ApplySpark(appearance.spark)
 	LB.TextElement:Apply(self)
+end
+
+---@param spark { enabled: boolean, color: LBColor }
+function BarMixin:ApplySpark(spark)
+	local edge = self.fill:GetStatusBarTexture()
+	local r, g, b, a = Unpack(spark.color)
+	local glow = a * GLOW_ALPHA
+
+	self.sparkEnabled = spark.enabled
+
+	self.spark:ClearAllPoints()
+	self.spark:SetPoint("TOP", edge, "TOPRIGHT")
+	self.spark:SetPoint("BOTTOM", edge, "BOTTOMRIGHT")
+	PixelUtil.SetWidth(self.spark, SPARK_WIDTH)
+	self.spark:SetVertexColor(r, g, b, a)
+
+	self.glowLeft:ClearAllPoints()
+	self.glowLeft:SetPoint("TOPRIGHT", edge, "TOPRIGHT")
+	self.glowLeft:SetPoint("BOTTOMRIGHT", edge, "BOTTOMRIGHT")
+	self.glowLeft:SetWidth(GLOW_WIDTH / 2)
+	self.glowLeft:SetGradient("HORIZONTAL", CreateColor(r, g, b, 0), CreateColor(r, g, b, glow))
+
+	self.glowRight:ClearAllPoints()
+	self.glowRight:SetPoint("TOPLEFT", edge, "TOPRIGHT")
+	self.glowRight:SetPoint("BOTTOMLEFT", edge, "BOTTOMRIGHT")
+	self.glowRight:SetWidth(GLOW_WIDTH / 2)
+	self.glowRight:SetGradient("HORIZONTAL", CreateColor(r, g, b, glow), CreateColor(r, g, b, 0))
+
+	self:UpdateSpark()
+end
+
+function BarMixin:UpdateSpark()
+	local fill = self.values[1]
+	local shown = self.sparkEnabled and self.sparkAlpha > 0 and fill > 0 and fill < 1 or false
+
+	self.spark:SetShown(shown)
+	self.glowLeft:SetShown(shown)
+	self.glowRight:SetShown(shown)
+end
+
+---@param alpha number
+function BarMixin:SetSparkAlpha(alpha)
+	self.sparkAlpha = alpha
+
+	self.spark:SetAlpha(alpha)
+	self.glowLeft:SetAlpha(alpha)
+	self.glowRight:SetAlpha(alpha)
+	self:UpdateSpark()
+end
+
+---@param hold number seconds at full strength before the fade (length of the push)
+function BarMixin:FlashSpark(hold)
+	if not self.sparkEnabled then
+		return
+	end
+
+	LB:StopTween(self.sparkDriver)
+	self:SetSparkAlpha(1)
+
+	LB:Tween(self.sparkDriver, hold, function() end, function()
+		LB:Tween(self.sparkDriver, SPARK_FADE, function(eased)
+			self:SetSparkAlpha(1 - eased)
+		end)
+	end)
 end
 
 ---@param fill number
@@ -225,6 +314,7 @@ function BarMixin:SetValues(fill, quest, rested)
 	self.fill:SetValue(fill)
 	self.quest:SetValue(quest)
 	self.rested:SetValue(rested)
+	self:UpdateSpark()
 end
 
 ---@param fill number
@@ -305,6 +395,7 @@ function BarMixin:SetSnapshot(snapshot, animate)
 	end
 
 	if levelled then
+		self:FlashSpark(SWEEP_UP + SWEEP_DOWN)
 		self:LevelUp(fill, quest, rested)
 
 		return
@@ -314,6 +405,10 @@ function BarMixin:SetSnapshot(snapshot, animate)
 		self.pending = { fill, quest, rested }
 
 		return
+	end
+
+	if fill > self.values[1] then
+		self:FlashSpark(SWEEP_UP)
 	end
 
 	self:TweenValues(fill, quest, rested, SWEEP_UP)

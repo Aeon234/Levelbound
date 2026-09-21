@@ -4,6 +4,7 @@ local Callbacks = LB.Callbacks
 
 local SEPARATOR = 2
 local REFLOW = 0.25
+local SPARK_PREVIEW = 1
 
 local FLAT = [[Interface\Buttons\WHITE8X8]]
 
@@ -19,8 +20,10 @@ local FLAT = [[Interface\Buttons\WHITE8X8]]
 ---@field driver Frame?
 ---@field bars table<string, LBBar>
 ---@field separators Texture[]
+---@field border LBBorderFrame?
 ---@field rects table<string, LBBarRect>
 ---@field hasBars boolean?
+---@field settling boolean?
 local BarGroup = {
 	bars = {},
 	separators = {},
@@ -192,7 +195,8 @@ function BarGroup:PlaceSeparators(frame, ids, rects)
 	local shown = 0
 
 	if layout.mode == "SEGMENTED" then
-		local color = LB.Profile:Get("appearance.border.color")
+		local border = LB.Profile:Get("appearance.border")
+		local color = LB.Border:Color(border.style, border)
 
 		for index = 1, #ids - 1 do
 			local rect = rects[ids[index]]
@@ -210,6 +214,30 @@ function BarGroup:PlaceSeparators(frame, ids, rects)
 
 	for index = shown + 1, #self.separators do
 		self.separators[index]:Hide()
+	end
+end
+
+---@param frame Frame
+---@param ids string[]
+---@param rects table<string, LBBarRect>
+---@param override string?
+function BarGroup:ApplyBorders(frame, ids, rects, override)
+	local border = LB.Profile:Get("appearance.border")
+	local style = override or border.style
+	local grouped = LB.Profile:Get("layout.mode") == "SEGMENTED"
+	local color = LB.Border:Color(style, border)
+
+	self.border = self.border or LB.Border:Create(frame)
+	self.border:Apply(grouped and style or "NONE", color, frame:GetHeight())
+
+	for _, id in ipairs(ids) do
+		local bar = self.bars[id]
+		local rect = rects[id]
+
+		if bar and rect then
+			bar.border = bar.border or LB.Border:Create(bar)
+			bar.border:Apply(grouped and "NONE" or style, color, rect.height)
+		end
 	end
 end
 
@@ -264,6 +292,8 @@ function BarGroup:ApplyLayout(animated)
 		self:Bar(frame, id)
 	end
 
+	self:ApplyBorders(frame, ids, rects, fullscreen and "NONE" or nil)
+
 	if not animated then
 		for id, rect in pairs(rects) do
 			Place(self.bars[id], frame, rect)
@@ -271,11 +301,14 @@ function BarGroup:ApplyLayout(animated)
 		end
 
 		self:PlaceSeparators(frame, ids, rects)
+		self:Settled()
 
 		return
 	end
 
 	local from = {}
+
+	self.settling = true
 
 	for id, rect in pairs(rects) do
 		from[id] = self.rects[id] or { width = rect.width, height = rect.height, x = rect.x, y = rect.y }
@@ -303,7 +336,15 @@ function BarGroup:ApplyLayout(animated)
 		for id, rect in pairs(rects) do
 			self.rects[id] = rect
 		end
+
+		self:Settled()
 	end)
+end
+
+function BarGroup:Settled()
+	self.settling = false
+
+	LB.Gain:OnLayoutSettled()
 end
 
 ---@param animated boolean?
@@ -383,6 +424,14 @@ Callbacks:Register("Party", BarGroup, function()
 	end
 end)
 
-Callbacks:Register("Settings", BarGroup, function()
+Callbacks:Register("Settings", BarGroup, function(_, path)
 	BarGroup:Refresh(true)
+
+	if type(path) == "string" and path:find("^appearance%.spark") then
+		for _, bar in pairs(BarGroup.bars) do
+			if bar:IsShown() then
+				bar:FlashSpark(SPARK_PREVIEW)
+			end
+		end
+	end
 end)

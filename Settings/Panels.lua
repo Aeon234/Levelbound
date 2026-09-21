@@ -72,6 +72,20 @@ local function Header(label)
 end
 
 ---@param row LBSettingRow
+---@param predicate fun(): boolean
+---@return LBSettingRow row
+local function Enabled(row, predicate)
+	row.enabled = predicate
+
+	return row
+end
+
+---@return boolean
+local function BorderTextured()
+	return LB.Border:IsTextured(LB.Profile:Get("appearance.border.style"))
+end
+
+---@param row LBSettingRow
 ---@return LBSettingRow row
 local function Full(row)
 	row.full = true
@@ -150,19 +164,19 @@ end
 local OUTLINES = {
 	{ value = "NONE", label = NONE },
 	{ value = "OUTLINE", label = L["Outline"] },
-	{ value = "THICKOUTLINE", label = L["Thick outline"] },
+	{ value = "THICKOUTLINE", label = L["Thick Outline"] },
 	{ value = "SLUG", label = L["Slug"] },
-	{ value = "SLUG_OUTLINE", label = L["Slug outline"] },
-	{ value = "SLUG_THICKOUTLINE", label = L["Slug thick outline"] },
+	{ value = "SLUG_OUTLINE", label = L["Slug Outline"] },
+	{ value = "SLUG_THICKOUTLINE", label = L["Slug Thick Outline"] },
 }
 
 local TYPE_LABELS = {
 	xp = COMBAT_XP_GAIN,
-	petxp = L["Pet experience"],
+	petxp = L["Pet Experience"],
 	reputation = REPUTATION,
-	house = L["House favor"],
-	endeavor = L["Neighborhood endeavor"],
-	travelers = L["Travel points"],
+	house = L["Housing Exp"],
+	endeavor = L["Neighborhood Endeavor"],
+	travelers = L["Travel Points"],
 	honor = HONOR,
 	azerite = L["Azerite"],
 }
@@ -202,29 +216,28 @@ local gradientEndGet, gradientEndSet = GradientStop(2)
 
 local appearance = {
 	Header(L["Bars"]),
-	Full(Dropdown(L["Bar texture"], "appearance.texture", MediaOptions("statusbar"))),
-	Full(Check(L["Experience bar uses class color"], "appearance.xpUseClassColor")),
+	Full(Dropdown(L["Bar Texture"], "appearance.texture", MediaOptions("statusbar"))),
+	Full(Check(L["Experience Bar Uses Class Color"], "appearance.xpUseClassColor")),
 	{
 		type = "COLOR",
 		variable = "xpGradientStart",
-		label = L["Experience gradient start"],
+		label = L["Experience Gradient Start"],
 		get = gradientStartGet,
 		set = gradientStartSet,
 	},
 	{
 		type = "COLOR",
 		variable = "xpGradientEnd",
-		label = L["Experience gradient end"],
+		label = L["Experience Gradient End"],
 		get = gradientEndGet,
 		set = gradientEndSet,
 	},
-	Full(Color(L["Completed-quest color"], "appearance.questColor")),
-	-- A colour and its opacity share a row, so the slider is read as belonging to the swatch beside it.
-	Color(L["Rested color"], "appearance.restedColor"),
-	Alpha(L["Rested opacity"], "appearance.restedColor"),
+	Full(Color(L["Completed-Quest Color"], "appearance.questColor")),
+	Color(L["Rested Color"], "appearance.restedColor"),
+	Alpha(L["Rested Opacity"], "appearance.restedColor"),
 	Color(BACKGROUND, "appearance.background"),
-	Alpha(L["Background opacity"], "appearance.background"),
-	Header(L["Type colors"]),
+	Alpha(L["Background Opacity"], "appearance.background"),
+	Header(L["Type Colors"]),
 	Color(TYPE_LABELS.house, "appearance.typeColors.house", function()
 		return LB.can.house == true
 	end),
@@ -235,48 +248,48 @@ local appearance = {
 		return LB.can.endeavor == true
 	end),
 	Header(L["Border"]),
-	Full(Dropdown(L["Border style"], "appearance.border.style", {
+	Dropdown(L["Border Style"], "appearance.border.style", {
 		{ value = "NONE", label = NONE },
 		{ value = "ONE_PIXEL", label = L["1 px"] },
 		{ value = "TWO_PIXEL", label = L["2 px"] },
-		{ value = "RING", label = L["Ring"] },
-		{ value = "RING_MEDIUM", label = L["Ring medium"] },
-		{ value = "RING_THICK", label = L["Ring thick"] },
-	})),
-	Color(L["Border color"], "appearance.border.color"),
-	Alpha(L["Border opacity"], "appearance.border.color"),
+		{ value = "THICK", label = L["Thick"] },
+		{ value = "ROUNDED", label = L["Rounded"] },
+		{ value = "ROUNDED_THICK", label = L["Rounded Thick"] },
+	}),
+	Enabled(Check(L["Custom Color"], "appearance.border.customColor"), BorderTextured),
+	Enabled(Color(L["Border Color"], "appearance.border.color"), function()
+		return not BorderTextured() or LB.Profile:Get("appearance.border.customColor") == true
+	end),
+	Alpha(L["Border Opacity"], "appearance.border.color"),
 	Header(L["Spark"]),
-	Check(L["Progress spark"], "appearance.spark.enabled"),
-	Color(L["Spark color"], "appearance.spark.color"),
-	Full(Button(L["Reset colors"], RESET, function()
+	Check(L["Progress Spark"], "appearance.spark.enabled"),
+	Color(L["Spark Color"], "appearance.spark.color"),
+	Full(Button(L["Reset Colors"], RESET, function()
 		LB.Profile:Reset("appearance")
 		LB.Settings:Refresh()
 	end)),
 }
 
 local gain = {
-	Check(L["Show gain indicator"], "gain.enabled"),
-	Check(L["Hide in combat"], "gain.hideInCombat"),
-	Full(Button(L["Example gain"], PREVIEW, function()
-		LB.Gain:Preview()
-	end)),
+	Check(L["Show Gain Indicator"], "gain.enabled"),
+	Check(L["Hide in Combat"], "gain.hideInCombat"),
 	Full(Dropdown(L["Position"], "gain.position", {
-		{ value = "FILL_EDGE", label = L["Fill edge"] },
-		{ value = "RIGHT_END", label = L["Right end"] },
+		{ value = "FILL_EDGE", label = L["Fill Edge"] },
+		{ value = "RIGHT_END", label = L["Right End"] },
 	})),
-	Header(L["Amount text"]),
+	Header(L["Amount Text"]),
 	Dropdown(L["Font"], "gain.text.font", MediaOptions("font")),
 	Slider(L["Size"], "gain.text.size", 6, 32, 1),
 	Dropdown(L["Outline"], "gain.text.outline", OUTLINES),
 	Color(COLOR, "gain.text.color"),
-	-- Alone, so the two offsets land on one line together rather than one of them chasing the side.
-	Alone(Dropdown(L["Text side"], "gain.text.side", {
-		{ value = "LEFT", label = L["Left of the arrow"] },
-		{ value = "RIGHT", label = L["Right of the arrow"] },
+
+	Alone(Dropdown(L["Text Side"], "gain.text.side", {
+		{ value = "LEFT", label = L["Left of the Arrow"] },
+		{ value = "RIGHT", label = L["Right of the Arrow"] },
 	})),
-	Slider(L["Horizontal offset"], "gain.text.x", -40, 40, 1),
-	Slider(L["Vertical offset"], "gain.text.y", -40, 40, 1),
-	Header(L["Arrow tint"]),
+	Slider(L["Horizontal Offset"], "gain.text.x", -40, 40, 1),
+	Slider(L["Vertical Offset"], "gain.text.y", -40, 40, 1),
+	Header(L["Arrow Tint"]),
 }
 
 Append(gain, GainColorRows())
@@ -286,14 +299,14 @@ Panels.sections = {
 		id = "general",
 		title = GENERAL,
 		rows = {
-			Full(Check(L["Hide Blizzard's status tracking bar"], "general.hideBlizzardBar", function()
+			Full(Check(L["Hide Blizzard's Status Tracking Bar"], "general.hideBlizzardBar", function()
 				return LB.can.statusTrackingBar == true
 			end)),
 			{
 				type = "CHECK",
 				full = true,
 				variable = "minimapButton",
-				label = L["Show minimap button"],
+				label = L["Show Minimap Button"],
 				get = function()
 					return LB.Profile:Global().minimapButton.hide ~= true
 				end,
@@ -307,7 +320,7 @@ Panels.sections = {
 				type = "CHECK",
 				full = true,
 				variable = "requestTimePlayed",
-				label = L["Request time played at login"],
+				label = L["Request Time Played at Login"],
 				get = function()
 					return LB.Profile:Global().requestTimePlayed == true
 				end,
@@ -322,12 +335,12 @@ Panels.sections = {
 		title = L["Layout"],
 		rows = {
 			Header(L["Placement"]),
-			Dropdown(L["Layout mode"], "layout.mode", {
+			Dropdown(L["Layout Mode"], "layout.mode", {
 				{ value = "SEGMENTED", label = L["Segmented"] },
 				{ value = "CONNECTED", label = L["Connected"] },
 				{ value = "INDEPENDENT", label = L["Independent"] },
 			}),
-			Dropdown(L["Fullscreen edge"], "layout.fullscreen", {
+			Dropdown(L["Fullscreen Edge"], "layout.fullscreen", {
 				{ value = "OFF", label = L["Off"] },
 				{ value = "TOP", label = L["Top"] },
 				{ value = "BOTTOM", label = L["Bottom"] },
@@ -336,13 +349,13 @@ Panels.sections = {
 			Slider(L["Width"], "layout.width", 100, 1600, 10),
 			Slider(L["Height"], "layout.height", 4, 64, 1),
 			Header(L["Stacking"]),
-			Dropdown(L["Growth direction"], "layout.growth", {
+			Dropdown(L["Growth Direction"], "layout.growth", {
 				{ value = "UP", label = L["Up"] },
 				{ value = "DOWN", label = L["Down"] },
 			}),
-			Slider(L["Gap between bars"], "layout.gap", 0, 10, 1),
+			Slider(L["Gap Between Bars"], "layout.gap", 0, 10, 1),
 			Header(L["Advanced"]),
-			Dropdown(L["Frame strata"], "layout.strata", {
+			Dropdown(L["Frame Strata"], "layout.strata", {
 				{ value = "BACKGROUND", label = BACKGROUND },
 				{ value = "LOW", label = L["Low"] },
 				{ value = "MEDIUM", label = L["Medium"] },
@@ -352,7 +365,7 @@ Panels.sections = {
 	},
 	{
 		id = "types",
-		title = L["Progress types"],
+		title = L["Progress Types"],
 		rows = {
 			Check(TYPE_LABELS.xp, "types.xp"),
 			Check(TYPE_LABELS.petxp, "types.petxp", function()
@@ -368,7 +381,7 @@ Panels.sections = {
 			Check(TYPE_LABELS.azerite, "types.azerite", function()
 				return LB.can.azerite == true
 			end),
-			Header(L["This character only"]),
+			Header(L["This Character Only"]),
 			OptIn("endeavor", TYPE_LABELS.endeavor, function()
 				return LB.can.endeavor == true
 			end),
@@ -384,14 +397,14 @@ Panels.sections = {
 	},
 	{
 		id = "text",
-		title = L["Text and tooltip"],
+		title = L["Text and Tooltip"],
 		rows = {
 			Header(L["Numbers"]),
-			Check(L["Compact numbers"], "text.compactNumbers"),
-			Check(L["Show decimals"], "text.decimals"),
+			Check(L["Compact Numbers"], "text.compactNumbers"),
+			Check(L["Show Decimals"], "text.decimals"),
 			Header(L["Tooltip"]),
-			Check(L["Show tooltip"], "tooltip.enabled"),
-			Check(L["Click actions"], "tooltip.clickActions"),
+			Check(L["Show Tooltip"], "tooltip.enabled"),
+			Check(L["Click Actions"], "tooltip.clickActions"),
 		},
 	},
 	{
@@ -399,21 +412,21 @@ Panels.sections = {
 		title = L["Visibility"],
 		rows = {
 			Header(L["Fading"]),
-			Check(L["Fade until hovered"], "visibility.fadeUntilHovered"),
-			Slider(L["Faded opacity"], "visibility.fadedAlpha", 0, 1, 0.05, true),
-			Header(L["Stay fully visible"]),
-			Check(L["In combat"], "visibility.fullInCombat"),
-			Check(L["With a target"], "visibility.fullWithTarget"),
-			Header(L["Focus mode"]),
-			Check(L["Dim the other bars on hover"], "visibility.focus.enabled"),
-			Slider(L["Dimmed opacity"], "visibility.focus.alpha", 0, 1, 0.05, true),
+			Check(L["Fade Until Hovered"], "visibility.fadeUntilHovered"),
+			Slider(L["Faded Opacity"], "visibility.fadedAlpha", 0, 1, 0.05, true),
+			Header(L["Stay Fully Visible"]),
+			Check(L["In Combat"], "visibility.fullInCombat"),
+			Check(L["With a Target"], "visibility.fullWithTarget"),
+			Header(L["Focus Mode"]),
+			Check(L["Dim the Other Bars on Hover"], "visibility.focus.enabled"),
+			Slider(L["Dimmed Opacity"], "visibility.focus.alpha", 0, 1, 0.05, true),
 			Header(L["Hiding"]),
-			Full(Check(L["Hide the bars in combat"], "visibility.hideInCombat")),
+			Full(Check(L["Hide the Bars in Combat"], "visibility.hideInCombat")),
 		},
 	},
 	{
 		id = "gain",
-		title = L["Gain indicator"],
+		title = L["Gain Indicator"],
 		rows = gain,
 		onSelect = function()
 			LB.Gain:Preview()
@@ -423,22 +436,22 @@ Panels.sections = {
 		id = "party",
 		title = L["Party"],
 		rows = {
-			Header(L["Party markers"]),
-			Check(L["Show party markers"], "party.markers"),
-			Dropdown(L["Marker visibility"], "party.visibility", {
+			Header(L["Party Markers"]),
+			Check(L["Show Party Markers"], "party.markers"),
+			Dropdown(L["Marker Visibility"], "party.visibility", {
 				{ value = "ALWAYS", label = ALWAYS },
-				{ value = "HOVER", label = L["On hover"] },
+				{ value = "HOVER", label = L["On Hover"] },
 			}),
-			Dropdown(L["Marker style"], "party.style", {
+			Dropdown(L["Marker Style"], "party.style", {
 				{ value = "DOT", label = L["Dot"] },
-				{ value = "TICK", label = L["Full-height tick"] },
-				{ value = "NOTCH", label = L["Top-edge notch"] },
+				{ value = "TICK", label = L["Full-Height Tick"] },
+				{ value = "NOTCH", label = L["Top-Edge Notch"] },
 				{ value = "DIAMOND", label = L["Diamond"] },
 			}),
-			Slider(L["Marker size"], "party.size", 4, 24, 1),
+			Slider(L["Marker Size"], "party.size", 4, 24, 1),
 			Header(L["Glow"]),
-			Check(L["Marker glow"], "party.glow"),
-			Slider(L["Glow opacity"], "party.glowOpacity", 0, 1, 0.05, true),
+			Check(L["Marker Glow"], "party.glow"),
+			Slider(L["Glow Opacity"], "party.glowOpacity", 0, 1, 0.05, true),
 		},
 	},
 	{
@@ -449,7 +462,7 @@ Panels.sections = {
 				type = "DROPDOWN",
 				full = true,
 				variable = "activeProfile",
-				label = L["Active profile"],
+				label = L["Active Profile"],
 				options = function()
 					local options = {}
 
@@ -471,7 +484,7 @@ Panels.sections = {
 				type = "CHECK",
 				full = true,
 				variable = "characterProfile",
-				label = L["Use a profile for this character"],
+				label = L["Use a Profile for This Character"],
 				get = function()
 					return LB.Profile.char.useCharacterProfile == true
 				end,
@@ -481,16 +494,16 @@ Panels.sections = {
 				end,
 			},
 			Header(L["Manage"]),
-			Button(L["New profile"], NEW, function()
+			Button(L["New Profile"], NEW, function()
 				StaticPopup_Show("LEVELBOUND_NEW_PROFILE")
 			end),
-			Button(L["Copy current profile"], L["Copy"], function()
+			Button(L["Copy Current Profile"], L["Copy"], function()
 				StaticPopup_Show("LEVELBOUND_COPY_PROFILE")
 			end),
-			Button(L["Delete current profile"], DELETE, function()
+			Button(L["Delete Current Profile"], DELETE, function()
 				StaticPopup_Show("LEVELBOUND_DELETE_PROFILE", LB.Profile.activeName)
 			end),
-			Button(L["Reset this profile"], RESET, function()
+			Button(L["Reset This Profile"], RESET, function()
 				StaticPopup_Show("LEVELBOUND_RESET_PROFILE", LB.Profile.activeName)
 			end),
 		},

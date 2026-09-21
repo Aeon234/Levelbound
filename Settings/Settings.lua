@@ -6,6 +6,10 @@ local WIDTH = 1100
 local HEIGHT = 724
 local CATEGORY_WIDTH = 199
 local CATEGORY_HEIGHT = 20
+local BUTTON_TEMPLATE = "MainMenuFrameButtonTemplate"
+local BUTTON_HEIGHT = 32
+local CLOSE_WIDTH = 120
+local PREVIEW_WIDTH = 190
 
 ---@class LBSettingPage
 ---@field category table
@@ -18,6 +22,7 @@ local CATEGORY_HEIGHT = 20
 ---@field frame Frame?
 ---@field list any?
 ---@field search EditBox?
+---@field previewButton Button?
 ---@field pages table<string, LBSettingPage>
 ---@field buttons table<string, Button>
 ---@field active string?
@@ -414,11 +419,13 @@ function Panel:Create()
 	frame:SetScript("OnDragStart", frame.StartMoving)
 	frame:SetScript("OnDragStop", frame.StopMovingOrSizing)
 	frame:SetScript("OnShow", function()
-		LB.Preview:Enter()
+		LB.Visibility:SetEditing(true)
+		self:PaintPreviewButton()
 	end)
 	frame:SetScript("OnHide", function()
 		LB.Gain:ClearPreview()
 		LB.Preview:Exit()
+		LB.Visibility:SetEditing(false)
 	end)
 	frame:Hide()
 
@@ -467,24 +474,47 @@ function Panel:Create()
 		LB.Settings:OnSearchChanged(box:GetText() or "")
 	end)
 
-	local close = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+	local close = CreateFrame("Button", nil, frame, BUTTON_TEMPLATE)
 
-	close:SetPoint("BOTTOMRIGHT", -16, 16)
-	close:SetSize(96, 22)
+	close:SetPoint("BOTTOMRIGHT", -16, 8)
+	close:SetSize(CLOSE_WIDTH, BUTTON_HEIGHT)
 	close:SetText(CLOSE)
 	close:SetScript("OnClick", function()
 		frame:Hide()
 	end)
 
+	local preview = CreateFrame("Button", nil, frame, BUTTON_TEMPLATE)
+
+	preview:SetPoint("BOTTOMLEFT", 16, 8)
+	preview:SetSize(PREVIEW_WIDTH, BUTTON_HEIGHT)
+	preview:SetScript("OnClick", function()
+		if LB.Preview:IsActive() then
+			LB.Preview:Exit()
+		else
+			LB.Preview:Enter()
+		end
+	end)
+
 	self.frame = frame
 	self.list = list
 	self.search = search
+	self.previewButton = preview
+
+	self:PaintPreviewButton()
 
 	for index, section in ipairs(LB.Panels.sections) do
 		self.buttons[section.id] = CategoryButton(categories, section, index)
 	end
 
 	tinsert(UISpecialFrames, "LevelboundSettings")
+end
+
+function Panel:PaintPreviewButton()
+	local button = self.previewButton
+
+	if button then
+		button:SetText(LB.Preview:IsActive() and L["Stop Preview"] or L["Preview All Bars"])
+	end
 end
 
 function Panel:Refresh()
@@ -522,3 +552,7 @@ function Panel:Toggle()
 
 	self:Open()
 end
+
+LB.Callbacks:Register("Layout", Panel, function()
+	Panel:PaintPreviewButton()
+end)
