@@ -353,7 +353,7 @@ function BarGroup:Refresh(animated)
 
 	self.hasBars = #ids > 0
 
-	LB.Visibility:Refresh(false)
+	LB.Visibility:Refresh(animated)
 end
 
 ---@param id string
@@ -384,5 +384,5 @@ Callbacks:Register("Party", BarGroup, function()
 end)
 
 Callbacks:Register("Settings", BarGroup, function()
-	BarGroup:Refresh(false)
+	BarGroup:Refresh(true)
 end)

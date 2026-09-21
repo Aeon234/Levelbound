@@ -186,5 +186,5 @@ for _, event in ipairs({ "PET_BATTLE_OPENING_START", "PET_BATTLE_CLOSE" }) do
 end
 
 Callbacks:Register("Settings", Visibility, function()
-	Visibility:Refresh(false)
+	Visibility:Refresh(true)
 end)

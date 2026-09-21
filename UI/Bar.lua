@@ -340,10 +340,15 @@ function BarMixin:FadeOut(onFinished)
 end
 
 function BarMixin:Appear()
+	local returning = not self:IsShown() or self.fading
+
 	LB:StopTween(self)
 
 	self.fading = nil
 
-	self:SetAlpha(1)
+	if returning then
+		self:SetAlpha(1)
+	end
+
 	self:Show()
 end

@@ -28,7 +28,9 @@ local addonName = ...
 ---@field Session LBSession
 ---@field TimePlayed LBTimePlayed
 ---@field failed boolean?
----@field Settings table?
+---@field Settings LBSettings
+---@field Widgets LBWidgets
+---@field Panels LBPanels
 local LB = select(2, ...)
 
 LB.name = addonName

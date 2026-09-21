@@ -1,6 +1,10 @@
 local LB = select(2, ...)
 
 LB.Source:New("house", {
+	Capability = function()
+		return LB.can.house == true
+	end,
+
 	IsAvailable = function()
 		return LB.can.house == true and C_Housing.GetTrackedHouseGuid() ~= nil
 	end,

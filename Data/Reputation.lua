@@ -65,6 +65,10 @@ local function StandingText(factionID, reaction)
 end
 
 LB.Source:New("reputation", {
+	Capability = function()
+		return C_Reputation ~= nil and C_Reputation.GetWatchedFactionData ~= nil
+	end,
+
 	IsAvailable = function()
 		local data = C_Reputation.GetWatchedFactionData()
 
@@ -81,7 +85,17 @@ LB.Source:New("reputation", {
 		local data = C_Reputation.GetWatchedFactionData()
 
 		if not data or data.factionID == 0 then
-			return false
+			local emptied = snapshot.max ~= 0
+
+			snapshot.cur, snapshot.max = 0, 0
+			snapshot.level, snapshot.label, snapshot.standing, snapshot.color = nil, nil, nil, nil
+			snapshot.atCap = false
+			snapshot.flags.paragonPending = false
+			snapshot.flags.major = false
+
+			self.factionID = nil
+
+			return emptied
 		end
 
 		local factionID = data.factionID

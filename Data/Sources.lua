@@ -34,6 +34,7 @@ local Events = LB.Events
 ---@class LBSourceSpec
 ---@field Read fun(self: LBSource, snapshot: LBSnapshot): boolean
 ---@field IsAvailable? fun(self: LBSource): boolean
+---@field Capability? fun(self: LBSource): boolean
 ---@field HasData? fun(self: LBSource): boolean
 ---@field Events? fun(self: LBSource): string[]
 ---@field OnEvent? fun(self: LBSource, event: string, ...: any): boolean
@@ -49,6 +50,11 @@ local SourceMixin = {}
 ---@return boolean
 function SourceMixin:IsAvailable()
 	return true
+end
+
+---@return boolean
+function SourceMixin:Capability()
+	return self:IsAvailable()
 end
 
 ---@return boolean
@@ -298,7 +304,16 @@ function Model:OnSourceEvent(source, event, ...)
 		end)
 	end
 
-	if source.visible ~= source:IsVisible() then
+	local stillThere, available = pcall(source.IsAvailable, source)
+
+	if not stillThere then
+		self:Disable(source, tostring(available))
+		self:Sync()
+
+		return
+	end
+
+	if source.available ~= available or source.visible ~= source:IsVisible() then
 		Events:Coalesce("layout", function()
 			Model:Sync()
 		end)
@@ -334,7 +349,8 @@ function Model:Sync()
 		end
 
 		if source then
-			local wanted = source.available and source:IsEnabled()
+			local present, capable = pcall(source.Capability, source)
+			local wanted = present and capable == true and source:IsEnabled()
 
 			if wanted and not source.subscribed then
 				source.subscribed = true

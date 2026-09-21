@@ -41,6 +41,10 @@ local XP = LB.Source:New("xp", {
 	atMaxLevel = false,
 
 	---@param self LBXPSource
+	Capability = function()
+		return true
+	end,
+
 	IsAvailable = function(self)
 		self.atMaxLevel = GameRulesUtil.IsPlayerAtEffectiveMaxLevel()
 

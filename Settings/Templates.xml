@@ -1,0 +1,8 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/">
+	<Frame name="LevelboundSettingsRowTemplate" mixin="LevelboundSettingsRowMixin" virtual="true">
+		<Size x="560" y="26" />
+		<Scripts>
+			<OnLoad method="OnLoad" />
+		</Scripts>
+	</Frame>
+</Ui>

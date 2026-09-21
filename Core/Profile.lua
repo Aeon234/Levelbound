@@ -23,7 +23,12 @@ local SCHEMA_VERSION = 1
 ---@field font string LibSharedMedia font name
 ---@field size number
 ---@field color LBColor
----@field outline "NONE" | "OUTLINE" | "THICKOUTLINE"
+---@field outline "NONE" | "OUTLINE" | "THICKOUTLINE" | "SLUG" | "SLUG_OUTLINE" | "SLUG_THICKOUTLINE"
+
+---@class LBGainTextStyle : LBTextStyle
+---@field side "LEFT" | "RIGHT"
+---@field x number
+---@field y number
 
 ---@class LBTextElement : LBTextStyle
 ---@field kind string
@@ -91,7 +96,7 @@ local SCHEMA_VERSION = 1
 ---@field hideInCombat boolean
 ---@field position "FILL_EDGE" | "RIGHT_END"
 ---@field colors table<string, LBColor>
----@field text LBTextStyle
+---@field text LBGainTextStyle
 
 ---@class LBPartySettings
 ---@field markers boolean
@@ -184,7 +189,7 @@ local defaults = {
 			honor = GAIN_GREEN,
 			azerite = GAIN_GREEN,
 		},
-		text = { font = FONT, size = 12, color = { 1, 1, 1, 1 }, outline = "OUTLINE" },
+		text = { font = FONT, size = 12, color = { 1, 1, 1, 1 }, outline = "OUTLINE", side = "RIGHT", x = 0, y = 0 },
 	},
 	party = {
 		markers = true,

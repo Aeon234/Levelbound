@@ -4,6 +4,9 @@ local Callbacks = LB.Callbacks
 
 local GAP = 2
 local BASE_SIZE = 24
+local PREVIEW_AMOUNT = 1234
+local PREVIEW_MERGE = 0.1
+local HOLD_AT = 0.25
 local TRAVEL = 20
 
 local RISE = 0.25
@@ -25,6 +28,9 @@ local OUTLINES = {
 	NONE = "",
 	OUTLINE = "OUTLINE",
 	THICKOUTLINE = "THICKOUTLINE",
+	SLUG = "SLUG",
+	SLUG_OUTLINE = "SLUG, OUTLINE",
+	SLUG_THICKOUTLINE = "SLUG, THICKOUTLINE",
 }
 
 ---@param frame Frame
@@ -38,13 +44,17 @@ local function Reset(_, frame)
 	frame.amount = 0
 	frame.elapsed = 0
 	frame.scale = 1
+	frame.arrowX = 0
 	frame.textX = 0
+	frame.textY = 0
+	frame.held = nil
 end
 
 ---@class LBGain
 ---@field pool any
 ---@field active table<LBBar, Frame>
 ---@field inCombat boolean
+---@field previewing boolean? a held example is on screen
 local Gain = {
 	pool = CreateFramePool("Frame", UIParent, nil, Reset),
 	active = {},
@@ -122,19 +132,25 @@ local function Finish(frame)
 end
 
 ---@param frame Frame
+---@param elapsed number seconds into the animation
+local function Paint(frame, elapsed)
+	local arrowX, arrowY, arrowAlpha, textY, textAlpha = Gain:Keyframe(elapsed, frame.scale)
+
+	frame.arrow:ClearAllPoints()
+	frame.arrow:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", frame.arrowX + arrowX, arrowY)
+	frame.arrow:SetAlpha(arrowAlpha)
+
+	frame.text:ClearAllPoints()
+	frame.text:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", frame.textX, textY + frame.textY)
+	frame.text:SetAlpha(textAlpha)
+end
+
+---@param frame Frame
 ---@param delta number
 local function OnUpdate(frame, delta)
 	frame.elapsed = frame.elapsed + delta
 
-	local arrowX, arrowY, arrowAlpha, textY, textAlpha = Gain:Keyframe(frame.elapsed, frame.scale)
-
-	frame.arrow:ClearAllPoints()
-	frame.arrow:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", arrowX, arrowY)
-	frame.arrow:SetAlpha(arrowAlpha)
-
-	frame.text:ClearAllPoints()
-	frame.text:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", frame.textX, textY)
-	frame.text:SetAlpha(textAlpha)
+	Paint(frame, frame.elapsed)
 
 	if frame.elapsed >= DURATION then
 		Finish(frame)
@@ -161,7 +177,8 @@ end
 
 ---@param bar LBBar
 ---@param amount number
-function Gain:Show(bar, amount)
+---@param held boolean? stop at the top of the rise and stay there, for editing the settings
+function Gain:Show(bar, amount, held)
 	local settings = LB.Profile:Get("gain")
 
 	if not settings.enabled or amount <= 0 then
@@ -192,7 +209,7 @@ function Gain:Show(bar, amount)
 	frame.amount = frame.amount + amount
 	frame.elapsed = 0
 	frame.scale = scale
-	frame.textX = size + GAP
+	frame.textY = style.y or 0
 
 	frame:SetParent(bar)
 	frame:SetFrameLevel(bar:GetFrameLevel() + 20)
@@ -208,7 +225,12 @@ function Gain:Show(bar, amount)
 	frame.text:SetTextColor(style.color[1], style.color[2], style.color[3], style.color[4] or 1)
 	frame.text:SetText(("+%s"):format(LB.Format:Number(frame.amount)))
 
-	local width = frame.textX + frame.text:GetStringWidth()
+	local textWidth = frame.text:GetStringWidth()
+	local width = size + GAP + textWidth
+	local onLeft = style.side == "LEFT"
+
+	frame.arrowX = onLeft and (textWidth + GAP) or 0
+	frame.textX = (onLeft and 0 or (size + GAP)) + (style.x or 0)
 
 	PixelUtil.SetSize(frame, math.max(width, 1), size)
 
@@ -217,10 +239,12 @@ function Gain:Show(bar, amount)
 
 	Anchor(frame, bar, self:Offset(fraction, bar:GetWidth(), width, settings.position), size)
 
-	frame:SetScript("OnUpdate", OnUpdate)
+	frame.held = held == true
+
+	frame:SetScript("OnUpdate", not frame.held and OnUpdate or nil)
 	frame:Show()
 
-	OnUpdate(frame, 0)
+	Paint(frame, frame.held and HOLD_AT or 0)
 end
 
 ---@param bar LBBar
@@ -231,7 +255,37 @@ function Gain:OnProgress(bar)
 		return
 	end
 
+	self:ClearPreview()
 	self:Show(bar, source.delta or 0)
+end
+
+function Gain:Preview()
+	local group = LB.BarGroup
+	local frame = group.frame
+
+	if not frame or not frame:IsShown() then
+		return
+	end
+
+	self:ReleaseAll()
+
+	self.previewing = true
+
+	for _, bar in pairs(group.bars) do
+		if bar:IsShown() then
+			self:Show(bar, PREVIEW_AMOUNT, true)
+		end
+	end
+end
+
+function Gain:ClearPreview()
+	if not self.previewing then
+		return
+	end
+
+	self.previewing = false
+
+	self:ReleaseAll()
 end
 
 ---@param bar LBBar
@@ -268,8 +322,16 @@ LB.Events:Register("PLAYER_REGEN_ENABLED", Gain, function()
 	Gain:SetCombat(false)
 end)
 
-Callbacks:Register("Settings", Gain, function()
+Callbacks:Register("Settings", Gain, function(_, path)
 	if not LB.Profile:Get("gain.enabled") then
 		Gain:ReleaseAll()
+
+		return
+	end
+
+	if LB.Settings:IsOpen() and type(path) == "string" and path:find("^gain") then
+		LB.Events:Merge("gain:preview", PREVIEW_MERGE, function()
+			Gain:Preview()
+		end)
 	end
 end)

@@ -12,6 +12,10 @@ local function ArtifactColor()
 end
 
 LB.Source:New("azerite", {
+	Capability = function()
+		return LB.can.azerite == true
+	end,
+
 	IsAvailable = function()
 		if not LB.can.azerite then
 			return false

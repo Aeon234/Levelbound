@@ -3,6 +3,10 @@ local LB = select(2, ...)
 LB.Source:New("endeavor", {
 	perCharacter = true,
 
+	Capability = function()
+		return LB.can.endeavor == true
+	end,
+
 	IsAvailable = function()
 		if not LB.can.endeavor then
 			return false

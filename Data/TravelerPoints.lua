@@ -35,6 +35,10 @@ end
 LB.Source:New("travelers", {
 	perCharacter = true,
 
+	Capability = function()
+		return LB.can.travelers == true
+	end,
+
 	IsAvailable = function()
 		if not LB.can.travelers then
 			return false

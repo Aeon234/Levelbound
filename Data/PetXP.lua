@@ -1,6 +1,10 @@
 local LB = select(2, ...)
 
 LB.Source:New("petxp", {
+	Capability = function()
+		return LB.can.petXP == true
+	end,
+
 	IsAvailable = function()
 		return LB.can.petXP == true and UnitExists("pet")
 	end,

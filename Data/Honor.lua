@@ -4,6 +4,10 @@ local ALLIANCE = { 0.0, 0.26, 0.68 }
 local HORDE = { 0.77, 0.12, 0.23 }
 
 LB.Source:New("honor", {
+	Capability = function()
+		return LB.can.honor == true
+	end,
+
 	IsAvailable = function()
 		if not LB.can.honor then
 			return false
