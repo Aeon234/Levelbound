@@ -4,6 +4,9 @@ local MAJOR = 1
 local SEQUENCE_MAX = 65536
 local MERGE = 0.2
 local REPLY_DELAY = 1
+local PRIORITY = "NORMAL"
+local RETRY = 1
+local RETRIES = 3
 
 local FLAG_MAX_LEVEL = 1
 
@@ -20,11 +23,19 @@ local FLAG_MAX_LEVEL = 1
 ---@field restricted boolean
 ---@field pending boolean
 ---@field owed boolean request arrived while restricted and is owed an answer
+---@field asking boolean a request was refused by messaging lockdown and goes out when it lifts
+---@field queued boolean
+---@field stale boolean stale message still in queue
+---@field retries integer refused sends of the current state
 local Comms = {
 	sequence = 0,
 	restricted = false,
 	pending = false,
 	owed = false,
+	asking = false,
+	queued = false,
+	stale = false,
+	retries = 0,
 }
 LB.Comms = Comms
 
@@ -134,24 +145,82 @@ function Comms:IsRestricted()
 end
 
 ---@param message string
----@return boolean sent
-function Comms:Transmit(message)
+---@param onSent? fun(arg: any, didSend: boolean, result: integer)
+---@return boolean handed false when not in a party the protocol uses
+function Comms:Transmit(message, onSent)
 	local channel = self:Channel()
 
 	if not channel then
 		return false
 	end
 
-	local result = C_ChatInfo.SendAddonMessage(LB.MESSAGE_PREFIX, message, channel)
+	ChatThrottleLib:SendAddonMessage(PRIORITY, LB.MESSAGE_PREFIX, message, channel, nil, nil, onSent)
 
+	return true
+end
+
+---@param result integer
+---@return boolean retry worth sending again shortly
+function Comms:OnRefused(result)
 	if result == Enum.SendAddonMessageResult.AddOnMessageLockdown then
 		self.restricted = true
-		self.pending = true
 
 		return false
 	end
 
-	return result == nil or result == Enum.SendAddonMessageResult.Success
+	return result ~= Enum.SendAddonMessageResult.NotInGroup
+		and result ~= Enum.SendAddonMessageResult.InvalidChannel
+		and result ~= Enum.SendAddonMessageResult.InvalidChatType
+end
+
+---@param _ any
+---@param didSend boolean
+---@param result integer
+local function OnStateSent(_, didSend, result)
+	Comms.queued = false
+
+	if didSend then
+		Comms.retries = 0
+
+		if Comms.stale then
+			Comms:TransmitState()
+		end
+
+		return
+	end
+
+	if Comms:OnRefused(result) then
+		if Comms.retries < RETRIES then
+			Comms.retries = Comms.retries + 1
+
+			LB.Events:Merge("party:retry", RETRY, function()
+				Comms:TransmitState()
+			end)
+		end
+	elseif Comms.restricted then
+		Comms.pending = true
+	end
+end
+
+function Comms:TransmitState()
+	if self.queued then
+		self.stale = true
+
+		return
+	end
+
+	local message = self:Encode()
+
+	if not message then
+		return
+	end
+
+	self.queued = true
+	self.stale = false
+
+	if not self:Transmit(message, OnStateSent) then
+		self.queued = false
+	end
 end
 
 ---@param immediate boolean? skip the merge window, for a login or a group join
@@ -167,31 +236,40 @@ function Comms:Send(immediate)
 		return
 	end
 
-	if immediate then
-		local message = self:Encode()
+	self.retries = 0
 
-		if message then
-			self:Transmit(message)
-		end
+	if immediate then
+		self:TransmitState()
 
 		return
 	end
 
 	LB.Events:Merge("party:send", MERGE, function()
-		local message = Comms:Encode()
-
-		if message then
-			Comms:Transmit(message)
-		end
+		Comms:TransmitState()
 	end)
 end
 
+---@param _ any
+---@param didSend boolean
+---@param result integer
+local function OnRequestSent(_, didSend, result)
+	if not didSend and not Comms:OnRefused(result) and Comms.restricted then
+		Comms.asking = true
+	end
+end
+
 function Comms:SendRequest()
-	if not self:Channel() or self.restricted then
+	if not self:Channel() then
 		return
 	end
 
-	C_ChatInfo.SendAddonMessage(LB.MESSAGE_PREFIX, MAJOR .. ":R", self:Channel())
+	if self.restricted then
+		self.asking = true
+
+		return
+	end
+
+	self:Transmit(MAJOR .. ":R", OnRequestSent)
 end
 
 function Comms:AnswerRequest()
@@ -215,6 +293,12 @@ function Comms:OnRestrictionChanged(state)
 	end
 
 	self.restricted = false
+
+	if self.asking then
+		self.asking = false
+
+		self:SendRequest()
+	end
 
 	if self.pending or self.owed then
 		self.pending = false

@@ -5,7 +5,7 @@
   "flavors": ["retail"],
 
   "globals": {
-    "read": ["LibStub", "SlashCmdList", "StaticPopupDialogs"],
+    "read": ["LibStub", "ChatThrottleLib", "SlashCmdList", "StaticPopupDialogs"],
     "write": ["Levelbound*", "SlashCmdList"]
   },
 

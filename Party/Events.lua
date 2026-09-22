@@ -20,6 +20,17 @@ LB.Events:Register("GROUP_ROSTER_UPDATE", Roster, function(owner)
 	owner.wasGrouped = inGroup
 end)
 
+LB.Events:Register("PLAYER_ENTERING_WORLD", Comms, function(owner, _, isInitialLogin, isReloadingUi)
+	if isInitialLogin or isReloadingUi then
+		return
+	end
+
+	LB.Events:Merge("party:zoned", 3, function()
+		owner:SendRequest()
+		owner:Send(true)
+	end)
+end)
+
 LB.Events:Register("UNIT_CONNECTION", Roster, function(owner)
 	owner:Reconcile()
 end)
