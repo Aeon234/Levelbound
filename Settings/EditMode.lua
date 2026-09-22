@@ -153,6 +153,7 @@ end
 ---@field dragging boolean? a mover is being dragged, so the toolbar stands aside
 ---@field toolbarSlot "TOP" | "BOTTOM" | "CENTER" | nil where the toolbar sits, away from the bars
 ---@field fromSettings boolean? the session began from the settings window, so it ends there too
+---@field previewAll boolean? Preview All Bars on for Independent mode
 ---@field snapshot LBProfileData? the profile as it was when the session began
 ---@field selected string?
 ---@field movers table<string, LBMover>
@@ -246,7 +247,8 @@ function EditMode:Enter(fromSettings)
 	end
 
 	LB.Visibility:SetEditing(true)
-	LB.Preview:Enter()
+	LB.Preview:SetEditing(true)
+	self:SyncPreview()
 
 	if LB.Settings:IsOpen() then
 		LB.Settings:Close()
@@ -355,9 +357,14 @@ function EditMode:Finish(reopen)
 
 	self:HideLayout(false)
 
-	local settingsOpen = LB.Settings:IsOpen()
+	local settingsOpen = LB.Settings:IsOpen() or reopen
 
-	LB.Preview:Exit()
+	if not settingsOpen or self.previewAll then
+		LB.Preview:Exit()
+	end
+
+	self.previewAll = false
+
 	LB.Preview:SetEditing(settingsOpen)
 	LB.Visibility:SetEditing(settingsOpen)
 	LB.Settings:PaintSession()
@@ -620,7 +627,7 @@ function EditMode:PlaceToolbar()
 	local slot = "TOP"
 
 	if self:SlotTaken(left, screenHeight - TOOLBAR_INSET - height, width, height) then
-		slot = self:SlotTaken(left, TOOLBAR_INSET, width, height) and "CENTER" or "BOTTOM"
+		slot = self:SlotTaken(left, TOOLBAR_INSET, width, height) and "BOTTOM" or "CENTER"
 	end
 
 	if slot == self.toolbarSlot then
@@ -1528,8 +1535,21 @@ function EditMode:Build()
 	self.hoverWatch = CreateFrame("Frame")
 end
 
+function EditMode:SyncPreview()
+	local independent = LB.Profile:Get("layout.mode") == "INDEPENDENT"
+
+	if independent and not LB.Preview:IsActive() then
+		self.previewAll = true
+		LB.Preview:Enter()
+	elseif not independent and self.previewAll then
+		self.previewAll = false
+		LB.Preview:Exit()
+	end
+end
+
 LB.Callbacks:Register("Settings", EditMode, function()
 	if EditMode.active then
+		EditMode:SyncPreview()
 		EditMode:RefreshMovers()
 		EditMode:PaintToolbar()
 	end
