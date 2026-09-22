@@ -128,9 +128,9 @@ local defaults = {
 		mode = "SEGMENTED",
 		fullscreen = "OFF",
 		width = 560,
-		height = 12,
+		height = 24,
 		positions = {
-			SEGMENTED = { point = "TOP", x = 0, y = -200 },
+			SEGMENTED = { point = "TOP", x = 0, y = -40 },
 			CONNECTED = { point = "TOP", x = 0, y = -200 },
 			INDEPENDENT = { point = "CENTER", x = 0, y = 0 },
 		},
