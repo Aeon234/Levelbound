@@ -4,7 +4,7 @@ local L = LB.L
 
 local DEFAULT_PROFILE = "Default"
 local FONT = LB.DEFAULT_FONT
-local SCHEMA_VERSION = 1
+local SCHEMA_VERSION = 2
 local EXPORT_FORMAT = 1
 local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 
@@ -32,12 +32,12 @@ local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 ---@field x number
 ---@field y number
 
----@class LBTextElement : LBTextStyle
----@field kind string
+---@class LBTextSlot
+---@field text string
 ---@field visibility LBTextVisibility
----@field anchor LBAnchor
 ---@field x number
 ---@field y number
+---@field style table over-ridden settings
 
 ---@class LBFramePosition
 ---@field point FramePoint
@@ -83,7 +83,8 @@ local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 ---@class LBTextSettings
 ---@field compactNumbers boolean
 ---@field decimals boolean
----@field elements table<string, LBTextElement[]>
+---@field style LBTextStyle
+---@field slots table<string, table<LBAnchor, LBTextSlot>>
 
 ---@class LBVisibilitySettings
 ---@field hideInCombat boolean
@@ -163,7 +164,8 @@ local defaults = {
 	text = {
 		compactNumbers = true,
 		decimals = true,
-		elements = {},
+		style = { font = FONT, size = 12, color = { 1, 1, 1, 1 }, outline = "OUTLINE" },
+		slots = {},
 	},
 	tooltip = {
 		enabled = true,
@@ -204,57 +206,24 @@ local defaults = {
 	time = {},
 }
 
----@type table<string, LBTextElement[]>
-local elementDefaults = {
-	xp = {
-		{
-			kind = "LEVEL",
-			visibility = "HOVER",
-			anchor = "INSIDE_LEFT",
-			x = 0,
-			y = 0,
-			font = FONT,
-			size = 12,
-			color = { 1, 1, 1, 1 },
-			outline = "OUTLINE",
-		},
-		{
-			kind = "PERCENT",
-			visibility = "HOVER",
-			anchor = "INSIDE_RIGHT",
-			x = 0,
-			y = 0,
-			font = FONT,
-			size = 12,
-			color = { 1, 1, 1, 1 },
-			outline = "OUTLINE",
-		},
-	},
-	other = {
-		{
-			kind = "NAME",
-			visibility = "HOVER",
-			anchor = "INSIDE_LEFT",
-			x = 0,
-			y = 0,
-			font = FONT,
-			size = 12,
-			color = { 1, 1, 1, 1 },
-			outline = "OUTLINE",
-		},
-		{
-			kind = "PERCENT",
-			visibility = "HOVER",
-			anchor = "INSIDE_RIGHT",
-			x = 0,
-			y = 0,
-			font = FONT,
-			size = 12,
-			color = { 1, 1, 1, 1 },
-			outline = "OUTLINE",
-		},
-	},
+---@param text string
+---@return LBTextSlot
+local function Slot(text)
+	return { text = text, visibility = "HOVER", x = 0, y = 0, style = {} }
+end
+
+defaults.text.slots.xp = {
+	INSIDE_LEFT = Slot((LEVEL or "Level") .. " [level]"),
+	INSIDE_CENTER = Slot("[cur] / [max] ([remaining])"),
+	INSIDE_RIGHT = Slot("[percent]% ([percentquest]%)"),
 }
+
+for _, id in ipairs({ "petxp", "reputation", "house", "endeavor", "travelers", "honor", "azerite" }) do
+	defaults.text.slots[id] = {
+		INSIDE_LEFT = Slot("[name]"),
+		INSIDE_RIGHT = Slot("[percent]%"),
+	}
+end
 
 ---@type LBDatabase
 local globalDefaults = {
@@ -280,15 +249,6 @@ local characterDefaults = {
 ---@field char LBCharacterDatabase
 local Profile = {}
 LB.Profile = Profile
-
----@param profile LBProfileData
-local function SeedLists(profile)
-	for key, elements in pairs(elementDefaults) do
-		if profile.text.elements[key] == nil then
-			profile.text.elements[key] = LB:CopyTable(elements)
-		end
-	end
-end
 
 ---@type string?
 local characterKey = nil
@@ -341,8 +301,6 @@ function Profile:Ensure(name)
 		LB:MergeDefaults(profile, defaults)
 	end
 
-	SeedLists(profile)
-
 	return profile
 end
 
@@ -364,6 +322,14 @@ end
 
 ---@type table<integer, fun(db: LBDatabase)>
 local migrations = {}
+
+migrations[2] = function(db)
+	for _, profile in pairs(db.profiles or {}) do
+		if type(profile) == "table" and type(profile.text) == "table" then
+			profile.text.elements = nil
+		end
+	end
+end
 
 ---@param db LBDatabase
 ---@return integer from
@@ -476,10 +442,6 @@ function Profile:Reset(section)
 	end
 
 	self.active[section] = LB:CopyTable(defaults[section])
-
-	if section == "text" then
-		SeedLists(self.active)
-	end
 
 	LB.Callbacks:Fire("Settings", section, nil)
 
@@ -700,6 +662,32 @@ function Profile:Import(payload, name)
 	return true
 end
 
+---@param slot LBTextSlot
+---@return LBTextStyle style the shared style with this slot's overrides applied
+function Profile:ResolveStyle(slot)
+	local style = LB:CopyTable(self.active.text.style)
+
+	for key, value in pairs(slot.style or {}) do
+		style[key] = LB:CopyTable(value)
+	end
+
+	return style
+end
+
+---@param from string progress type to copy
+---@param to string progress type to replace
+function Profile:CopySlots(from, to)
+	local slots = self.active.text.slots
+
+	if from == to or not slots[from] then
+		return
+	end
+
+	slots[to] = LB:CopyTable(slots[from])
+
+	LB.Callbacks:Fire("Settings", "text.slots", nil)
+end
+
 ---@param from string
 ---@param to string
 ---@return boolean renamed
@@ -785,9 +773,5 @@ end
 
 ---@return LBProfileData defaults a fresh copy, for comparison and reset controls
 function Profile:Defaults()
-	local copy = LB:CopyTable(defaults)
-
-	SeedLists(copy)
-
-	return copy
+	return LB:CopyTable(defaults)
 end

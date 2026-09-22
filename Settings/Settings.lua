@@ -17,6 +17,7 @@ local PREVIEW_WIDTH = 190
 ---@field headers table<table, true>
 ---@field spans table<table, true>
 ---@field rows table[]?
+---@field customs table<table, true>
 
 ---@class LBSettings
 ---@field frame Frame?
@@ -298,7 +299,7 @@ function Panel:Page(section)
 	end
 
 	local category, layout = _G.Settings.RegisterVerticalLayoutCategory(("Levelbound %s"):format(section.title))
-	local headers, spans, alones = {}, {}, {}
+	local headers, spans, alones, customs = {}, {}, {}, {}
 
 	for index, row in ipairs(Allowed(section.rows)) do
 		local initializer = LB.Widgets:Add(category, layout, row, index, section.id)
@@ -315,11 +316,15 @@ function Panel:Page(section)
 			if row.alone then
 				alones[initializer] = true
 			end
+
+			if row.type == "CUSTOM" then
+				customs[initializer] = true
+			end
 		end
 	end
 
-	page = { category = category, layout = layout, headers = headers, spans = spans }
-	page.rows = self:Pair(layout:GetInitializers(), spans, headers, alones)
+	page = { category = category, layout = layout, headers = headers, spans = spans, customs = customs }
+	page.rows = self:Pair(layout:GetInitializers(), spans, headers, alones, customs)
 
 	self.pages[section.id] = page
 
@@ -330,13 +335,21 @@ end
 ---@param spans table<table, true>
 ---@param headers table<table, true>
 ---@param alones table<table, true>?
+---@param customs table<table, true>?
 ---@return table[] rows spanning rows alone, everything else two to a row
-function Panel:Pair(initializers, spans, headers, alones)
+function Panel:Pair(initializers, spans, headers, alones, customs)
 	local rows = {}
 	local pending = nil
 
 	for _, initializer in ipairs(initializers) do
-		if alones and alones[initializer] then
+		if customs and customs[initializer] then
+			if pending then
+				rows[#rows + 1] = LB.Widgets:Row(pending)
+				pending = nil
+			end
+
+			rows[#rows + 1] = initializer
+		elseif alones and alones[initializer] then
 			if pending then
 				rows[#rows + 1] = LB.Widgets:Row(pending)
 			end
@@ -381,6 +394,7 @@ function Panel:Select(id)
 
 	LB.Gain:ClearPreview()
 	LB.Marker:ClearPreview()
+	LB.TextSlot:SetEditing(false)
 
 	for sectionId, button in pairs(self.buttons) do
 		PaintCategory(button, sectionId == id)
@@ -436,7 +450,7 @@ function Panel:Search(text)
 		if #matches > 0 then
 			rows[#rows + 1] = CreateSettingsListSectionHeaderInitializer(section.title)
 
-			for _, paired in ipairs(self:Pair(matches, {}, {})) do
+			for _, paired in ipairs(self:Pair(matches, {}, {}, nil, page.customs)) do
 				rows[#rows + 1] = paired
 			end
 		end
@@ -491,6 +505,7 @@ function Panel:Create()
 	frame:SetScript("OnHide", function()
 		LB.Gain:ClearPreview()
 		LB.Marker:ClearPreview()
+		LB.TextSlot:SetEditing(false)
 		LB.Preview:Exit()
 		LB.Preview:SetEditing(false)
 		LB.Visibility:SetEditing(false)

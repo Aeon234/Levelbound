@@ -45,8 +45,6 @@ local PULSE = 0.5
 ---@field sparkDriver Frame
 ---@field textSuppressed boolean?
 ---@field snapshot LBSnapshot?
----@field textPool any?
----@field texts LBTextEntry[]?
 ---@field markerPool any?
 ---@field markers table?
 ---@field markerShown table<string, Frame>?
@@ -134,7 +132,7 @@ function BarMixin:OnEnter()
 	self.hovered = true
 
 	LB.Visibility:SetHovered(self.id)
-	LB.TextElement:SetHovered(self, true)
+	LB.TextSlot:SetHovered(self, true)
 	LB.Marker:SetHovered(self, true)
 
 	if self.snapshot then
@@ -146,7 +144,7 @@ function BarMixin:OnLeave()
 	self.hovered = false
 
 	LB.Visibility:SetHovered(nil)
-	LB.TextElement:SetHovered(self, false)
+	LB.TextSlot:SetHovered(self, false)
 	LB.Marker:SetHovered(self, false)
 	LB.Tooltip:Hide()
 end
@@ -242,7 +240,7 @@ function BarMixin:ApplyAppearance()
 	self.background:SetValue(1)
 
 	self:ApplySpark(appearance.spark)
-	LB.TextElement:Apply(self)
+	LB.TextSlot:ApplyBar(self)
 end
 
 ---@param spark { enabled: boolean, color: LBColor }
@@ -461,7 +459,7 @@ function BarMixin:SetSnapshot(snapshot, animate, gained)
 		self:ApplyAppearance()
 	end
 
-	LB.TextElement:Update(self, snapshot)
+	LB.TextSlot:UpdateBar(self)
 	LB.Marker:Apply(self)
 
 	local fill, quest, rested = LB.Model:Fractions(snapshot)

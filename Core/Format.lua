@@ -1,7 +1,5 @@
 local LB = select(2, ...)
 
-local L = LB.L
-
 local DASH = "—"
 
 local PERCENT_WHOLE = PERCENTAGE_STRING
@@ -42,6 +40,20 @@ function Format:Percent(fraction)
 	end
 
 	return PERCENT_WHOLE:format(Round(fraction * 100))
+end
+
+---@param fraction number? 0-1
+---@return string
+function Format:PercentNumber(fraction)
+	if not fraction then
+		return DASH
+	end
+
+	if LB.Profile:Get("text.decimals") then
+		return ("%.1f"):format(fraction * 100)
+	end
+
+	return tostring(Round(fraction * 100))
 end
 
 ---@param cur number?
@@ -156,31 +168,4 @@ function Format:Value(kind, snapshot, source)
 	end
 
 	return resolver(snapshot, source)
-end
-
----@param kind string
----@return string label for a tooltip line or a settings list
-function Format:Label(kind)
-	return L["kind." .. kind]
-end
-
----@return string[] kinds offered for the XP bar, in inventory order
-function Format:XPKinds()
-	return {
-		"LEVEL",
-		"VALUE",
-		"PERCENT",
-		"REMAINING",
-		"PERCENT_WITH_QUESTS",
-		"SESSION_TIME",
-		"LEVEL_TIME",
-		"TOTAL_TIME",
-		"XP_PER_HOUR",
-		"TIME_TO_LEVEL",
-	}
-end
-
----@return string[] kinds offered for every other progress type
-function Format:OtherKinds()
-	return { "NAME", "STANDING", "VALUE", "PERCENT", "REMAINING" }
 end

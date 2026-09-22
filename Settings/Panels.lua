@@ -208,8 +208,13 @@ end
 
 ---@class LBPanels
 ---@field sections LBSettingSection[]
+---@field outlines LBSettingOption[]
+---@field typeLabels table<string, string>
 local Panels = {}
 LB.Panels = Panels
+
+Panels.outlines = OUTLINES
+Panels.typeLabels = TYPE_LABELS
 
 local gradientStartGet, gradientStartSet = GradientStop(1)
 local gradientEndGet, gradientEndSet = GradientStop(2)
@@ -398,7 +403,33 @@ Panels.sections = {
 	{
 		id = "text",
 		title = L["Text and Tooltip"],
+		onSelect = function()
+			LB.TextSlot:SetEditing(true)
+		end,
 		rows = {
+			Header(L["Bar Text"]),
+			{
+				type = "CUSTOM",
+				template = "LevelboundTextEditorTemplate",
+				label = L["Bar Text"],
+				searchTags = {
+					L["Tags"],
+					L["slot.ABOVE_LEFT"],
+					L["slot.ABOVE_CENTER"],
+					L["slot.ABOVE_RIGHT"],
+					L["slot.INSIDE_LEFT"],
+					L["slot.INSIDE_CENTER"],
+					L["slot.INSIDE_RIGHT"],
+					L["slot.BELOW_LEFT"],
+					L["slot.BELOW_CENTER"],
+					L["slot.BELOW_RIGHT"],
+				},
+			},
+			Header(L["Shared Text Style"]),
+			Dropdown(L["Font"], "text.style.font", MediaOptions("font")),
+			Slider(L["Size"], "text.style.size", 6, 32, 1),
+			Dropdown(L["Outline"], "text.style.outline", OUTLINES),
+			Color(COLOR, "text.style.color"),
 			Header(L["Numbers"]),
 			Check(L["Compact Numbers"], "text.compactNumbers"),
 			Check(L["Show Decimals"], "text.decimals"),

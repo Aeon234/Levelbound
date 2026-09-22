@@ -5,4 +5,10 @@
 			<OnLoad method="OnLoad" />
 		</Scripts>
 	</Frame>
+	<Frame name="LevelboundTextEditorTemplate" mixin="LevelboundTextEditorMixin" virtual="true">
+		<Size x="800" y="400" />
+		<Scripts>
+			<OnLoad method="OnLoad" />
+		</Scripts>
+	</Frame>
 </Ui>

@@ -18,7 +18,8 @@ local addonName = ...
 ---@field Broker LBBroker
 ---@field BarGroup LBBarGroup
 ---@field Bar LBBarFactory
----@field TextElement LBTextElement
+---@field TextSlot LBTextSlotRenderer
+---@field Tags LBTags
 ---@field Marker LBMarker
 ---@field Gain LBGain
 ---@field Visibility LBVisibility

@@ -122,7 +122,7 @@ function Visibility:Apply(animated)
 			local alpha, dimmed = self:Resolve(settings, self.state, id)
 
 			bar.textSuppressed = dimmed
-			LB.TextElement:SetHovered(bar, bar.hovered == true)
+			LB.TextSlot:SetHovered(bar, bar.hovered == true)
 			SetAlpha(bar, bar.alphaDriver, alpha, animated)
 			brightest = math.max(brightest, alpha)
 		end

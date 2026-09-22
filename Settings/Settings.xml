@@ -1,5 +1,6 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/">
 	<Script file="Widgets.lua" />
+	<Script file="TextEditor.lua" />
 	<Include file="Templates.xml" />
 	<Script file="Panels.lua" />
 	<Script file="Settings.lua" />

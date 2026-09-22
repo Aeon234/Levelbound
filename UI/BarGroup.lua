@@ -293,6 +293,18 @@ function BarGroup:ApplyLayout(animated)
 
 	self:ApplyBorders(frame, ids, rects, fullscreen and "NONE" or nil)
 
+	local leadId = ids[1]
+
+	for _, id in ipairs(ids) do
+		if id == "xp" then
+			leadId = "xp"
+		end
+	end
+
+	local lead = leadId and self.bars[leadId] or nil
+
+	LB.TextSlot:ApplyGroup(frame, lead, fullscreen and layout.fullscreen or nil)
+
 	if not animated then
 		for id, rect in pairs(rects) do
 			Place(self.bars[id], frame, rect)

@@ -11,7 +11,9 @@ local FLAT = [[Interface\Buttons\WHITE8X8]]
 ---@field label string
 
 ---@class LBSettingRow
----@field type "HEADER" | "CHECK" | "SLIDER" | "DROPDOWN" | "COLOR" | "BUTTON"
+---@field type "HEADER" | "CHECK" | "SLIDER" | "DROPDOWN" | "COLOR" | "BUTTON" | "CUSTOM"
+---@field template string?
+---@field searchTags string[]?
 ---@field label string?
 ---@field path string?
 ---@field variable string?
@@ -488,6 +490,15 @@ end
 ---@param section string
 ---@return table? initializer
 function Widgets:Create(category, layout, row, index, section)
+	if row.type == "CUSTOM" then
+		local initializer = Settings.CreateElementInitializer(row.template, row)
+
+		initializer:AddSearchTags(row.label, unpack(row.searchTags or {}))
+		layout:AddInitializer(initializer)
+
+		return initializer
+	end
+
 	if row.type == "HEADER" then
 		local initializer = CreateSettingsListSectionHeaderInitializer(row.label)
 
