@@ -21,6 +21,7 @@ local OUTLINES = {
 ---@field x number
 ---@field y number
 ---@field justify "LEFT" | "CENTER" | "RIGHT"
+---@field below boolean? hangs one line below its point while anchored by its own bottom edge
 
 ---@type table<string, LBSlotAnchor>
 local ANCHORS = {
@@ -30,9 +31,9 @@ local ANCHORS = {
 	INSIDE_LEFT = { host = "LEFT", own = "LEFT", x = PADDING, y = 0, justify = "LEFT" },
 	INSIDE_CENTER = { host = "CENTER", own = "CENTER", x = 0, y = 0, justify = "CENTER" },
 	INSIDE_RIGHT = { host = "RIGHT", own = "RIGHT", x = -PADDING, y = 0, justify = "RIGHT" },
-	BELOW_LEFT = { host = "BOTTOMLEFT", own = "TOPLEFT", x = 0, y = -GAP, justify = "LEFT" },
-	BELOW_CENTER = { host = "BOTTOM", own = "TOP", x = 0, y = -GAP, justify = "CENTER" },
-	BELOW_RIGHT = { host = "BOTTOMRIGHT", own = "TOPRIGHT", x = 0, y = -GAP, justify = "RIGHT" },
+	BELOW_LEFT = { host = "BOTTOMLEFT", own = "BOTTOMLEFT", x = 0, y = -GAP, justify = "LEFT", below = true },
+	BELOW_CENTER = { host = "BOTTOM", own = "BOTTOM", x = 0, y = -GAP, justify = "CENTER", below = true },
+	BELOW_RIGHT = { host = "BOTTOMRIGHT", own = "BOTTOMRIGHT", x = 0, y = -GAP, justify = "RIGHT", below = true },
 }
 
 local ROWS = {
@@ -139,7 +140,17 @@ local function Configure(host, keys, typeId)
 			fontString:SetTextColor(color[1], color[2], color[3], color[4] or 1)
 			fontString:SetJustifyH(anchor.justify)
 			fontString:ClearAllPoints()
-			fontString:SetPoint(anchor.own, host.frame, anchor.host, anchor.x + (slot.x or 0), anchor.y + (slot.y or 0))
+			local pixel = LB:Pixel(host.frame)
+			local x = LB.Placement:ToPixel(anchor.x + (slot.x or 0), pixel)
+			local y = anchor.y + (slot.y or 0)
+
+			if anchor.below then
+				y = y - fontString:GetLineHeight()
+			end
+
+			y = LB.Placement:ToPixel(y, pixel)
+
+			fontString:SetPoint(anchor.own, host.frame, anchor.host, x, y)
 
 			host.entries[key] = {
 				fontString = fontString,

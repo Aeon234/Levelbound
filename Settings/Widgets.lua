@@ -25,7 +25,7 @@ local FLAT = [[Interface\Buttons\WHITE8X8]]
 ---@field step number?
 ---@field percent boolean?
 ---@field alphaOf string?
----@field tooltip string?
+---@field tooltip (string | fun(): string)?
 ---@field buttonText string?
 ---@field onClick (fun())?
 ---@field full boolean?

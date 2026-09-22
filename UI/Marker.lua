@@ -1,7 +1,6 @@
 local LB = select(2, ...)
 
 local FLAT = [[Interface\Buttons\WHITE8X8]]
-local GLOW_SCALE = 2.3
 local OUTLINE = 1
 local FADE = 0.5
 local OFFLINE_ALPHA = 0.4
@@ -152,7 +151,6 @@ local function Build(frame)
 		return
 	end
 
-	frame.glow = frame:CreateTexture(nil, "BACKGROUND")
 	frame.outline = frame:CreateTexture(nil, "BORDER")
 	frame.shape = frame:CreateTexture(nil, "ARTWORK")
 end
@@ -246,24 +244,6 @@ local function Draw(frame, bar, placement, placements)
 
 	frame.shape:SetVertexColor(color[1], color[2], color[3], 1)
 	frame.outline:SetVertexColor(0, 0, 0, 1)
-
-	if party.glow then
-		frame.glow:ClearAllPoints()
-		frame.glow:SetTexture(texture or FLAT)
-		frame.glow:SetVertexColor(color[1], color[2], color[3], party.glowOpacity)
-		PixelUtil.SetSize(frame.glow, size * GLOW_SCALE, markerHeight * (tall and 1 or GLOW_SCALE))
-
-		-- The triangle's visual centre is its centroid, not the middle of its box.
-		if style == "NOTCH" then
-			frame.glow:SetPoint("TOP", frame, "TOP", 0, 0)
-		else
-			frame.glow:SetPoint("CENTER", frame, "CENTER", 0, 0)
-		end
-
-		frame.glow:Show()
-	else
-		frame.glow:Hide()
-	end
 
 	frame:SetAlpha(member.offline and OFFLINE_ALPHA or 1)
 

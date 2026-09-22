@@ -109,6 +109,34 @@ local function Button(label, buttonText, onClick)
 	return { type = "BUTTON", label = label, buttonText = buttonText, onClick = onClick }
 end
 
+---@param row LBSettingRow
+---@param set fun(value: any)
+---@return LBSettingRow row
+local function Setter(row, set)
+	row.set = set
+
+	return row
+end
+
+---@return boolean
+local function NotEditing()
+	return not LB.EditMode:IsActive()
+end
+
+---@return string
+local function EditingNote()
+	return LB.EditMode:IsActive() and L["Finish editing the layout to change profiles."] or ""
+end
+
+---@param row LBSettingRow
+---@return LBSettingRow row
+local function Locked(row)
+	row.enabled = NotEditing
+	row.tooltip = EditingNote
+
+	return row
+end
+
 ---@param mediaType string
 ---@return fun(): LBSettingOption[]
 local function MediaOptions(mediaType)
@@ -304,9 +332,6 @@ Panels.sections = {
 		id = "general",
 		title = GENERAL,
 		rows = {
-			Full(Check(L["Hide Blizzard's Status Tracking Bar"], "general.hideBlizzardBar", function()
-				return LB.can.statusTrackingBar == true
-			end)),
 			{
 				type = "CHECK",
 				full = true,
@@ -354,10 +379,15 @@ Panels.sections = {
 			Slider(L["Width"], "layout.width", 100, 1600, 10),
 			Slider(L["Height"], "layout.height", 4, 64, 1),
 			Header(L["Stacking"]),
-			Dropdown(L["Growth Direction"], "layout.growth", {
-				{ value = "UP", label = L["Up"] },
-				{ value = "DOWN", label = L["Down"] },
-			}),
+			Setter(
+				Dropdown(L["Growth Direction"], "layout.growth", {
+					{ value = "UP", label = L["Up"] },
+					{ value = "DOWN", label = L["Down"] },
+				}),
+				function(value)
+					LB.EditMode:SetGrowth(value)
+				end
+			),
 			Slider(L["Gap Between Bars"], "layout.gap", 0, 10, 1),
 			Header(L["Advanced"]),
 			Dropdown(L["Frame Strata"], "layout.strata", {
@@ -483,9 +513,6 @@ Panels.sections = {
 				{ value = "DIAMOND", label = L["Diamond"] },
 			}),
 			Slider(L["Marker Size"], "party.size", 4, 24, 1),
-			Header(L["Glow"]),
-			Check(L["Marker Glow"], "party.glow"),
-			Slider(L["Glow Opacity"], "party.glowOpacity", 0, 1, 0.05, true),
 		},
 	},
 	{
@@ -497,6 +524,8 @@ Panels.sections = {
 				full = true,
 				variable = "activeProfile",
 				label = L["Active Profile"],
+				enabled = NotEditing,
+				tooltip = EditingNote,
 				options = function()
 					local options = {}
 
@@ -519,6 +548,8 @@ Panels.sections = {
 				full = true,
 				variable = "characterProfile",
 				label = L["Use a Profile for This Character"],
+				enabled = NotEditing,
+				tooltip = EditingNote,
 				get = function()
 					return LB.Profile.char.useCharacterProfile == true
 				end,
@@ -528,12 +559,12 @@ Panels.sections = {
 				end,
 			},
 			Header(L["Manage"]),
-			Button(L["New Profile"], NEW, function()
+			Locked(Button(L["New Profile"], NEW, function()
 				StaticPopup_Show("LEVELBOUND_NEW_PROFILE")
-			end),
-			Button(L["Copy Current Profile"], L["Copy"], function()
+			end)),
+			Locked(Button(L["Copy Current Profile"], L["Copy"], function()
 				StaticPopup_Show("LEVELBOUND_COPY_PROFILE")
-			end),
+			end)),
 			Button(L["Export Profile"], L["Export"], function()
 				local encoded = LB.Profile:Export(LB.Profile.activeName)
 
@@ -541,15 +572,15 @@ Panels.sections = {
 					StaticPopup_Show("LEVELBOUND_EXPORT_PROFILE", LB.Profile.activeName, nil, encoded)
 				end
 			end),
-			Button(L["Import Profile"], L["Import"], function()
+			Locked(Button(L["Import Profile"], L["Import"], function()
 				StaticPopup_Show("LEVELBOUND_IMPORT_PROFILE")
-			end),
-			Button(L["Delete Current Profile"], DELETE, function()
+			end)),
+			Locked(Button(L["Delete Current Profile"], DELETE, function()
 				StaticPopup_Show("LEVELBOUND_DELETE_PROFILE", LB.Profile.activeName)
-			end),
-			Button(L["Reset This Profile"], RESET, function()
+			end)),
+			Locked(Button(L["Reset This Profile"], RESET, function()
 				StaticPopup_Show("LEVELBOUND_RESET_PROFILE", LB.Profile.activeName)
-			end),
+			end)),
 		},
 	},
 }

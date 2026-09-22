@@ -126,7 +126,7 @@ function BarGroup:ComputeLayout(ids, screenWidth)
 
 	for index, id in ipairs(ids) do
 		local stored = independent[id]
-		local position = stored and stored.position or layout.position
+		local position = stored and stored.position or layout.positions.INDEPENDENT
 
 		rects[id] = {
 			width = stored and stored.width or layout.width,
@@ -153,6 +153,12 @@ function BarGroup:Create()
 
 	self.frame = frame
 	self.driver = CreateFrame("Frame", nil, frame)
+
+	for _, event in ipairs({ "UI_SCALE_CHANGED", "DISPLAY_SIZE_CHANGED" }) do
+		LB.Events:Register(event, self, function()
+			self:ApplyLayout(false)
+		end)
+	end
 
 	self:ApplyLayout(false)
 end
@@ -203,7 +209,7 @@ function BarGroup:PlaceSeparators(frame, ids, rects)
 
 			separator:SetVertexColor(color[1], color[2], color[3], color[4] or 1)
 			separator:ClearAllPoints()
-			separator:SetPoint("TOPLEFT", frame, "TOPLEFT", rect.x + rect.width, 0)
+			separator:SetPoint("TOPLEFT", frame, "TOPLEFT", LB.Placement:ToPixel(rect.x + rect.width, LB:Pixel()), 0)
 			PixelUtil.SetSize(separator, SEPARATOR, rect.height)
 			separator:Show()
 
@@ -240,6 +246,23 @@ function BarGroup:ApplyBorders(frame, ids, rects, override)
 	end
 end
 
+---@param value number
+---@return number value on the nearest physical pixel boundary
+local function Snap(value)
+	return LB.Placement:ToPixel(value, LB:Pixel())
+end
+
+---@param region Frame
+---@param position LBFramePosition
+local function PlaceOnScreen(region, position)
+	local width, height = region:GetSize()
+	local left, bottom = LB.Placement:Resolve(position, width, height, UIParent:GetWidth(), UIParent:GetHeight())
+	local x = position.x + Snap(left) - left
+	local y = position.y + Snap(bottom) - bottom
+
+	region:SetPoint(position.point, UIParent, position.point, x, y)
+end
+
 ---@param bar LBBar
 ---@param frame Frame
 ---@param rect LBBarRect
@@ -248,12 +271,12 @@ local function Place(bar, frame, rect)
 	bar:ClearAllPoints()
 
 	if rect.point then
-		bar:SetPoint(rect.point, UIParent, rect.point, rect.x, rect.y)
+		PlaceOnScreen(bar, { point = rect.point, x = rect.x, y = rect.y })
 
 		return
 	end
 
-	bar:SetPoint("TOPLEFT", frame, "TOPLEFT", rect.x, -rect.y)
+	bar:SetPoint("TOPLEFT", frame, "TOPLEFT", Snap(rect.x), -Snap(rect.y))
 end
 
 ---@param animated boolean?
@@ -281,10 +304,10 @@ function BarGroup:ApplyLayout(animated)
 		frame:SetPoint(other, UIParent, other, 0, 0)
 		PixelUtil.SetHeight(frame, math.max(groupHeight, 1))
 	else
-		local position = layout.position
+		local position = layout.positions[layout.mode]
 
-		frame:SetPoint(position.point, UIParent, position.point, position.x, position.y)
 		PixelUtil.SetSize(frame, math.max(groupWidth, 1), math.max(groupHeight, 1))
+		PlaceOnScreen(frame, position)
 	end
 
 	for _, id in ipairs(ids) do
@@ -306,6 +329,8 @@ function BarGroup:ApplyLayout(animated)
 	LB.TextSlot:ApplyGroup(frame, lead, fullscreen and layout.fullscreen or nil)
 
 	if not animated then
+		LB:StopTween(driver)
+
 		for id, rect in pairs(rects) do
 			Place(self.bars[id], frame, rect)
 			self.rects[id] = rect
@@ -436,7 +461,9 @@ Callbacks:Register("Party", BarGroup, function()
 end)
 
 Callbacks:Register("Settings", BarGroup, function(_, path)
-	BarGroup:Refresh(true)
+	local placement = path == nil or (type(path) == "string" and path:find("^layout%.") ~= nil)
+
+	BarGroup:Refresh(not placement)
 
 	if type(path) == "string" and path:find("^appearance%.spark") then
 		for _, bar in pairs(BarGroup.bars) do

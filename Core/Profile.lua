@@ -45,7 +45,6 @@ local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 ---@field y number
 
 ---@class LBProfileData
----@field general { hideBlizzardBar: boolean }
 ---@field layout LBLayoutSettings
 ---@field types table<string, boolean>
 ---@field appearance LBAppearanceSettings
@@ -61,7 +60,7 @@ local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 ---@field fullscreen "OFF" | "TOP" | "BOTTOM"
 ---@field width number
 ---@field height number
----@field position LBFramePosition
+---@field positions table<string, LBFramePosition> keyed by layout mode, so each mode keeps its own place
 ---@field growth "UP" | "DOWN"
 ---@field gap number
 ---@field strata FrameStrata
@@ -106,14 +105,17 @@ local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 ---@field visibility "ALWAYS" | "HOVER"
 ---@field style "DOT" | "TICK" | "NOTCH" | "DIAMOND"
 ---@field size number
----@field glow boolean
----@field glowOpacity number
 
 ---@class LBDatabase
 ---@field version integer
 ---@field profiles table<string, LBProfileData>
 ---@field profileKeys table<string, string>
----@field global { minimapButton: { hide: boolean }, requestTimePlayed: boolean }
+---@field global LBGlobalSettings
+
+---@class LBGlobalSettings
+---@field minimapButton { hide: boolean }
+---@field requestTimePlayed boolean
+---@field editMode { snap: boolean, grid: "DIMMED" | "BRIGHT" | "OFF", hoverBar: boolean }
 
 ---@class LBCharacterDatabase
 ---@field optIn { endeavor: boolean, travelers: boolean }
@@ -123,15 +125,16 @@ local GAIN_GREEN = { 0.226, 1.0, 0.006 }
 
 ---@type LBProfileData
 local defaults = {
-	general = {
-		hideBlizzardBar = true,
-	},
 	layout = {
 		mode = "SEGMENTED",
 		fullscreen = "OFF",
 		width = 560,
 		height = 12,
-		position = { point = "BOTTOM", x = 0, y = 200 },
+		positions = {
+			SEGMENTED = { point = "BOTTOM", x = 0, y = 200 },
+			CONNECTED = { point = "BOTTOM", x = 0, y = 200 },
+			INDEPENDENT = { point = "BOTTOM", x = 0, y = 200 },
+		},
 		growth = "UP",
 		gap = 2,
 		strata = "LOW",
@@ -200,8 +203,6 @@ local defaults = {
 		visibility = "ALWAYS",
 		style = "DOT",
 		size = 8,
-		glow = false,
-		glowOpacity = 0.15,
 	},
 	time = {},
 }
@@ -233,6 +234,7 @@ local globalDefaults = {
 	global = {
 		minimapButton = { hide = false },
 		requestTimePlayed = true,
+		editMode = { snap = true, grid = "BRIGHT", hoverBar = false },
 	},
 }
 
@@ -766,9 +768,24 @@ function Profile:SetOptIn(key, enabled)
 	LB.Callbacks:Fire("Settings", "optIn." .. key, enabled)
 end
 
----@return { minimapButton: { hide: boolean }, requestTimePlayed: boolean }
+---@return LBGlobalSettings
 function Profile:Global()
 	return self.db.global
+end
+
+---@return LBProfileData copy of the active profile, for an editing session to fall back to
+function Profile:Snapshot()
+	return LB:CopyTable(self.active)
+end
+
+---@param data LBProfileData a copy taken by Snapshot while this profile was active
+function Profile:Restore(data)
+	LB:MergeDefaults(data, defaults)
+
+	self.db.profiles[self.activeName] = data
+	self.active = data
+
+	LB.Callbacks:Fire("Settings", nil, nil)
 end
 
 ---@return LBProfileData defaults a fresh copy, for comparison and reset controls

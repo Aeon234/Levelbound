@@ -10,6 +10,7 @@ local BUTTON_TEMPLATE = "MainMenuFrameButtonTemplate"
 local BUTTON_HEIGHT = 32
 local CLOSE_WIDTH = 120
 local PREVIEW_WIDTH = 190
+local EDIT_WIDTH = 150
 
 ---@class LBSettingPage
 ---@field category table
@@ -24,6 +25,10 @@ local PREVIEW_WIDTH = 190
 ---@field list any?
 ---@field search EditBox?
 ---@field previewButton Button?
+---@field editButton Button?
+---@field returnButton Button?
+---@field fade Frame? drives the window's fade back in after an edit session
+---@field sessionLabel FontString?
 ---@field pages table<string, LBSettingPage>
 ---@field buttons table<string, Button>
 ---@field active string?
@@ -500,12 +505,26 @@ function Panel:Create()
 	frame:SetScript("OnShow", function()
 		LB.Visibility:SetEditing(true)
 		LB.Preview:SetEditing(true)
+		LB.EditMode:OnSettingsShown()
 		self:PaintPreviewButton()
+		self:PaintSession()
 	end)
 	frame:SetScript("OnHide", function()
+		if self.fade then
+			LB:StopTween(self.fade)
+		end
+
+		frame:SetAlpha(1)
 		LB.Gain:ClearPreview()
 		LB.Marker:ClearPreview()
 		LB.TextSlot:SetEditing(false)
+
+		if LB.EditMode:IsActive() then
+			LB.EditMode:OnSettingsHidden()
+
+			return
+		end
+
 		LB.Preview:Exit()
 		LB.Preview:SetEditing(false)
 		LB.Visibility:SetEditing(false)
@@ -568,7 +587,7 @@ function Panel:Create()
 
 	local preview = CreateFrame("Button", nil, frame, BUTTON_TEMPLATE)
 
-	preview:SetPoint("BOTTOMLEFT", 16, 8)
+	preview:SetPoint("TOPLEFT", 16, -28)
 	preview:SetSize(PREVIEW_WIDTH, BUTTON_HEIGHT)
 	preview:SetScript("OnClick", function()
 		if LB.Preview:IsActive() then
@@ -578,12 +597,39 @@ function Panel:Create()
 		end
 	end)
 
+	local edit = CreateFrame("Button", nil, frame, BUTTON_TEMPLATE)
+
+	edit:SetPoint("LEFT", preview, "RIGHT", 8, 0)
+	edit:SetSize(EDIT_WIDTH, BUTTON_HEIGHT)
+	edit:SetText(L["Edit Mode"])
+	edit:SetScript("OnClick", function()
+		LB.EditMode:Enter(true)
+	end)
+
+	local back = CreateFrame("Button", nil, frame, BUTTON_TEMPLATE)
+
+	back:SetPoint("TOPLEFT", preview, "TOPLEFT")
+	back:SetSize(PREVIEW_WIDTH, BUTTON_HEIGHT)
+	back:SetText(L["Return to Layout"])
+	back:SetScript("OnClick", function()
+		frame:Hide()
+	end)
+
+	local session = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+
+	session:SetPoint("LEFT", edit, "LEFT")
+	session:SetText(L["Editing the layout. Changes are not saved yet."])
+
 	self.frame = frame
 	self.list = list
 	self.search = search
 	self.previewButton = preview
+	self.editButton = edit
+	self.returnButton = back
+	self.sessionLabel = session
 
 	self:PaintPreviewButton()
+	self:PaintSession()
 
 	for index, section in ipairs(LB.Panels.sections) do
 		self.buttons[section.id] = CategoryButton(categories, section, index)
@@ -598,6 +644,36 @@ function Panel:PaintPreviewButton()
 	if button then
 		button:SetText(LB.Preview:IsActive() and L["Stop Preview"] or L["Preview All Bars"])
 	end
+end
+
+function Panel:PaintSession()
+	local editing = LB.EditMode:IsActive()
+
+	if self.previewButton and self.editButton and self.returnButton and self.sessionLabel then
+		self.previewButton:SetShown(not editing)
+		self.editButton:SetShown(not editing)
+		self.returnButton:SetShown(editing)
+		self.sessionLabel:SetShown(editing)
+	end
+end
+
+---Opens the window on the page it last showed and fades it in.
+---@param duration number seconds
+function Panel:Reveal(duration)
+	self:Open()
+
+	local frame = self.frame
+
+	if not frame then
+		return
+	end
+
+	self.fade = self.fade or CreateFrame("Frame")
+
+	frame:SetAlpha(0)
+	LB:Tween(self.fade, duration, function(eased)
+		frame:SetAlpha(eased)
+	end)
 end
 
 function Panel:Refresh()

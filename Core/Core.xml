@@ -6,6 +6,7 @@
 	<Script file="Profile.lua" />
 	<Script file="Format.lua" />
 	<Script file="Tags.lua" />
+	<Script file="Placement.lua" />
 	<Script file="Broker.lua" />
 	<Script file="Bootstrap.lua" />
 </Ui>

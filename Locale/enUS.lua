@@ -28,6 +28,8 @@ L["that is not a Levelbound profile string, or it was cut short."] =
 L["that profile string was made by a newer version of Levelbound."] =
 	"that profile string was made by a newer version of Levelbound."
 L["that profile string has no profile in it."] = "that profile string has no profile in it."
+L["the layout cannot be edited in combat."] = "the layout cannot be edited in combat."
+L["layout editing is paused for combat."] = "layout editing is paused for combat."
 
 -- Progress types (Data/House.lua, settings window)
 L["Pet Experience"] = "Pet Experience"
@@ -38,7 +40,7 @@ L["Azerite"] = "Azerite"
 
 -- Minimap button and addon compartment (Core/Broker.lua)
 L["Left-click: open settings"] = "Left-click: open settings"
-L["Right-click: preview all bars"] = "Right-click: preview all bars"
+L["Right-click: open edit mode"] = "Right-click: open edit mode"
 
 -- Tooltip (UI/Tooltip.lua, Data/Reputation.lua)
 L["Remaining"] = "Remaining"
@@ -78,9 +80,12 @@ L["tag.session"] = "Session time"
 L["tag.leveltime"] = "Time this level"
 L["tag.played"] = "Total time played"
 
--- Settings window: frame (Settings/Settings.lua)
+-- Settings window: frame (Settings/Settings.lua); "Edit Mode" is also the edit mode toolbar's title
 L["Preview All Bars"] = "Preview All Bars"
 L["Stop Preview"] = "Stop Preview"
+L["Edit Mode"] = "Edit Mode"
+L["Return to Layout"] = "Return to Layout"
+L["Editing the layout. Changes are not saved yet."] = "Editing the layout. Changes are not saved yet."
 
 -- Settings window: used on more than one page
 L["Size"] = "Size"
@@ -91,11 +96,10 @@ L["Slug Outline"] = "Slug Outline"
 L["Slug Thick Outline"] = "Slug Thick Outline"
 
 -- Settings window: General
-L["Hide Blizzard's Status Tracking Bar"] = "Hide Blizzard's Status Tracking Bar"
 L["Show Minimap Button"] = "Show Minimap Button"
 L["Request Time Played at Login"] = "Request Time Played at Login"
 
--- Settings window: Layout
+-- Settings window: Layout; mode names, sizes and "Off" are also used by edit mode
 L["Layout"] = "Layout"
 L["Placement"] = "Placement"
 L["Layout Mode"] = "Layout Mode"
@@ -228,9 +232,6 @@ L["Full-Height Tick"] = "Full-Height Tick"
 L["Top-Edge Notch"] = "Top-Edge Notch"
 L["Diamond"] = "Diamond"
 L["Marker Size"] = "Marker Size"
-L["Glow"] = "Glow"
-L["Marker Glow"] = "Marker Glow"
-L["Glow Opacity"] = "Glow Opacity"
 
 -- Settings window: Profiles, and its popups (Settings/Settings.lua)
 L["Profiles"] = "Profiles"
@@ -246,6 +247,7 @@ L["Import Profile"] = "Import Profile"
 L["Import"] = "Import"
 L["Delete Current Profile"] = "Delete Current Profile"
 L["Reset This Profile"] = "Reset This Profile"
+L["Finish editing the layout to change profiles."] = "Finish editing the layout to change profiles."
 L["Name the new profile"] = "Name the new profile"
 L["Name the copy"] = "Name the copy"
 L["Copy this string to share the profile %q."] = "Copy this string to share the profile %q."
@@ -253,3 +255,24 @@ L["Paste a Levelbound profile string."] = "Paste a Levelbound profile string."
 L["Name the imported profile"] = "Name the imported profile"
 L["Delete the profile %q? This cannot be undone."] = "Delete the profile %q? This cannot be undone."
 L["Reset every setting in the profile %q?"] = "Reset every setting in the profile %q?"
+
+-- Edit mode: toolbar, mover panel and popups (Settings/EditMode.lua, Settings/EditPanel.lua)
+L["Exit"] = "Exit"
+L["Snap"] = "Snap"
+L["Enabled"] = "Enabled"
+L["Disabled"] = "Disabled"
+L["Grid Lines"] = "Grid Lines"
+L["Dimmed"] = "Dimmed"
+L["Bright"] = "Bright"
+L["Hover Top Bar"] = "Hover Top Bar"
+L["Resume Editing"] = "Resume Editing"
+L["Paused"] = "Paused"
+L["Paused for combat"] = "Paused for combat"
+L["Progress Bars"] = "Progress Bars"
+L["Bar Stack"] = "Bar Stack"
+L["X"] = "X"
+L["Y"] = "Y"
+L["Pinned to Top Edge"] = "Pinned to Top Edge"
+L["Pinned to Bottom Edge"] = "Pinned to Bottom Edge"
+L["Save your layout changes?"] = "Save your layout changes?"
+L["Discard"] = "Discard"

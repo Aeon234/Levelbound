@@ -9,11 +9,7 @@ LB.Broker = Broker
 
 local function OnClick(_, button)
 	if button == "RightButton" then
-		if LB.Preview:IsActive() then
-			LB.Preview:Exit()
-		else
-			LB.Preview:Enter()
-		end
+		LB.EditMode:Toggle()
 
 		return
 	end
@@ -29,7 +25,7 @@ end
 local function OnTooltipShow(tooltip)
 	tooltip:AddLine(LB.title)
 	tooltip:AddLine(L["Left-click: open settings"], 1, 1, 1)
-	tooltip:AddLine(L["Right-click: preview all bars"], 1, 1, 1)
+	tooltip:AddLine(L["Right-click: open edit mode"], 1, 1, 1)
 end
 
 function Broker:Create()

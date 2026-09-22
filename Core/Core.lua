@@ -15,8 +15,14 @@ local addonName = ...
 ---@field Model LBModel
 ---@field Source LBSourceFactory
 ---@field Preview LBPreview
+---@field Placement LBPlacement
+---@field EditMode LBEditMode
+---@field EditPanel LBEditPanel
+---@field Mover LBMoverFactory
+---@field MoverMixin LBMover
 ---@field Broker LBBroker
 ---@field BarGroup LBBarGroup
+---@field BlizzardBar LBBlizzardBar
 ---@field Bar LBBarFactory
 ---@field TextSlot LBTextSlotRenderer
 ---@field Tags LBTags
@@ -161,6 +167,12 @@ function LB:StopTween(frame)
 	frame:SetScript("OnUpdate", nil)
 end
 
+---@param region Region? defaults to UIParent
+---@return number pixel the size of one physical pixel in the region's units
+function LB:Pixel(region)
+	return PixelUtil.GetPixelToUIUnitFactor() / (region or UIParent):GetEffectiveScale()
+end
+
 ---@param section string? section to open at
 function LB:OpenSettings(section)
 	if self.Settings then
@@ -249,6 +261,12 @@ SlashCmdList.LEVELBOUND = function(message)
 
 	if command == "debug" then
 		LB:PrintDiagnostics()
+
+		return
+	end
+
+	if command == "edit" then
+		LB.EditMode:Toggle()
 
 		return
 	end
