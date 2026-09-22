@@ -263,7 +263,9 @@ function Gain:Preview()
 	local group = LB.BarGroup
 	local frame = group.frame
 
-	if not frame or not frame:IsShown() then
+	if not frame or not frame:IsShown() or not LB.Settings:IsOpen() then
+		self:ClearPreview()
+
 		return
 	end
 
@@ -283,8 +285,14 @@ function Gain:Preview()
 end
 
 function Gain:OnLayoutSettled()
-	if self.previewing then
+	if not self.previewing then
+		return
+	end
+
+	if LB.Settings:IsOpen() then
 		self:Preview()
+	else
+		self:ClearPreview()
 	end
 end
 

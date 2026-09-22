@@ -349,6 +349,12 @@ function Marker:Refresh()
 end
 
 function Marker:Preview()
+	if not LB.Settings:IsOpen() then
+		self:ClearPreview()
+
+		return
+	end
+
 	self.previewing = true
 	self.sample = self.sample or SampleMembers()
 

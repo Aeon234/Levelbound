@@ -363,6 +363,11 @@ function EditMode:Finish(reopen)
 		LB.Preview:Exit()
 	end
 
+	if not settingsOpen then
+		LB.Gain:ClearPreview()
+		LB.Marker:ClearPreview()
+	end
+
 	self.previewAll = false
 
 	LB.Preview:SetEditing(settingsOpen)
