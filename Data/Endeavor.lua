@@ -28,8 +28,19 @@ local function Fetch()
 	end
 end
 
+---@return boolean
+local function CanRequest()
+	if not LB.can.house or not LB:Readable(C_Housing.GetTrackedHouseGuid(), nil) then
+		return false
+	end
+
+	return C_NeighborhoodInitiative.IsInitiativeEnabled()
+		and C_NeighborhoodInitiative.PlayerMeetsRequiredLevel()
+		and C_NeighborhoodInitiative.PlayerHasInitiativeAccess()
+end
+
 local function Request()
-	if Endeavor.info or Endeavor.asked then
+	if Endeavor.info or Endeavor.asked or not CanRequest() then
 		return
 	end
 
@@ -53,7 +64,7 @@ LB.Source:New("endeavor", {
 	end,
 
 	Events = function()
-		return { "NEIGHBORHOOD_INITIATIVE_UPDATED", "PLAYER_ENTERING_WORLD" }
+		return { "NEIGHBORHOOD_INITIATIVE_UPDATED", "PLAYER_HOUSE_LIST_UPDATED", "PLAYER_ENTERING_WORLD" }
 	end,
 
 	---@param event string
@@ -64,7 +75,10 @@ LB.Source:New("endeavor", {
 			return self:Refresh()
 		end
 
-		Endeavor.asked = false
+		if event == "PLAYER_ENTERING_WORLD" then
+			Endeavor.asked = false
+		end
+
 		LB.Events:Merge("endeavor:request", SETTLE, Request)
 
 		return false
