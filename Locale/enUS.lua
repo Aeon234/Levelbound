@@ -133,7 +133,6 @@ L["High"] = "High"
 
 -- Settings window: Progress Types
 L["Progress Types"] = "Progress Types"
-L["This Character Only"] = "This Character Only"
 
 -- Settings window: Appearance
 L["Appearance"] = "Appearance"

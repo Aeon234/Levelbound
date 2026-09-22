@@ -33,8 +33,6 @@ local function Progress()
 end
 
 LB.Source:New("travelers", {
-	perCharacter = true,
-
 	Capability = function()
 		return LB.can.travelers == true
 	end,

@@ -1,5 +1,8 @@
 local LB = select(2, ...)
 
+-- Seconds after entering the world before asking the server for anything.
+local SETTLE = 1
+
 local frame = CreateFrame("Frame")
 
 frame:RegisterEvent("ADDON_LOADED")
@@ -38,12 +41,19 @@ frame:SetScript("OnEvent", function(self, event, ...)
 		LB.Broker:Create()
 		LB.Session:Reset()
 		LB.Session:RefreshAFK()
-		LB.TimePlayed:RequestOnce()
 		LB.Roster:Reconcile()
-		LB.Comms:SendRequest()
 	elseif event == "PLAYER_ENTERING_WORLD" and not LB.failed then
+		local isInitialLogin, isReloadingUi = ...
+
 		LB.Model:Seed()
 		LB.Roster:Reconcile()
 		LB.Visibility:Refresh(false)
+
+		if isInitialLogin or isReloadingUi then
+			C_Timer.After(SETTLE, function()
+				LB.TimePlayed:RequestOnce()
+				LB.Comms:SendRequest()
+			end)
+		end
 	end
 end)

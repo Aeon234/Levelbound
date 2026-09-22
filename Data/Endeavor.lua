@@ -1,8 +1,43 @@
 local LB = select(2, ...)
 
-LB.Source:New("endeavor", {
-	perCharacter = true,
+local SETTLE = 1
+local RETRY = 30
 
+---@class LBEndeavorCache
+---@field info table? the last loaded `NeighborhoodInitiativeInfo`
+---@field asked boolean requested since the last read
+---@field emptyAt number? `GetTime()` of the last read that came back unloaded
+local Endeavor = {
+	asked = false,
+}
+
+local function Fetch()
+	if not Endeavor.asked and Endeavor.emptyAt and GetTime() - Endeavor.emptyAt < RETRY then
+		return
+	end
+
+	Endeavor.asked = false
+
+	local info = C_NeighborhoodInitiative.GetNeighborhoodInitiativeInfo()
+
+	if info and info.isLoaded then
+		Endeavor.info = info
+		Endeavor.emptyAt = nil
+	else
+		Endeavor.emptyAt = GetTime()
+	end
+end
+
+local function Request()
+	if Endeavor.info or Endeavor.asked then
+		return
+	end
+
+	Endeavor.asked = true
+	C_NeighborhoodInitiative.RequestNeighborhoodInitiativeInfo()
+end
+
+LB.Source:New("endeavor", {
 	Capability = function()
 		return LB.can.endeavor == true
 	end,
@@ -12,20 +47,34 @@ LB.Source:New("endeavor", {
 			return false
 		end
 
-		local info = C_NeighborhoodInitiative.GetNeighborhoodInitiativeInfo()
+		local info = Endeavor.info
 
-		return info ~= nil and info.isLoaded and info.progressRequired > 0
+		return info ~= nil and info.progressRequired > 0
 	end,
 
 	Events = function()
 		return { "NEIGHBORHOOD_INITIATIVE_UPDATED", "PLAYER_ENTERING_WORLD" }
 	end,
 
+	---@param event string
+	OnEvent = function(self, event)
+		if event == "NEIGHBORHOOD_INITIATIVE_UPDATED" then
+			Fetch()
+
+			return self:Refresh()
+		end
+
+		Endeavor.asked = false
+		LB.Events:Merge("endeavor:request", SETTLE, Request)
+
+		return false
+	end,
+
 	---@param snapshot LBSnapshot
 	Read = function(_, snapshot)
-		local info = C_NeighborhoodInitiative.GetNeighborhoodInitiativeInfo()
+		local info = Endeavor.info
 
-		if not info or not info.isLoaded then
+		if not info then
 			return false
 		end
 

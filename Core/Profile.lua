@@ -118,7 +118,6 @@ local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 ---@field editMode { snap: boolean, grid: "DIMMED" | "BRIGHT" | "OFF", hoverBar: boolean }
 
 ---@class LBCharacterDatabase
----@field optIn { endeavor: boolean, travelers: boolean }
 ---@field useCharacterProfile boolean
 
 local GAIN_GREEN = { 0.226, 1.0, 0.006 }
@@ -145,6 +144,8 @@ local defaults = {
 		petxp = true,
 		reputation = true,
 		house = true,
+		endeavor = true,
+		travelers = true,
 		honor = true,
 		azerite = true,
 	},
@@ -210,7 +211,7 @@ local defaults = {
 ---@param text string
 ---@return LBTextSlot
 local function Slot(text)
-	return { text = text, visibility = "HOVER", x = 0, y = 0, style = {} }
+	return { text = text, visibility = "ALWAYS", x = 0, y = 0, style = {} }
 end
 
 defaults.text.slots.xp = {
@@ -244,7 +245,6 @@ local globalDefaults = {
 
 ---@type LBCharacterDatabase
 local characterDefaults = {
-	optIn = { endeavor = false, travelers = false },
 	useCharacterProfile = false,
 }
 
@@ -752,24 +752,6 @@ function Profile:SetUseCharacterProfile(enabled)
 	self.db.profileKeys[self:CharacterKey()] = nil
 
 	self:Activate(self:ResolveName())
-end
-
----@param key "endeavor" | "travelers"
----@return boolean
-function Profile:OptedIn(key)
-	return self.char.optIn[key] == true
-end
-
----@param key "endeavor" | "travelers"
----@param enabled boolean
-function Profile:SetOptIn(key, enabled)
-	if self.char.optIn[key] == enabled then
-		return
-	end
-
-	self.char.optIn[key] = enabled
-
-	LB.Callbacks:Fire("Settings", "optIn." .. key, enabled)
 end
 
 ---@return LBGlobalSettings

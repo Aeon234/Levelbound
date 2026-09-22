@@ -1,5 +1,25 @@
 local LB = select(2, ...)
 
+---@class LBHouseFavor
+---@field favor table? the last `HouseLevelFavor` for the tracked house
+---@field asked string? the house asked about since the last loading screen
+local House = {}
+
+---@return string? guid the tracked house, or nil when there is none or it cannot be read
+local function TrackedGuid()
+	return LB:Readable(C_Housing.GetTrackedHouseGuid(), nil)
+end
+
+---@param guid string?
+local function Ask(guid)
+	if not guid or House.asked == guid then
+		return
+	end
+
+	House.asked = guid
+	C_Housing.GetCurrentHouseLevelFavor(guid)
+end
+
 LB.Source:New("house", {
 	Capability = function()
 		return LB.can.house == true
@@ -18,17 +38,39 @@ LB.Source:New("house", {
 		}
 	end,
 
+	---@param event string
+	OnEvent = function(self, event, ...)
+		if event == "HOUSE_LEVEL_FAVOR_UPDATED" then
+			local favor = ...
+
+			if favor and LB:Readable(favor.houseGUID, nil) == TrackedGuid() then
+				House.favor = favor
+			end
+		else
+			if event == "PLAYER_ENTERING_WORLD" or event == "TRACKED_HOUSE_CHANGED" then
+				House.asked = nil
+			end
+
+			if event == "TRACKED_HOUSE_CHANGED" then
+				House.favor = nil
+			end
+		end
+
+		return self:Refresh()
+	end,
+
 	---@param snapshot LBSnapshot
 	Read = function(_, snapshot)
-		local guid = C_Housing.GetTrackedHouseGuid()
+		local guid = TrackedGuid()
+		local favor = House.favor
 
 		if not guid then
 			return false
 		end
 
-		local favor = C_Housing.GetCurrentHouseLevelFavor(guid)
+		if not favor or LB:Readable(favor.houseGUID, nil) ~= guid then
+			Ask(guid)
 
-		if not favor then
 			return false
 		end
 

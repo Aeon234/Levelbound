@@ -24,7 +24,6 @@ local Events = LB.Events
 ---@field available boolean
 ---@field visible boolean
 ---@field subscribed boolean
----@field perCharacter boolean
 ---@field failed boolean disabled for the session after an error
 ---@field delta number gain since the last Progress fire
 ---@field seeded boolean first read is a baseline only
@@ -40,7 +39,6 @@ local Events = LB.Events
 ---@field OnEvent? fun(self: LBSource, event: string, ...: any): boolean
 ---@field Click? fun(self: LBSource)
 ---@field Tooltip? fun(self: LBSource, tip: GameTooltip)
----@field perCharacter? boolean
 
 ---@class LBSourceMixin : LBSourceFields, LBSourceSpec
 local SourceMixin = {}
@@ -59,10 +57,6 @@ end
 
 ---@return boolean
 function SourceMixin:IsEnabled()
-	if self.perCharacter then
-		return LB.Profile:OptedIn(self.id)
-	end
-
 	return LB.Profile:Get("types." .. self.id) == true
 end
 

@@ -170,25 +170,6 @@ local function GradientStop(index)
 	return Read, Write
 end
 
----@param key "endeavor" | "travelers"
----@param label string
----@param gate fun(): boolean
----@return LBSettingRow
-local function OptIn(key, label, gate)
-	return {
-		type = "CHECK",
-		variable = "optIn." .. key,
-		label = label,
-		gate = gate,
-		get = function()
-			return LB.Profile:OptedIn(key)
-		end,
-		set = function(value)
-			LB.Profile:SetOptIn(key, value)
-		end,
-	}
-end
-
 local OUTLINES = {
 	{ value = "NONE", label = NONE },
 	{ value = "OUTLINE", label = L["Outline"] },
@@ -410,18 +391,17 @@ Panels.sections = {
 			Check(TYPE_LABELS.house, "types.house", function()
 				return LB.can.house == true
 			end),
+			Check(TYPE_LABELS.endeavor, "types.endeavor", function()
+				return LB.can.endeavor == true
+			end),
+			Check(TYPE_LABELS.travelers, "types.travelers", function()
+				return LB.can.travelers == true
+			end),
 			Check(TYPE_LABELS.honor, "types.honor", function()
 				return LB.can.honor == true
 			end),
 			Check(TYPE_LABELS.azerite, "types.azerite", function()
 				return LB.can.azerite == true
-			end),
-			Header(L["This Character Only"]),
-			OptIn("endeavor", TYPE_LABELS.endeavor, function()
-				return LB.can.endeavor == true
-			end),
-			OptIn("travelers", TYPE_LABELS.travelers, function()
-				return LB.can.travelers == true
 			end),
 		},
 	},

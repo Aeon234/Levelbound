@@ -22,15 +22,16 @@ local OUTLINES = {
 ---@field y number
 ---@field justify "LEFT" | "CENTER" | "RIGHT"
 ---@field below boolean? hangs one line below its point while anchored by its own bottom edge
+---@field span "LEFT" | "" | "RIGHT" | nil pinned by that side to the bar's top and bottom edges
 
 ---@type table<string, LBSlotAnchor>
 local ANCHORS = {
 	ABOVE_LEFT = { host = "TOPLEFT", own = "BOTTOMLEFT", x = 0, y = GAP, justify = "LEFT" },
 	ABOVE_CENTER = { host = "TOP", own = "BOTTOM", x = 0, y = GAP, justify = "CENTER" },
 	ABOVE_RIGHT = { host = "TOPRIGHT", own = "BOTTOMRIGHT", x = 0, y = GAP, justify = "RIGHT" },
-	INSIDE_LEFT = { host = "LEFT", own = "LEFT", x = PADDING, y = 0, justify = "LEFT" },
-	INSIDE_CENTER = { host = "CENTER", own = "CENTER", x = 0, y = 0, justify = "CENTER" },
-	INSIDE_RIGHT = { host = "RIGHT", own = "RIGHT", x = -PADDING, y = 0, justify = "RIGHT" },
+	INSIDE_LEFT = { host = "LEFT", own = "LEFT", x = PADDING, y = 0, justify = "LEFT", span = "LEFT" },
+	INSIDE_CENTER = { host = "CENTER", own = "CENTER", x = 0, y = 0, justify = "CENTER", span = "" },
+	INSIDE_RIGHT = { host = "RIGHT", own = "RIGHT", x = -PADDING, y = 0, justify = "RIGHT", span = "RIGHT" },
 	BELOW_LEFT = { host = "BOTTOMLEFT", own = "BOTTOMLEFT", x = 0, y = -GAP, justify = "LEFT", below = true },
 	BELOW_CENTER = { host = "BOTTOM", own = "BOTTOM", x = 0, y = -GAP, justify = "CENTER", below = true },
 	BELOW_RIGHT = { host = "BOTTOMRIGHT", own = "BOTTOMRIGHT", x = 0, y = -GAP, justify = "RIGHT", below = true },
@@ -139,18 +140,28 @@ local function Configure(host, keys, typeId)
 
 			fontString:SetTextColor(color[1], color[2], color[3], color[4] or 1)
 			fontString:SetJustifyH(anchor.justify)
+			fontString:SetJustifyV("MIDDLE")
 			fontString:ClearAllPoints()
 			local pixel = LB:Pixel(host.frame)
 			local x = LB.Placement:ToPixel(anchor.x + (slot.x or 0), pixel)
 			local y = anchor.y + (slot.y or 0)
 
 			if anchor.below then
-				y = y - fontString:GetLineHeight()
+				y = y - style.size
 			end
 
 			y = LB.Placement:ToPixel(y, pixel)
 
-			fontString:SetPoint(anchor.own, host.frame, anchor.host, x, y)
+			if anchor.span then
+				local top = ("TOP" .. anchor.span) --[[@as FramePoint]]
+				local bottom = ("BOTTOM" .. anchor.span) --[[@as FramePoint]]
+				local room = LB.Placement:ToPixel(style.size, pixel)
+
+				fontString:SetPoint(top, host.frame, top, x, y + room)
+				fontString:SetPoint(bottom, host.frame, bottom, x, y - room)
+			else
+				fontString:SetPoint(anchor.own, host.frame, anchor.host, x, y)
+			end
 
 			host.entries[key] = {
 				fontString = fontString,
