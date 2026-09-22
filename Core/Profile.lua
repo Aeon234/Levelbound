@@ -217,6 +217,10 @@ defaults.text.slots.xp = {
 	INSIDE_LEFT = Slot((LEVEL or "Level") .. " [level]"),
 	INSIDE_CENTER = Slot("[cur] / [max] ([remaining])"),
 	INSIDE_RIGHT = Slot("[percent]% ([percentquest]%)"),
+	ABOVE_LEFT = Slot(L["Time this level:"] .. " [leveltime]"),
+	ABOVE_RIGHT = Slot(L["Time this session:"] .. " [session]"),
+	BELOW_LEFT = Slot(L["Leveling in:"] .. " [ttl] ([xph] " .. L["XP/Hr"] .. ")"),
+	BELOW_RIGHT = Slot(L["Completed:"] .. " [quest:color] | " .. L["Rested:"] .. " [rested:color]"),
 }
 
 for _, id in ipairs({ "petxp", "reputation", "house", "endeavor", "travelers", "honor", "azerite" }) do

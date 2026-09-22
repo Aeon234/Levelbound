@@ -11,6 +11,14 @@ end
 local L = setmetatable({}, { __index = FallBackToKey })
 LB.L = L
 
+-- Default text on the experience bar (Core/Profile.lua)
+L["Time this level:"] = "Time this level:"
+L["Time this session:"] = "Time this session:"
+L["Leveling in:"] = "Leveling in:"
+L["XP/Hr"] = "XP/Hr"
+L["Completed:"] = "Completed:"
+L["Rested:"] = "Rested:"
+
 -- Chat messages (Core, Data)
 L["settings were saved by a newer version of Levelbound and may not load correctly."] =
 	"settings were saved by a newer version of Levelbound and may not load correctly."
