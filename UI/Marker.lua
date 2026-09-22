@@ -7,13 +7,43 @@ local FADE = 0.5
 local OFFLINE_ALPHA = 0.4
 local NEUTRAL = { 0.7, 0.7, 0.7 }
 
+local SAMPLE = {
+	{ class = "MAGE", fraction = 0.18, level = 41 },
+	{ class = "WARRIOR", fraction = 0.46, level = 42 },
+	{ class = "PRIEST", fraction = 0.49, level = 42 },
+	{ class = "DRUID", fraction = 0.81, level = 43, offline = true },
+}
+
 ---@class LBMarkerPlacement
 ---@field member LBRosterMember
 ---@field x number centre of the marker, in bar coordinates
 
 ---@class LBMarker
+---@field previewing boolean?
+---@field sample LBRosterMember[]?
 local Marker = {}
 LB.Marker = Marker
+
+---@return LBRosterMember[]
+local function SampleMembers()
+	---@type LBRosterMember[]
+	local members = {}
+
+	for index, entry in ipairs(SAMPLE) do
+		---@type LBRosterMember
+		local member = {
+			name = LOCALIZED_CLASS_NAMES_MALE and LOCALIZED_CLASS_NAMES_MALE[entry.class] or entry.class,
+			class = entry.class,
+			state = { sequence = 0, level = entry.level, xp = 0, xpMax = 0, flags = 0, atMaxLevel = false },
+			offline = entry.offline == true,
+			fraction = entry.fraction,
+		}
+
+		members[index] = member
+	end
+
+	return members
+end
 
 ---@param members LBRosterMember[] in a stable order
 ---@param width number
@@ -68,11 +98,11 @@ end
 ---@param member LBRosterMember
 ---@return LBColor
 local function ClassColor(member)
-	if not member.unit then
-		return NEUTRAL
-	end
+	local class = member.class
 
-	local _, class = UnitClass(member.unit)
+	if not class and member.unit then
+		class = select(2, UnitClass(member.unit))
+	end
 
 	if issecretvalue(class) or not class then
 		return NEUTRAL
@@ -277,7 +307,7 @@ function Marker:Apply(bar)
 		return
 	end
 
-	local members = LB.Roster:Visible()
+	local members = self.previewing and self.sample or LB.Roster:Visible()
 	local placements = self:Positions(members, bar:GetWidth(), party.size)
 	local wanted = {}
 
@@ -323,11 +353,36 @@ function Marker:SetHovered(bar, hovered)
 		return
 	end
 
-	local visible = LB.Profile:Get("party.visibility") == "ALWAYS" or hovered
+	local visible = self.previewing or LB.Profile:Get("party.visibility") == "ALWAYS" or hovered
 
 	for _, frame in pairs(shown) do
 		frame:SetShown(visible)
 	end
+end
+
+function Marker:Refresh()
+	local bar = LB.BarGroup.bars.xp
+
+	if bar and bar:IsShown() then
+		self:Apply(bar)
+	end
+end
+
+function Marker:Preview()
+	self.previewing = true
+	self.sample = self.sample or SampleMembers()
+
+	self:Refresh()
+end
+
+function Marker:ClearPreview()
+	if not self.previewing then
+		return
+	end
+
+	self.previewing = false
+
+	self:Refresh()
 end
 
 ---@param bar LBBar

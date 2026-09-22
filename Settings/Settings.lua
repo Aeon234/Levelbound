@@ -380,6 +380,7 @@ function Panel:Select(id)
 	self.active = id
 
 	LB.Gain:ClearPreview()
+	LB.Marker:ClearPreview()
 
 	for sectionId, button in pairs(self.buttons) do
 		PaintCategory(button, sectionId == id)
@@ -489,6 +490,7 @@ function Panel:Create()
 	end)
 	frame:SetScript("OnHide", function()
 		LB.Gain:ClearPreview()
+		LB.Marker:ClearPreview()
 		LB.Preview:Exit()
 		LB.Preview:SetEditing(false)
 		LB.Visibility:SetEditing(false)

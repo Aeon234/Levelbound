@@ -434,6 +434,9 @@ Panels.sections = {
 	},
 	{
 		id = "party",
+		onSelect = function()
+			LB.Marker:Preview()
+		end,
 		title = L["Party"],
 		rows = {
 			Header(L["Party Markers"]),

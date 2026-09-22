@@ -5,6 +5,7 @@ local MAX_PARTY = 4
 ---@class LBRosterMember
 ---@field name string
 ---@field unit string?
+---@field class string?
 ---@field state LBPartyState
 ---@field offline boolean
 ---@field fraction number progress toward that member's next level
