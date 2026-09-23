@@ -175,6 +175,26 @@ function LB:Pixel(region)
 	return PixelUtil.GetPixelToUIUnitFactor() / (region or UIParent):GetEffectiveScale()
 end
 
+---@param region Region
+---@param width number
+function LB:SetPixelWidth(region, width)
+	region:SetWidth(PixelUtil.GetNearestPixelSize(width, region:GetEffectiveScale()))
+end
+
+---@param region Region
+---@param height number
+function LB:SetPixelHeight(region, height)
+	region:SetHeight(PixelUtil.GetNearestPixelSize(height, region:GetEffectiveScale()))
+end
+
+---@param region Region
+---@param width number
+---@param height number
+function LB:SetPixelSize(region, width, height)
+	self:SetPixelWidth(region, width)
+	self:SetPixelHeight(region, height)
+end
+
 ---@param section string? section to open at
 function LB:OpenSettings(section)
 	if self.Settings then

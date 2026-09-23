@@ -586,6 +586,9 @@ Panels.sections = {
 			Locked(Button(L["New Profile"], NEW, function()
 				StaticPopup_Show("LEVELBOUND_NEW_PROFILE")
 			end)),
+			Locked(Button(L["Rename Current Profile"], L["Rename"], function()
+				StaticPopup_Show("LEVELBOUND_RENAME_PROFILE", LB.Profile.activeName)
+			end)),
 			Locked(Button(L["Copy Current Profile"], L["Copy"], function()
 				StaticPopup_Show("LEVELBOUND_COPY_PROFILE")
 			end)),

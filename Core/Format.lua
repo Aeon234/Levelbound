@@ -9,11 +9,6 @@ local PERCENT_DECIMAL = PERCENTAGE_STRING:gsub("%%d", "%%.1f")
 local Format = {}
 LB.Format = Format
 
----@return string
-function Format:Dash()
-	return DASH
-end
-
 ---@param value number?
 ---@return string
 function Format:Number(value)
@@ -119,14 +114,6 @@ local resolvers = {
 		end
 
 		return Format:Percent(math.min((snapshot.cur + snapshot.overlays.quest) / snapshot.max, 1))
-	end,
-
-	RESTED = function(snapshot)
-		return Format:Number(snapshot.overlays.rested)
-	end,
-
-	QUEST_XP = function(snapshot)
-		return Format:Number(snapshot.overlays.quest)
 	end,
 
 	SESSION_TIME = function()

@@ -72,11 +72,6 @@ function Roster:IsMember(name)
 	return self:UnitFor(name) ~= nil
 end
 
----@return table<string, LBRosterMember>
-function Roster:Members()
-	return self.members
-end
-
 ---@param name string
 ---@param state LBPartyState
 function Roster:Upsert(name, state)
@@ -100,17 +95,6 @@ function Roster:Upsert(name, state)
 			fraction = fraction,
 		}
 	end
-
-	LB.Callbacks:Fire("Party")
-end
-
----@param name string
-function Roster:Remove(name)
-	if not self.members[name] then
-		return
-	end
-
-	self.members[name] = nil
 
 	LB.Callbacks:Fire("Party")
 end

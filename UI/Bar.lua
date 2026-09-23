@@ -201,7 +201,7 @@ end
 ---@param width number
 ---@param height number
 function BarMixin:SetGeometry(width, height)
-	PixelUtil.SetSize(self, width, height)
+	LB:SetPixelSize(self, width, height)
 	self:PaintFill()
 end
 
@@ -306,7 +306,7 @@ function BarMixin:ApplySpark(spark)
 
 	self.sparkEnabled = spark.enabled
 
-	PixelUtil.SetWidth(self.spark, CORE_WIDTH)
+	LB:SetPixelWidth(self.spark, CORE_WIDTH)
 	self.spark:SetVertexColor(r, g, b, a)
 	self.flare:SetGradient("HORIZONTAL", CreateColor(r, g, b, 0), CreateColor(r, g, b, a * FLARE_PEAK))
 

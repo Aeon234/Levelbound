@@ -216,7 +216,7 @@ function Gain:Show(bar, amount, held)
 
 	frame.arrow:SetTexture(LB.Media.textures.gainArrow)
 	frame.arrow:SetVertexColor(color[1], color[2], color[3], color[4] or 1)
-	PixelUtil.SetSize(frame.arrow, size, size)
+	LB:SetPixelSize(frame.arrow, size, size)
 
 	if path then
 		frame.text:SetFont(path, style.size, OUTLINES[style.outline] or "")
@@ -232,7 +232,7 @@ function Gain:Show(bar, amount, held)
 	frame.arrowX = onLeft and (textWidth + GAP) or 0
 	frame.textX = (onLeft and 0 or (size + GAP)) + (style.x or 0)
 
-	PixelUtil.SetSize(frame, math.max(width, 1), size)
+	LB:SetPixelSize(frame, math.max(width, 1), size)
 
 	local snapshot = bar.snapshot or LB.Model:Get(bar.id)
 	local fraction = snapshot and LB.Model:Fractions(snapshot) or 0

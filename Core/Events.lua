@@ -51,12 +51,6 @@ function Events:UnregisterAll(owner)
 	end
 end
 
----@param event string
----@return boolean
-function Events:IsRegistered(event)
-	return self.registered[event] == true
-end
-
 ---@param key string
 ---@param work fun()
 function Events:Coalesce(key, work)
@@ -88,10 +82,4 @@ end
 ---@param key string
 function Events:Cancel(key)
 	self.pending[key] = nil
-end
-
----@param key string
----@return boolean
-function Events:IsPending(key)
-	return self.pending[key] ~= nil
 end

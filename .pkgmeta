@@ -14,4 +14,5 @@ ignore:
   - .pkgmeta
   - .wowluarc.json
   - .github
+  - Tools
   - "*.md"

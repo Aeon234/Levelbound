@@ -210,7 +210,7 @@ function BarGroup:PlaceSeparators(frame, ids, rects)
 			separator:SetVertexColor(color[1], color[2], color[3], color[4] or 1)
 			separator:ClearAllPoints()
 			separator:SetPoint("TOPLEFT", frame, "TOPLEFT", LB.Placement:ToPixel(rect.x + rect.width, LB:Pixel()), 0)
-			PixelUtil.SetSize(separator, SEPARATOR, rect.height)
+			LB:SetPixelSize(separator, SEPARATOR, rect.height)
 			separator:Show()
 
 			shown = index
@@ -302,11 +302,11 @@ function BarGroup:ApplyLayout(animated)
 
 		frame:SetPoint(edge, UIParent, edge, 0, 0)
 		frame:SetPoint(other, UIParent, other, 0, 0)
-		PixelUtil.SetHeight(frame, math.max(groupHeight, 1))
+		LB:SetPixelHeight(frame, math.max(groupHeight, 1))
 	else
 		local position = layout.positions[layout.mode]
 
-		PixelUtil.SetSize(frame, math.max(groupWidth, 1), math.max(groupHeight, 1))
+		LB:SetPixelSize(frame, math.max(groupWidth, 1), math.max(groupHeight, 1))
 		PlaceOnScreen(frame, position)
 	end
 

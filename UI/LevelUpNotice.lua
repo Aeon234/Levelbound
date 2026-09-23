@@ -148,7 +148,7 @@ local function Style(frame)
 		frame.text:SetFont(path, style.size, OUTLINES[style.outline] or "")
 	end
 
-	PixelUtil.SetSize(frame, math.max(frame.text:GetStringWidth(), 1), style.size)
+	LB:SetPixelSize(frame, math.max(frame.text:GetStringWidth(), 1), style.size)
 end
 
 ---@param frame Frame

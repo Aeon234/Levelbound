@@ -6,6 +6,9 @@ local QUEST_EVENTS = {
 	QUEST_TURNED_IN = true,
 }
 
+local QUEST_MERGE = 0.2
+local QUEST_SCAN = "LEVELBOUND_QUEST_SCAN"
+
 ---@return number completed
 ---@return number incomplete
 local function ScanQuestXP()
@@ -74,6 +77,14 @@ local XP = LB.Source:New("xp", {
 		end
 
 		if QUEST_EVENTS[event] then
+			LB.Events:Merge("xp:quests", QUEST_MERGE, function()
+				LB.Model:OnSourceEvent(self, QUEST_SCAN)
+			end)
+
+			return false
+		end
+
+		if event == QUEST_SCAN then
 			self.questXP, self.incompleteQuestXP = ScanQuestXP()
 		end
 

@@ -4,7 +4,7 @@ local L = LB.L
 
 local DEFAULT_PROFILE = "Default"
 local FONT = LB.DEFAULT_FONT
-local SCHEMA_VERSION = 2
+local SCHEMA_VERSION = 1
 local EXPORT_FORMAT = 1
 local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 
@@ -366,14 +366,6 @@ end
 
 ---@type table<integer, fun(db: LBDatabase)>
 local migrations = {}
-
-migrations[2] = function(db)
-	for _, profile in pairs(db.profiles or {}) do
-		if type(profile) == "table" and type(profile.text) == "table" then
-			profile.text.elements = nil
-		end
-	end
-end
 
 ---@param db LBDatabase
 ---@return integer from
@@ -750,7 +742,7 @@ function Profile:Rename(from, to)
 	end
 
 	if self.activeName == from then
-		self.activeName = to
+		self:Activate(to)
 	end
 
 	return true

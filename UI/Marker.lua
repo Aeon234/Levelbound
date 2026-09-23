@@ -215,7 +215,7 @@ local function Draw(frame, bar, placement, placements)
 	local tall = style == "TICK"
 	local markerHeight = tall and height or size
 
-	PixelUtil.SetSize(frame, size, markerHeight)
+	LB:SetPixelSize(frame, size, markerHeight)
 
 	frame:SetFrameLevel(bar:GetFrameLevel() + 10)
 	frame:ClearAllPoints()

@@ -65,6 +65,21 @@ StaticPopupDialogs.LEVELBOUND_NEW_PROFILE = {
 	end,
 }
 
+StaticPopupDialogs.LEVELBOUND_RENAME_PROFILE = {
+	text = L["Rename the profile %q"],
+	button1 = ACCEPT,
+	button2 = CANCEL,
+	hasEditBox = 1,
+	maxLetters = 32,
+	timeout = 0,
+	whileDead = 1,
+	hideOnEscape = 1,
+	OnAccept = function(dialog)
+		LB.Profile:Rename(LB.Profile.activeName, EditBoxText(dialog))
+		LB.Settings:Refresh()
+	end,
+}
+
 StaticPopupDialogs.LEVELBOUND_COPY_PROFILE = {
 	text = L["Name the copy"],
 	button1 = ACCEPT,

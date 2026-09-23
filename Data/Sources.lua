@@ -124,13 +124,6 @@ function SourceMixin:Fraction()
 	return math.min(snapshot.cur / snapshot.max, 1)
 end
 
----@return number fill
----@return number quest
----@return number rested
-function SourceMixin:OverlayFractions()
-	return LB.Model:Fractions(self.snapshot)
-end
-
 ---@return number questOverflow
 ---@return number restedOverflow
 function SourceMixin:Overflow()
