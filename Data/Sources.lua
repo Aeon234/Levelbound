@@ -144,7 +144,7 @@ local Model = {
 }
 LB.Model = Model
 
-local ORDER = { "xp", "petxp", "reputation", "house", "endeavor", "travelers", "honor", "azerite" }
+local ORDER = { "xp", "petxp", "reputation", "house", "endeavor", "travelers", "honor" }
 
 ---@class LBSourceFactory
 local Source = {}

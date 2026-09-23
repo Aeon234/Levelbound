@@ -187,7 +187,6 @@ local TYPE_LABELS = {
 	endeavor = L["Neighborhood Endeavor"],
 	travelers = L["Travel Points"],
 	honor = HONOR,
-	azerite = L["Azerite"],
 }
 
 ---@return LBSettingRow[]
@@ -399,9 +398,6 @@ Panels.sections = {
 			end),
 			Check(TYPE_LABELS.honor, "types.honor", function()
 				return LB.can.honor == true
-			end),
-			Check(TYPE_LABELS.azerite, "types.azerite", function()
-				return LB.can.azerite == true
 			end),
 		},
 	},

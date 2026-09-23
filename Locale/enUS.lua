@@ -44,7 +44,6 @@ L["Pet Experience"] = "Pet Experience"
 L["Housing Exp"] = "Housing Exp"
 L["Neighborhood Endeavor"] = "Neighborhood Endeavor"
 L["Travel Points"] = "Travel Points"
-L["Azerite"] = "Azerite"
 
 -- Minimap button and addon compartment (Core/Broker.lua)
 L["Left-click: open settings"] = "Left-click: open settings"

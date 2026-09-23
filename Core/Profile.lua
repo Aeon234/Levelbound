@@ -147,7 +147,6 @@ local defaults = {
 		endeavor = true,
 		travelers = true,
 		honor = true,
-		azerite = true,
 	},
 	appearance = {
 		texture = "Solid",
@@ -195,7 +194,6 @@ local defaults = {
 			endeavor = { 253 / 255, 199 / 255, 9 / 255 },
 			travelers = { 1 / 255, 178 / 255, 193 / 255 },
 			honor = { 184 / 255, 24 / 255, 0 },
-			azerite = { 247 / 255, 237 / 255, 145 / 255 },
 		},
 		text = { font = FONT, size = 12, color = { 1, 1, 1, 1 }, outline = "OUTLINE", side = "RIGHT", x = 0, y = 0 },
 	},
@@ -224,7 +222,7 @@ defaults.text.slots.xp = {
 	BELOW_RIGHT = Slot(L["Completed:"] .. " [quest:color] | " .. L["Rested:"] .. " [rested:color]"),
 }
 
-for _, id in ipairs({ "petxp", "reputation", "house", "endeavor", "travelers", "honor", "azerite" }) do
+for _, id in ipairs({ "petxp", "reputation", "house", "endeavor", "travelers", "honor" }) do
 	defaults.text.slots[id] = {
 		INSIDE_LEFT = Slot("[name]"),
 		INSIDE_RIGHT = Slot("[percent]%"),
