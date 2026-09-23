@@ -84,14 +84,17 @@ local function SlotLabel(key)
 	return L["slot." .. key]
 end
 
----@return string[] types this client has, in display order
+---@return string[] types this client has, in display order, whether or not this character shows them
 local function Types()
 	local ids = {}
 
 	for _, id in ipairs(LB.Model:Order()) do
 		local source = LB.Model:Source(id)
+		local ok, capable = pcall(function()
+			return source ~= nil and source:Capability()
+		end)
 
-		if source and source:IsAvailable() then
+		if ok and capable then
 			ids[#ids + 1] = id
 		end
 	end
