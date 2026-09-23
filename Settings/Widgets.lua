@@ -32,6 +32,12 @@ local FLAT = [[Interface\Buttons\WHITE8X8]]
 ---@field alone boolean?
 ---@field gate (fun(): boolean)?
 ---@field enabled (fun(): boolean)?
+---@field accessory LBSettingAccessory? a small icon button beside the control
+
+---@class LBSettingAccessory
+---@field icon string texture path
+---@field tooltip string
+---@field onClick fun()
 
 ---@class LBWidgets
 local Widgets = {}
@@ -46,6 +52,9 @@ local STEPPER_WIDTH = 54
 local BUTTON_WIDTH = 140
 
 local SWATCH_INSET = 3
+local ACCESSORY_SIZE = 20
+local ACCESSORY_IDLE = 0.8
+local ACCESSORY_DISABLED = 0.4
 local CHECKBOX_ATLAS = "checkbox-minimal"
 local CHECKER_ATLAS = "colorpicker-checkerboard"
 local HIGHLIGHT_ALPHA = 0.15
@@ -183,6 +192,73 @@ local function Control(frame)
 	return nil
 end
 
+---@param button any
+---@param hovered boolean
+local function PaintAccessory(button, hovered)
+	local shade = not button:IsEnabled() and ACCESSORY_DISABLED or (hovered and 1 or ACCESSORY_IDLE)
+
+	button.icon:SetVertexColor(shade, shade, shade)
+end
+
+---@param frame any
+---@return any button
+local function BuildAccessory(frame)
+	local button = CreateFrame("Button", nil, frame)
+
+	button:SetSize(ACCESSORY_SIZE, ACCESSORY_SIZE)
+	button.icon = button:CreateTexture(nil, "ARTWORK")
+	button.icon:SetAllPoints()
+
+	button:SetScript("OnEnter", function(self)
+		PaintAccessory(self, true)
+		GameTooltip:SetOwner(self, "ANCHOR_TOP")
+		GameTooltip:SetText(self.tooltip)
+		GameTooltip:Show()
+	end)
+	button:SetScript("OnLeave", function(self)
+		PaintAccessory(self, false)
+		GameTooltip:Hide()
+	end)
+	button:SetScript("OnClick", function(self)
+		self.onClick()
+	end)
+
+	return button
+end
+
+---@param frame any
+---@param control any
+---@return any leftmost the accessory when the row has one, else the control
+local function Accessory(frame, control)
+	local row = frame.initializer and frame.initializer.lbRow
+	local accessory = row and row.accessory
+	local button = frame.lbAccessory
+
+	if not accessory then
+		if button then
+			button:Hide()
+		end
+
+		return control
+	end
+
+	if not button then
+		button = BuildAccessory(frame)
+		frame.lbAccessory = button
+	end
+
+	button.icon:SetTexture(accessory.icon)
+	button.tooltip = accessory.tooltip
+	button.onClick = accessory.onClick
+	button:ClearAllPoints()
+	button:SetPoint("RIGHT", control, "LEFT", -PAD / 2, 0)
+	button:SetEnabled(not frame.IsEnabled or frame:IsEnabled())
+	PaintAccessory(button, false)
+	button:Show()
+
+	return button
+end
+
 ---@param row Frame
 ---@param frame any
 ---@param full boolean?
@@ -219,13 +295,15 @@ local function Fit(row, frame, full)
 		control:SetPoint("RIGHT", anchor, relative, offset, 0)
 	end
 
+	local leftmost = Accessory(frame, control)
+
 	frame.Text:ClearAllPoints()
 	frame.Text:SetPoint("LEFT", frame, "LEFT", PAD, 0)
-	frame.Text:SetPoint("RIGHT", control, "LEFT", -PAD, 0)
+	frame.Text:SetPoint("RIGHT", leftmost, "LEFT", -PAD, 0)
 
 	frame.Tooltip:ClearAllPoints()
 	frame.Tooltip:SetPoint("TOPLEFT")
-	frame.Tooltip:SetPoint("BOTTOMRIGHT", control, "BOTTOMLEFT", -2, 0)
+	frame.Tooltip:SetPoint("BOTTOMRIGHT", leftmost, "BOTTOMLEFT", -2, 0)
 end
 
 LevelboundSettingsRowMixin = {}
@@ -238,6 +316,13 @@ local function Evaluate(frame)
 
 	if frame.ColorSwatch and frame.IsEnabled then
 		frame.ColorSwatch:SetEnabled(frame:IsEnabled())
+	end
+
+	local button = frame.lbAccessory
+
+	if button and button:IsShown() and frame.IsEnabled then
+		button:SetEnabled(frame:IsEnabled())
+		PaintAccessory(button, false)
 	end
 end
 
@@ -475,6 +560,10 @@ end
 ---@return table? initializer the element this row added to the layout
 function Widgets:Add(category, layout, row, index, section)
 	local initializer = self:Create(category, layout, row, index, section)
+
+	if initializer and row.accessory then
+		initializer.lbRow = row
+	end
 
 	if initializer and row.enabled then
 		initializer:AddModifyPredicate(row.enabled)

@@ -399,6 +399,7 @@ function Panel:Select(id)
 
 	LB.Gain:ClearPreview()
 	LB.Marker:ClearPreview()
+	LB.LevelUpNotice:ClearPreview()
 	LB.TextSlot:SetEditing(false)
 
 	for sectionId, button in pairs(self.buttons) do
@@ -517,6 +518,7 @@ function Panel:Create()
 		frame:SetAlpha(1)
 		LB.Gain:ClearPreview()
 		LB.Marker:ClearPreview()
+		LB.LevelUpNotice:ClearPreview()
 		LB.TextSlot:SetEditing(false)
 
 		if LB.EditMode:IsActive() then

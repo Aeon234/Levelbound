@@ -27,6 +27,11 @@ local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 ---@field color LBColor
 ---@field outline "NONE" | "OUTLINE" | "THICKOUTLINE" | "SLUG" | "SLUG_OUTLINE" | "SLUG_THICKOUTLINE"
 
+---@class LBLevelUpTextStyle
+---@field font string LibSharedMedia font name
+---@field size number
+---@field outline "NONE" | "OUTLINE" | "THICKOUTLINE" | "SLUG" | "SLUG_OUTLINE" | "SLUG_THICKOUTLINE"
+
 ---@class LBGainTextStyle : LBTextStyle
 ---@field side "LEFT" | "RIGHT"
 ---@field x number
@@ -100,11 +105,24 @@ local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 ---@field colors table<string, LBColor>
 ---@field text LBGainTextStyle
 
+---@class LBLevelUpSettings
+---@field enabled boolean
+---@field onScreen boolean
+---@field chat boolean
+---@field sound boolean
+---@field hideInCombat boolean
+---@field anchor "TOPLEFT" | "TOP" | "TOPRIGHT" | "BOTTOMLEFT" | "BOTTOM" | "BOTTOMRIGHT" the point on the bar
+---@field direction "UP" | "DOWN" the way the stack grows
+---@field x number
+---@field y number
+---@field text LBLevelUpTextStyle
+
 ---@class LBPartySettings
 ---@field markers boolean
 ---@field visibility "ALWAYS" | "HOVER"
 ---@field style "DOT" | "TICK" | "NOTCH" | "DIAMOND"
 ---@field size number
+---@field levelUp LBLevelUpSettings
 
 ---@class LBDatabase
 ---@field version integer
@@ -167,7 +185,7 @@ local defaults = {
 	text = {
 		compactNumbers = true,
 		decimals = true,
-		style = { font = FONT, size = 12, color = { 1, 1, 1, 1 }, outline = "OUTLINE" },
+		style = { font = FONT, size = 12, color = { 1, 1, 1, 1 }, outline = "SLUG_OUTLINE" },
 		slots = {},
 	},
 	tooltip = {
@@ -195,13 +213,33 @@ local defaults = {
 			travelers = { 1 / 255, 178 / 255, 193 / 255 },
 			honor = { 184 / 255, 24 / 255, 0 },
 		},
-		text = { font = FONT, size = 12, color = { 1, 1, 1, 1 }, outline = "OUTLINE", side = "RIGHT", x = 0, y = 0 },
+		text = {
+			font = FONT,
+			size = 12,
+			color = { 1, 1, 1, 1 },
+			outline = "SLUG_OUTLINE",
+			side = "RIGHT",
+			x = 0,
+			y = 0,
+		},
 	},
 	party = {
 		markers = true,
 		visibility = "ALWAYS",
 		style = "DOT",
 		size = 8,
+		levelUp = {
+			enabled = true,
+			onScreen = true,
+			chat = true,
+			sound = true,
+			hideInCombat = false,
+			anchor = "BOTTOM",
+			direction = "DOWN",
+			x = 0,
+			y = 0,
+			text = { font = FONT, size = 12, outline = "SLUG_OUTLINE" },
+		},
 	},
 	time = {},
 }

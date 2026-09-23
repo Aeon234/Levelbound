@@ -46,3 +46,28 @@ LB.Callbacks:Register("Progress", Comms, function(owner, id)
 		owner:Send()
 	end
 end)
+
+local LevelUp = LB.LevelUp
+
+LB.Events:Register("UNIT_LEVEL", LevelUp, function(owner, _, unit)
+	owner:OnUnitLevel(unit)
+end)
+
+LB.Events:Register("GROUP_ROSTER_UPDATE", LevelUp, function(owner)
+	owner:Scan()
+end)
+
+-- Party units read as unknown for a moment after a loading screen.
+LB.Events:Register("PLAYER_ENTERING_WORLD", LevelUp, function(owner)
+	LB.Events:Merge("levelup:scan", 3, function()
+		owner:Scan()
+	end)
+end)
+
+LB.Events:Register("PLAYER_REGEN_DISABLED", LevelUp, function(owner)
+	owner:SetCombat(true)
+end)
+
+LB.Events:Register("PLAYER_REGEN_ENABLED", LevelUp, function(owner)
+	owner:SetCombat(false)
+end)

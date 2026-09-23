@@ -28,11 +28,13 @@ local addonName = ...
 ---@field Tags LBTags
 ---@field Marker LBMarker
 ---@field Gain LBGain
+---@field LevelUpNotice LBLevelUpNotice
 ---@field Visibility LBVisibility
 ---@field Tooltip LBTooltip
 ---@field Format LBFormat
 ---@field Comms LBComms
 ---@field Roster LBRoster
+---@field LevelUp LBLevelUp
 ---@field Session LBSession
 ---@field TimePlayed LBTimePlayed
 ---@field failed boolean?
@@ -257,9 +259,15 @@ SLASH_LEVELBOUND1 = "/levelbound"
 SLASH_LEVELBOUND2 = "/lb"
 
 SlashCmdList.LEVELBOUND = function(message)
-	local command = (message or ""):lower():match("^%s*(%S*)")
+	local command, argument = (message or ""):lower():match("^%s*(%S*)%s*(%S*)")
 
 	if command == "debug" then
+		if argument == "levelup" then
+			LB.LevelUp:Sample()
+
+			return
+		end
+
 		LB:PrintDiagnostics()
 
 		return

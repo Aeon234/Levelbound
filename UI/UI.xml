@@ -2,6 +2,7 @@
 	<Script file="TextSlot.lua" />
 	<Script file="Marker.lua" />
 	<Script file="Gain.lua" />
+	<Script file="LevelUpNotice.lua" />
 	<Script file="Tooltip.lua" />
 	<Script file="Border.lua" />
 	<Script file="Bar.lua" />

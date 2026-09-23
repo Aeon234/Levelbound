@@ -1,5 +1,6 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/">
 	<Script file="Roster.lua" />
 	<Script file="Comms.lua" />
+	<Script file="LevelUp.lua" />
 	<Script file="Events.lua" />
 </Ui>

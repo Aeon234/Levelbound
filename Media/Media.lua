@@ -21,6 +21,14 @@ Media.textures = {
 	markerDiamond = PATH .. [[Textures\MarkerDiamond-White.tga]],
 }
 
+Media.icons = {
+	speaker = [[Interface\Common\VoiceChat-Speaker]],
+}
+
+Media.sounds = {
+	levelUp = PATH .. [[Sounds\LevelUp.ogg]],
+}
+
 Media.markerShapes = {
 	DOT = Media.textures.markerDisc,
 	NOTCH = Media.textures.markerTriangle,

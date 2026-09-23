@@ -85,6 +85,27 @@ local function BorderTextured()
 	return LB.Border:IsTextured(LB.Profile:Get("appearance.border.style"))
 end
 
+---@return boolean
+local function LevelUpOn()
+	return LB.Profile:Get("party.levelUp.enabled") == true
+end
+
+---@return boolean
+local function LevelUpOnScreen()
+	return LevelUpOn() and LB.Profile:Get("party.levelUp.onScreen") == true
+end
+
+---@param row LBSettingRow
+---@param icon string
+---@param tooltip string
+---@param onClick fun()
+---@return LBSettingRow row
+local function Accessory(row, icon, tooltip, onClick)
+	row.accessory = { icon = icon, tooltip = tooltip, onClick = onClick }
+
+	return row
+end
+
 ---@param row LBSettingRow
 ---@return LBSettingRow row
 local function Full(row)
@@ -473,6 +494,7 @@ Panels.sections = {
 		id = "party",
 		onSelect = function()
 			LB.Marker:Preview()
+			LB.LevelUpNotice:Preview()
 		end,
 		title = L["Party"],
 		rows = {
@@ -489,6 +511,31 @@ Panels.sections = {
 				{ value = "DIAMOND", label = L["Diamond"] },
 			}),
 			Slider(L["Marker Size"], "party.size", 4, 24, 1),
+			Header(L["Level-Up Notices"]),
+			Check(L["Show Level-Up Notices"], "party.levelUp.enabled"),
+			Enabled(Check(L["On-Screen Notice"], "party.levelUp.onScreen"), LevelUpOn),
+			Enabled(Check(L["Chat Message"], "party.levelUp.chat"), LevelUpOn),
+			Enabled(Accessory(Check(SOUND, "party.levelUp.sound"), LB.Media.icons.speaker, L["Preview Sound"], function()
+				LB.LevelUp:PlaySound()
+			end), LevelUpOn),
+			Enabled(Check(L["Hide in Combat"], "party.levelUp.hideInCombat"), LevelUpOn),
+			Enabled(Dropdown(L["Anchor"], "party.levelUp.anchor", {
+				{ value = "TOPLEFT", label = L["Top Left"] },
+				{ value = "TOP", label = L["Top"] },
+				{ value = "TOPRIGHT", label = L["Top Right"] },
+				{ value = "BOTTOMLEFT", label = L["Bottom Left"] },
+				{ value = "BOTTOM", label = L["Bottom"] },
+				{ value = "BOTTOMRIGHT", label = L["Bottom Right"] },
+			}), LevelUpOnScreen),
+			Enabled(Dropdown(L["Growth Direction"], "party.levelUp.direction", {
+				{ value = "UP", label = L["Up"] },
+				{ value = "DOWN", label = L["Down"] },
+			}), LevelUpOnScreen),
+			Enabled(Slider(L["Horizontal Offset"], "party.levelUp.x", -300, 300, 1), LevelUpOnScreen),
+			Enabled(Slider(L["Vertical Offset"], "party.levelUp.y", -200, 200, 1), LevelUpOnScreen),
+			Enabled(Dropdown(L["Font"], "party.levelUp.text.font", MediaOptions("font")), LevelUpOnScreen),
+			Enabled(Slider(L["Size"], "party.levelUp.text.size", 6, 32, 1), LevelUpOnScreen),
+			Enabled(Dropdown(L["Outline"], "party.levelUp.text.outline", OUTLINES), LevelUpOnScreen),
 		},
 	},
 	{

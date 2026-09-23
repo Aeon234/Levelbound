@@ -366,6 +366,7 @@ function EditMode:Finish(reopen)
 	if not settingsOpen then
 		LB.Gain:ClearPreview()
 		LB.Marker:ClearPreview()
+		LB.LevelUpNotice:ClearPreview()
 	end
 
 	self.previewAll = false
