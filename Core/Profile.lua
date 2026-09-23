@@ -83,6 +83,7 @@ local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 ---@field standingColors table<string, LBColor> overrides on Blizzard's FACTION_BAR_COLORS
 ---@field border { style: string, color: LBColor, customColor: boolean }
 ---@field spark { enabled: boolean, color: LBColor }
+---@field shimmer boolean sweep a highlight across the fill on each gain
 
 ---@class LBTextSettings
 ---@field compactNumbers boolean
@@ -180,7 +181,8 @@ local defaults = {
 		},
 		standingColors = {},
 		border = { style = "NONE", color = { 1, 1, 1, 1 }, customColor = false },
-		spark = { enabled = false, color = { 1, 1, 1, 1 } },
+		spark = { enabled = true, color = { 1, 1, 1, 1 } },
+		shimmer = true,
 	},
 	text = {
 		compactNumbers = true,

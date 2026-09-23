@@ -298,6 +298,7 @@ local appearance = {
 	Header(L["Spark"]),
 	Check(L["Progress Spark"], "appearance.spark.enabled"),
 	Color(L["Spark Color"], "appearance.spark.color"),
+	Check(L["Gain Shimmer"], "appearance.shimmer"),
 	Full(Button(L["Reset Colors"], RESET, function()
 		LB.Profile:Reset("appearance")
 		LB.Settings:Refresh()

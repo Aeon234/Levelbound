@@ -165,6 +165,7 @@ L["Border Opacity"] = "Border Opacity"
 L["Spark"] = "Spark"
 L["Progress Spark"] = "Progress Spark"
 L["Spark Color"] = "Spark Color"
+L["Gain Shimmer"] = "Gain Shimmer"
 L["Reset Colors"] = "Reset Colors"
 
 -- Settings window: Text and Tooltip, and its editor (Settings/TextEditor.lua)

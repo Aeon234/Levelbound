@@ -12,25 +12,32 @@ local SWEEP_UP = 0.25
 
 local FILL_RATE = 0.25
 local FILL_MIN = 0.5
-local FILL_MAX = 2
+local FILL_MAX = 1
 local LEVEL_RATE = 0.5
 local FADE = 0.5
 
-local SPARK_WIDTH = 2
-local GLOW_WIDTH = 16
-local GLOW_ALPHA = 0.4
-local SPIKE_ALPHA = 0.5
-local PULSE = 0.5
+local CORE_WIDTH = 2
+local FLARE_WIDTH = 24
+local FLARE_PEAK = 0.8
+local FLARE_HOT = 1
+local FLARE_REST = 0.35
+local FLARE_COOL = 1
+
+local SHIMMER = 1.4
+local SHIMMER_WIDTH = 90
+local SHIMMER_ALPHA = 0.55
 
 ---@class LBBar : Frame
 ---@field id string
----@field fill StatusBar
+---@field clip Frame reveals the full-width fill art; only its width changes, so the art never stretches
+---@field content Frame
+---@field fillTexture Texture
 ---@field quest StatusBar
 ---@field rested StatusBar
 ---@field background StatusBar
----@field spark Texture
----@field glow Texture
----@field spike Texture
+---@field spark Texture the flare's core line
+---@field flare Texture
+---@field shimmer Texture[] the two halves of the sweeping highlight
 ---@field border LBBorderFrame?
 ---@field driver Frame
 ---@field alphaDriver Frame
@@ -41,8 +48,10 @@ local PULSE = 0.5
 ---@field pending number[]? target the sweep settles on
 ---@field hovered boolean?
 ---@field sparkEnabled boolean?
----@field sparkElapsed number?
----@field sparkDriver Frame
+---@field heat number flare brightness, hot while the fill grows and resting otherwise
+---@field growing boolean? a gain or level-up is moving the fill
+---@field shimmerElapsed number?
+---@field effectDriver Frame
 ---@field textSuppressed boolean?
 ---@field snapshot LBSnapshot?
 ---@field markerPool any?
@@ -99,24 +108,51 @@ function Bar:Create(parent, id)
 	bar.values = { 0, 0, 0 }
 	bar.driver = CreateFrame("Frame", nil, bar)
 	bar.alphaDriver = CreateFrame("Frame", nil, bar)
-	bar.sparkDriver = CreateFrame("Frame", nil, bar)
+	bar.effectDriver = CreateFrame("Frame", nil, bar)
+	bar.heat = FLARE_REST
 
 	bar.background = CreateLayer(bar, LEVEL_BACKGROUND)
 	bar.rested = CreateLayer(bar, LEVEL_RESTED)
 	bar.quest = CreateLayer(bar, LEVEL_QUEST)
-	bar.fill = CreateLayer(bar, LEVEL_FILL)
 
 	bar.background:SetValue(1)
 
-	bar.spark = bar.fill:CreateTexture(nil, "OVERLAY", nil, 1)
-	bar.glow = bar.fill:CreateTexture(nil, "OVERLAY")
-	bar.spike = bar.fill:CreateTexture(nil, "OVERLAY")
+	bar.clip = CreateFrame("Frame", nil, bar)
+	bar.clip:SetPoint("TOPLEFT")
+	bar.clip:SetPoint("BOTTOMLEFT")
+	bar.clip:SetFrameLevel(bar:GetFrameLevel() + LEVEL_FILL)
+	bar.clip:SetClipsChildren(true)
 
-	for _, texture in ipairs({ bar.spark, bar.glow, bar.spike }) do
+	bar.content = CreateFrame("Frame", nil, bar.clip)
+	bar.content:SetAllPoints(bar)
+
+	bar.fillTexture = bar.content:CreateTexture(nil, "ARTWORK")
+	bar.fillTexture:SetAllPoints()
+
+	bar.shimmer = {
+		bar.content:CreateTexture(nil, "ARTWORK", nil, 2),
+		bar.content:CreateTexture(nil, "ARTWORK", nil, 2),
+	}
+	bar.flare = bar.content:CreateTexture(nil, "OVERLAY")
+	bar.spark = bar.content:CreateTexture(nil, "OVERLAY", nil, 1)
+
+	for _, texture in ipairs({ bar.shimmer[1], bar.shimmer[2], bar.flare, bar.spark }) do
 		texture:SetTexture(FLAT)
 		texture:SetBlendMode("ADD")
 		texture:Hide()
 	end
+
+	bar.shimmer[1]:SetWidth(SHIMMER_WIDTH / 2)
+	bar.shimmer[2]:SetWidth(SHIMMER_WIDTH / 2)
+	bar.shimmer[2]:SetPoint("TOPLEFT", bar.shimmer[1], "TOPRIGHT")
+	bar.shimmer[2]:SetPoint("BOTTOMLEFT", bar.shimmer[1], "BOTTOMRIGHT")
+
+	bar.flare:SetPoint("TOPRIGHT", bar.clip, "TOPRIGHT")
+	bar.flare:SetPoint("BOTTOMRIGHT", bar.clip, "BOTTOMRIGHT")
+	bar.flare:SetWidth(FLARE_WIDTH)
+
+	bar.spark:SetPoint("TOPRIGHT", bar.clip, "TOPRIGHT")
+	bar.spark:SetPoint("BOTTOMRIGHT", bar.clip, "BOTTOMRIGHT")
 
 	bar:EnableMouse(true)
 	bar:SetScript("OnEnter", bar.OnEnter)
@@ -166,6 +202,14 @@ end
 ---@param height number
 function BarMixin:SetGeometry(width, height)
 	PixelUtil.SetSize(self, width, height)
+	self:PaintFill()
+end
+
+function BarMixin:PaintFill()
+	local fill = self.values[1]
+
+	self.clip:SetShown(fill > 0)
+	self.clip:SetWidth(math.max(fill * self:GetWidth(), 0.001))
 end
 
 ---@return LBColor?
@@ -219,10 +263,9 @@ function BarMixin:ApplyAppearance()
 	local appearance = LB.Profile:Get("appearance")
 	local texture = LB.Media:FetchOrDefault("statusbar", appearance.texture) or FLAT
 	local first, second = self:FillColors()
+	local fillTexture = self.fillTexture
 
-	self.fill:SetStatusBarTexture(texture)
-
-	local fillTexture = self.fill:GetStatusBarTexture()
+	fillTexture:SetTexture(texture)
 
 	if second then
 		fillTexture:SetVertexColor(1, 1, 1, 1)
@@ -239,124 +282,121 @@ function BarMixin:ApplyAppearance()
 
 	self.background:SetValue(1)
 
+	local tip = second or first
+	local light = { (tip[1] + 1) / 2, (tip[2] + 1) / 2, (tip[3] + 1) / 2 }
+
+	self.shimmer[1]:SetGradient(
+		"HORIZONTAL",
+		CreateColor(light[1], light[2], light[3], 0),
+		CreateColor(light[1], light[2], light[3], SHIMMER_ALPHA)
+	)
+	self.shimmer[2]:SetGradient(
+		"HORIZONTAL",
+		CreateColor(light[1], light[2], light[3], SHIMMER_ALPHA),
+		CreateColor(light[1], light[2], light[3], 0)
+	)
+
 	self:ApplySpark(appearance.spark)
 	LB.TextSlot:ApplyBar(self)
 end
 
 ---@param spark { enabled: boolean, color: LBColor }
 function BarMixin:ApplySpark(spark)
-	local edge = self.fill:GetStatusBarTexture()
 	local r, g, b, a = Unpack(spark.color)
 
 	self.sparkEnabled = spark.enabled
 
-	self.spark:ClearAllPoints()
-	self.spark:SetPoint("TOP", edge, "TOPRIGHT")
-	self.spark:SetPoint("BOTTOM", edge, "BOTTOMRIGHT")
-	PixelUtil.SetWidth(self.spark, SPARK_WIDTH)
+	PixelUtil.SetWidth(self.spark, CORE_WIDTH)
 	self.spark:SetVertexColor(r, g, b, a)
+	self.flare:SetGradient("HORIZONTAL", CreateColor(r, g, b, 0), CreateColor(r, g, b, a * FLARE_PEAK))
 
-	self.glow:SetWidth(GLOW_WIDTH)
-	self.glow:SetGradient("HORIZONTAL", CreateColor(r, g, b, 0), CreateColor(r, g, b, a))
-
-	self.spike:ClearAllPoints()
-	self.spike:SetPoint("TOPLEFT", edge, "TOPRIGHT")
-	self.spike:SetPoint("BOTTOMLEFT", edge, "BOTTOMRIGHT")
-	self.spike:SetGradient("HORIZONTAL", CreateColor(r, g, b, a), CreateColor(r, g, b, 0))
-
-	if self.sparkElapsed then
-		self:PaintSpark(self.sparkElapsed)
-	else
-		self:UpdateSpark()
-	end
+	self:PaintEffects()
 end
 
-function BarMixin:UpdateSpark()
+---@param heat number
+---@param growing boolean
+---@param delta number seconds since the last step
+---@return number heat hot while the fill grows, then cooling to rest over FLARE_COOL seconds
+function Bar:FlareHeat(heat, growing, delta)
+	if growing then
+		return FLARE_HOT
+	end
+
+	return math.max(FLARE_REST, heat - (FLARE_HOT - FLARE_REST) * delta / FLARE_COOL)
+end
+
+---@param elapsed number seconds into the sweep
+---@param fillWidth number
+---@return number x left edge of the highlight, from the bar's left edge
+---@return number alpha
+---@return boolean done
+function Bar:ShimmerKeyframe(elapsed, fillWidth)
+	local progress = math.min(math.max(elapsed, 0) / SHIMMER, 1)
+	local eased = progress < 0.5 and 2 * progress * progress or 1 - (-2 * progress + 2) ^ 2 / 2
+
+	return -SHIMMER_WIDTH + (fillWidth + SHIMMER_WIDTH) * eased, math.sin(math.pi * progress), progress >= 1
+end
+
+function BarMixin:PaintEffects()
 	local fill = self.values[1]
-	local shown = self.sparkEnabled and self.sparkElapsed ~= nil and fill > 0 and fill < 1 or false
+	local edge = self.sparkEnabled and fill > 0 and fill < 1 or false
 
-	self.spark:SetShown(shown)
-	self.glow:SetShown(shown)
-	self.spike:SetShown(shown)
-end
+	self.spark:SetShown(edge)
+	self.flare:SetShown(edge)
+	self.spark:SetAlpha(self.heat)
+	self.flare:SetAlpha(self.heat)
 
----@param elapsed number seconds into the pulse
----@return number glowAlpha
----@return number glowShift pixels the glow has slid past the edge
----@return number spikeAlpha
----@return number spikeScale fraction of the glow width the spike reaches
-function Bar:SparkKeyframe(elapsed)
-	local t = math.max(elapsed, 0)
-	local glowAlpha, spikeAlpha, spikeScale = 0.8, 0, 0.25
+	local elapsed = self.shimmerElapsed
+	local shown = elapsed ~= nil and fill > 0
 
-	if t < 0.1 then
-		glowAlpha = 0.8 * t / 0.1
-	elseif t > 0.35 then
-		glowAlpha = 0.8 * math.max(1 - (t - 0.35) / 0.15, 0)
+	self.shimmer[1]:SetShown(shown)
+	self.shimmer[2]:SetShown(shown)
+
+	if not elapsed or not shown then
+		return
 	end
 
-	local slide = math.min(t / 0.25, 1)
-	local glowShift = 8 * (1 - (1 - slide) * (1 - slide))
+	local x, alpha = Bar:ShimmerKeyframe(elapsed, fill * self:GetWidth())
+	local left = self.shimmer[1]
 
-	if t >= 0.15 and t < 0.25 then
-		local p = (t - 0.15) / 0.1
-
-		spikeAlpha = 0.5 * p * p
-		spikeScale = 0.25 + (1.4 - 0.25) * p
-	elseif t >= 0.25 then
-		local p = math.min((t - 0.25) / 0.2, 1)
-
-		spikeAlpha = 0.5 * math.max(1 - (t - 0.25) / 0.25, 0)
-		spikeScale = 1.4 * (1 - 0.5 * p * p)
-	end
-
-	return glowAlpha, glowShift, spikeAlpha, spikeScale
-end
-
----@param elapsed number
-function BarMixin:PaintSpark(elapsed)
-	local glowAlpha, glowShift, spikeAlpha, spikeScale = Bar:SparkKeyframe(elapsed)
-	local edge = self.fill:GetStatusBarTexture()
-
-	self.spark:SetAlpha(glowAlpha / 0.8)
-
-	self.glow:ClearAllPoints()
-	self.glow:SetPoint("TOPRIGHT", edge, "TOPRIGHT", glowShift, 0)
-	self.glow:SetPoint("BOTTOMRIGHT", edge, "BOTTOMRIGHT", glowShift, 0)
-	self.glow:SetAlpha(glowAlpha / 0.8 * GLOW_ALPHA)
-
-	self.spike:SetWidth(math.max(GLOW_WIDTH * spikeScale, 1))
-	self.spike:SetAlpha(spikeAlpha / 0.5 * SPIKE_ALPHA)
-
-	self:UpdateSpark()
+	left:ClearAllPoints()
+	left:SetPoint("TOPLEFT", self.content, "TOPLEFT", x, 0)
+	left:SetPoint("BOTTOMLEFT", self.content, "BOTTOMLEFT", x, 0)
+	left:SetAlpha(alpha)
+	self.shimmer[2]:SetAlpha(alpha)
 end
 
 ---@param driver Frame
 ---@param delta number
-local function SparkOnUpdate(driver, delta)
+local function EffectsOnUpdate(driver, delta)
 	local bar = driver:GetParent() --[[@as LBBar]]
-	local elapsed = (bar.sparkElapsed or 0) + delta
 
-	if elapsed >= PULSE then
-		driver:SetScript("OnUpdate", nil)
-		bar.sparkElapsed = nil
-		bar:UpdateSpark()
+	bar.heat = Bar:FlareHeat(bar.heat, bar.growing == true, delta)
 
-		return
+	if bar.shimmerElapsed then
+		bar.shimmerElapsed = bar.shimmerElapsed + delta
+
+		if bar.shimmerElapsed >= SHIMMER then
+			bar.shimmerElapsed = nil
+		end
 	end
 
-	bar.sparkElapsed = elapsed
-	bar:PaintSpark(elapsed)
+	bar:PaintEffects()
+
+	if not bar.growing and not bar.shimmerElapsed and bar.heat <= FLARE_REST then
+		driver:SetScript("OnUpdate", nil)
+	end
 end
 
-function BarMixin:FlashSpark()
-	if not self.sparkEnabled then
-		return
+---@param shimmer boolean sweep the highlight too, when the profile allows it
+function BarMixin:Glint(shimmer)
+	if shimmer and LB.Profile:Get("appearance.shimmer") then
+		self.shimmerElapsed = 0
 	end
 
-	self.sparkElapsed = 0
-	self:PaintSpark(0)
-	self.sparkDriver:SetScript("OnUpdate", SparkOnUpdate)
+	self.heat = FLARE_HOT
+	self:PaintEffects()
+	self.effectDriver:SetScript("OnUpdate", EffectsOnUpdate)
 end
 
 ---@param fill number
@@ -365,16 +405,18 @@ end
 function BarMixin:SetValues(fill, quest, rested)
 	self.values[1], self.values[2], self.values[3] = fill, quest, rested
 
-	self.fill:SetValue(fill)
+	self:PaintFill()
 	self.quest:SetValue(quest)
 	self.rested:SetValue(rested)
-	self:UpdateSpark()
+	self:PaintEffects()
 end
 
 ---@param progress number
 ---@return number
-local function SineOut(progress)
-	return math.sin(progress * math.pi / 2)
+local function EaseOut(progress)
+	local inverse = 1 - progress
+
+	return 1 - inverse * inverse * inverse
 end
 
 ---@param progress number
@@ -413,7 +455,15 @@ end
 ---@param rested number
 ---@param onFinished fun()?
 function BarMixin:GainTo(fill, quest, rested, onFinished)
-	self:TweenValues(fill, quest, rested, Bar:FillDuration(fill - self.values[1]), onFinished, SineOut)
+	self.growing = true
+
+	self:TweenValues(fill, quest, rested, Bar:FillDuration(fill - self.values[1]), function()
+		self.growing = false
+
+		if onFinished then
+			onFinished()
+		end
+	end, EaseOut)
 end
 
 ---@param fill number
@@ -427,6 +477,7 @@ function BarMixin:LevelUp(fill, quest, rested)
 	end
 
 	self.sweeping = true
+	self.growing = true
 
 	self:TweenValues(1, 1, 1, (1 - self.values[1]) / LEVEL_RATE, function()
 		self:SetValues(0, 0, 0)
@@ -436,11 +487,12 @@ function BarMixin:LevelUp(fill, quest, rested)
 
 		if not target then
 			self.sweeping = false
+			self.growing = false
 
 			return
 		end
 
-		self:FlashSpark()
+		self:Glint(true)
 		self:GainTo(target[1], target[2], target[3], function()
 			self.sweeping = false
 		end)
@@ -471,6 +523,7 @@ function BarMixin:SetSnapshot(snapshot, animate, gained)
 	if not animate then
 		LB:StopTween(self.driver)
 		self.sweeping = false
+		self.growing = false
 		self.pending = nil
 		self:SetValues(fill, quest, rested)
 
@@ -478,7 +531,7 @@ function BarMixin:SetSnapshot(snapshot, animate, gained)
 	end
 
 	if levelled then
-		self:FlashSpark()
+		self:Glint(true)
 		self:LevelUp(fill, quest, rested)
 
 		return
@@ -491,13 +544,14 @@ function BarMixin:SetSnapshot(snapshot, animate, gained)
 	end
 
 	if not gained then
+		self.growing = false
 		self:TweenValues(fill, quest, rested, SWEEP_UP)
 
 		return
 	end
 
 	if fill > self.values[1] then
-		self:FlashSpark()
+		self:Glint(true)
 	end
 
 	self:GainTo(fill, quest, rested)

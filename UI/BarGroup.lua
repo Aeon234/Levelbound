@@ -460,15 +460,18 @@ Callbacks:Register("Party", BarGroup, function()
 	end
 end)
 
-Callbacks:Register("Settings", BarGroup, function(_, path)
+Callbacks:Register("Settings", BarGroup, function(_, path, value)
 	local placement = path == nil or (type(path) == "string" and path:find("^layout%.") ~= nil)
 
 	BarGroup:Refresh(not placement)
 
-	if type(path) == "string" and path:find("^appearance%.spark") then
+	local spark = type(path) == "string" and path:find("^appearance%.spark") ~= nil
+	local shimmer = path == "appearance.shimmer" and value == true
+
+	if spark or shimmer then
 		for _, bar in pairs(BarGroup.bars) do
 			if bar:IsShown() then
-				bar:FlashSpark()
+				bar:Glint(shimmer)
 			end
 		end
 	end
