@@ -66,7 +66,7 @@ StaticPopupDialogs.LEVELBOUND_NEW_PROFILE = {
 }
 
 StaticPopupDialogs.LEVELBOUND_RENAME_PROFILE = {
-	text = L["Rename the profile %q"],
+	text = L['Rename the profile "%s"'],
 	button1 = ACCEPT,
 	button2 = CANCEL,
 	hasEditBox = 1,
@@ -96,7 +96,7 @@ StaticPopupDialogs.LEVELBOUND_COPY_PROFILE = {
 }
 
 StaticPopupDialogs.LEVELBOUND_EXPORT_PROFILE = {
-	text = L["Copy this string to share the profile %q."],
+	text = L['Copy this string to share the profile "%s".'],
 	button1 = CLOSE,
 	hasEditBox = 1,
 	maxLetters = 0,
@@ -160,7 +160,7 @@ StaticPopupDialogs.LEVELBOUND_NAME_IMPORT = {
 }
 
 StaticPopupDialogs.LEVELBOUND_DELETE_PROFILE = {
-	text = L["Delete the profile %q? This cannot be undone."],
+	text = L['Delete the profile "%s"? This cannot be undone.'],
 	button1 = ACCEPT,
 	button2 = CANCEL,
 	timeout = 0,
@@ -173,7 +173,7 @@ StaticPopupDialogs.LEVELBOUND_DELETE_PROFILE = {
 }
 
 StaticPopupDialogs.LEVELBOUND_RESET_PROFILE = {
-	text = L["Reset every setting in the profile %q?"],
+	text = L['Reset every setting in the profile "%s"?'],
 	button1 = ACCEPT,
 	button2 = CANCEL,
 	timeout = 0,
