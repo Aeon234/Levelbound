@@ -100,6 +100,29 @@ local function LevelUpOnScreen()
 	return LevelUpOn() and LB.Profile:Get("party.levelUp.onScreen") == true
 end
 
+---@return boolean
+local function LevelUpOnBar()
+	return LevelUpOnScreen() and LB.Profile:Get("party.levelUp.detached") ~= true
+end
+
+---@return boolean
+local function GainDetached()
+	return LB.Profile:Get("gain.detached") == true
+end
+
+---@return boolean
+local function GainOnBar()
+	return not GainDetached()
+end
+
+---@param row LBSettingRow
+---@return LBSettingRow row
+local function Detach(row)
+	row.tooltip = L["Drag it into place in Edit Mode."]
+
+	return row
+end
+
 ---@param row LBSettingRow
 ---@param icon string
 ---@param tooltip string
@@ -313,10 +336,21 @@ local appearance = {
 local gain = {
 	Check(L["Show Gain Indicator"], "gain.enabled"),
 	Check(L["Hide in Combat"], "gain.hideInCombat"),
-	Full(Dropdown(L["Position"], "gain.position", {
-		{ value = "FILL_EDGE", label = L["Fill Edge"] },
-		{ value = "RIGHT_END", label = L["Right End"] },
-	})),
+	Detach(Check(L["Detach from Bar"], "gain.detached")),
+	Enabled(
+		Dropdown(L["Position"], "gain.position", {
+			{ value = "FILL_EDGE", label = L["Fill Edge"] },
+			{ value = "RIGHT_END", label = L["Right End"] },
+		}),
+		GainOnBar
+	),
+	Enabled(
+		Dropdown(L["Growth Direction"], "gain.direction", {
+			{ value = "UP", label = L["Up"] },
+			{ value = "DOWN", label = L["Down"] },
+		}),
+		GainDetached
+	),
 	Header(L["Amount Text"]),
 	Dropdown(L["Font"], "gain.text.font", MediaOptions("font")),
 	Slider(L["Size"], "gain.text.size", 6, 32, 1),
@@ -531,6 +565,7 @@ Panels.sections = {
 				LevelUpOn
 			),
 			Enabled(Check(L["Hide in Combat"], "party.levelUp.hideInCombat"), LevelUpOn),
+			Enabled(Detach(Check(L["Detach from Bar"], "party.levelUp.detached")), LevelUpOnScreen),
 			Enabled(
 				Dropdown(L["Anchor"], "party.levelUp.anchor", {
 					{ value = "TOPLEFT", label = L["Top Left"] },
@@ -540,7 +575,7 @@ Panels.sections = {
 					{ value = "BOTTOM", label = L["Bottom"] },
 					{ value = "BOTTOMRIGHT", label = L["Bottom Right"] },
 				}),
-				LevelUpOnScreen
+				LevelUpOnBar
 			),
 			Enabled(
 				Dropdown(L["Growth Direction"], "party.levelUp.direction", {
@@ -549,8 +584,8 @@ Panels.sections = {
 				}),
 				LevelUpOnScreen
 			),
-			Enabled(Slider(L["Horizontal Offset"], "party.levelUp.x", -300, 300, 1), LevelUpOnScreen),
-			Enabled(Slider(L["Vertical Offset"], "party.levelUp.y", -200, 200, 1), LevelUpOnScreen),
+			Enabled(Slider(L["Horizontal Offset"], "party.levelUp.x", -300, 300, 1), LevelUpOnBar),
+			Enabled(Slider(L["Vertical Offset"], "party.levelUp.y", -200, 200, 1), LevelUpOnBar),
 			Enabled(Dropdown(L["Font"], "party.levelUp.text.font", MediaOptions("font")), LevelUpOnScreen),
 			Enabled(Slider(L["Size"], "party.levelUp.text.size", 6, 32, 1), LevelUpOnScreen),
 			Enabled(Dropdown(L["Outline"], "party.levelUp.text.outline", OUTLINES), LevelUpOnScreen),

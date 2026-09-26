@@ -103,6 +103,9 @@ local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 ---@field enabled boolean
 ---@field hideInCombat boolean
 ---@field position "FILL_EDGE" | "RIGHT_END"
+---@field detached boolean
+---@field direction "UP" | "DOWN"
+---@field screen LBFramePosition? the detached stack's place; nil sits it right of the screen's centre
 ---@field colors table<string, LBColor>
 ---@field text LBGainTextStyle
 
@@ -116,6 +119,8 @@ local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 ---@field direction "UP" | "DOWN" the way the stack grows
 ---@field x number
 ---@field y number
+---@field detached boolean
+---@field screen LBFramePosition? the detached stack's place; nil sits it left of the screen's centre
 ---@field text LBLevelUpTextStyle
 
 ---@class LBMarkerOpacitySettings
@@ -214,6 +219,8 @@ local defaults = {
 		enabled = true,
 		hideInCombat = false,
 		position = "FILL_EDGE",
+		detached = false,
+		direction = "UP",
 		colors = {
 			xp = GAIN_GREEN,
 			petxp = GAIN_GREEN,
@@ -255,6 +262,7 @@ local defaults = {
 			direction = "DOWN",
 			x = 0,
 			y = 0,
+			detached = false,
 			text = { font = FONT, size = 12, outline = "SLUG_OUTLINE" },
 		},
 	},

@@ -1,18 +1,9 @@
 local LB = select(2, ...)
 
 local Callbacks = LB.Callbacks
+local NoticeStack = LB.NoticeStack
 
-local MAX = 3
 local GAP = 4
-local SPACING = 2
-local RISE = 12
-local FADE_IN = 0.2
-local HOLD = 2.5
-local FADE = 0.5
-local DURATION = HOLD + FADE
-local EVICT = 0.3
-local SLIDE_RATE = 12
-local SETTLE = 0.05
 local PREVIEW_EVERY = 1.5
 
 local SAMPLE = {
@@ -31,91 +22,23 @@ local OUTLINES = {
 	SLUG_THICKOUTLINE = "SLUG, THICKOUTLINE",
 }
 
----@param frame Frame
-local function Reset(_, frame)
-	frame:SetScript("OnUpdate", nil)
-	frame:Hide()
-	frame:ClearAllPoints()
-
-	frame.elapsed = 0
-	frame.offset = 0
-	frame.target = 0
-	frame.evicted = nil
-end
-
 ---@class LBLevelUpNotice
----@field pool any
----@field active Frame[] newest first; the newest sits at the anchor
----@field leaving Frame[] pushed out by a newer notice, fading while they slide on
----@field target Region? what the notices attach to
----@field placement LBLevelUpSettings? read at each layout
+---@field stack LBNoticeStack
+---@field box Frame where the notices sit when detached from the bars
+---@field moverKey string
 ---@field previewing boolean?
+---@field editing boolean?
 ---@field ticker any?
 ---@field sampleIndex integer
 local Notice = {
-	pool = CreateFramePool("Frame", UIParent, nil, Reset),
-	active = {},
-	leaving = {},
+	moverKey = "levelUp",
 	sampleIndex = 0,
 }
 LB.LevelUpNotice = Notice
 
----@param elapsed number seconds since the notice appeared
----@return number rise distance travelled away from the bar
----@return number alpha
-function Notice:Keyframe(elapsed)
-	local progress = math.min(elapsed / DURATION, 1)
-	local inverse = 1 - progress
-	local rise = RISE * (1 - inverse * inverse * inverse)
-	local alpha = math.min(elapsed / FADE_IN, 1)
-
-	if elapsed > HOLD then
-		alpha = 1 - math.min((elapsed - HOLD) / FADE, 1)
-	end
-
-	return rise, alpha
-end
-
----@param current number
----@param target number
----@param delta number seconds since the last step
----@return number next eased toward the target, landing on it once close
-function Notice:Ease(current, target, delta)
-	local step = current + (target - current) * (1 - math.exp(-SLIDE_RATE * delta))
-
-	if math.abs(target - step) < SETTLE then
-		return target
-	end
-
-	return step
-end
-
----@param heights number[] notice heights, newest first
----@return number[] targets each notice's distance from the anchor
-function Notice:Slots(heights)
-	local targets = {}
-	local distance = 0
-
-	for index, height in ipairs(heights) do
-		targets[index] = distance
-		distance = distance + height + SPACING
-	end
-
-	return targets
-end
-
----@param anchor string TOPLEFT, TOP, TOPRIGHT, BOTTOMLEFT, BOTTOM or BOTTOMRIGHT, the point on the bar
----@param direction string UP or DOWN, the way the stack grows
----@return string point the notice's own point that attaches to the anchor
----@return integer sign 1 when growing up, -1 when growing down
-function Notice:Place(anchor, direction)
-	local side = anchor:match("LEFT") or anchor:match("RIGHT") or ""
-
-	if direction == "UP" then
-		return "BOTTOM" .. side, 1
-	end
-
-	return "TOP" .. side, -1
+---@return LBLevelUpSettings
+local function Settings()
+	return LB.Profile:Get("party.levelUp")
 end
 
 ---@return Region? target the XP bar in independent mode, else the group; either is placed even while hidden
@@ -129,6 +52,35 @@ local function Target()
 	return group.frame
 end
 
+---@return LBNoticeAnchor?
+local function Anchor()
+	local placement = Settings()
+
+	if placement.detached then
+		return NoticeStack:BoxAnchor(Notice.box, placement.direction)
+	end
+
+	local target = Target()
+
+	if not target then
+		return nil
+	end
+
+	local point, sign = NoticeStack:Place(placement.anchor, placement.direction)
+
+	return {
+		point = point,
+		relativeTo = target,
+		relativePoint = placement.anchor,
+		x = placement.x,
+		y = placement.y + sign * GAP,
+		sign = sign,
+	}
+end
+
+Notice.stack = NoticeStack:Create(Anchor)
+Notice.box = NoticeStack:CreateBox("LevelboundLevelUpNotices")
+
 ---@param frame Frame
 local function Build(frame)
 	if frame.text then
@@ -139,123 +91,56 @@ local function Build(frame)
 	frame.text:SetPoint("CENTER")
 end
 
----@param frame Frame
-local function Style(frame)
-	local style = LB.Profile:Get("party.levelUp.text")
+---@param fontString FontString
+local function Font(fontString)
+	local style = Settings().text
 	local path = LB.Media:FetchOrDefault("font", style.font)
 
 	if path then
-		frame.text:SetFont(path, style.size, OUTLINES[style.outline] or "")
+		fontString:SetFont(path, style.size, OUTLINES[style.outline] or "")
 	end
+end
 
-	LB:SetPixelSize(frame, math.max(frame.text:GetStringWidth(), 1), style.size)
+---@param fontString FontString
+---@return number
+local function LineHeight(fontString)
+	return math.max(fontString:GetStringHeight(), Settings().text.size)
 end
 
 ---@param frame Frame
-local function Paint(frame)
-	local target = Notice.target
-	local placement = Notice.placement
-
-	if not target or not placement then
-		return
-	end
-
-	local point, sign = Notice:Place(placement.anchor, placement.direction)
-	local rise, alpha = Notice:Keyframe(frame.elapsed)
-
-	if frame.evicted then
-		alpha = alpha * (1 - math.min(frame.evicted / EVICT, 1))
-	end
-
-	frame:ClearAllPoints()
-	frame:SetPoint(point, target, placement.anchor, placement.x, placement.y + sign * (GAP + frame.offset + rise))
-	frame:SetAlpha(alpha)
+local function Style(frame)
+	Font(frame.text)
+	LB:SetPixelSize(frame, math.max(frame.text:GetStringWidth(), 1), LineHeight(frame.text))
 end
 
-function Notice:Layout()
-	local heights = {}
+---@param entry { class: string, level: integer }
+---@return string name coloured by class
+local function SampleName(entry)
+	local name = LOCALIZED_CLASS_NAMES_MALE and LOCALIZED_CLASS_NAMES_MALE[entry.class] or entry.class
 
-	for index, frame in ipairs(self.active) do
-		heights[index] = frame:GetHeight()
-	end
-
-	local targets = self:Slots(heights)
-	local beyond = 0
-
-	for index, frame in ipairs(self.active) do
-		frame.target = targets[index]
-		beyond = targets[index] + frame:GetHeight() + SPACING
-	end
-
-	for _, frame in ipairs(self.leaving) do
-		frame.target = math.max(beyond, frame.target)
-	end
-
-	self.target = Target()
-	self.placement = LB.Profile:Get("party.levelUp")
-
-	for _, frame in ipairs(self.active) do
-		Paint(frame)
-	end
-
-	for _, frame in ipairs(self.leaving) do
-		Paint(frame)
-	end
+	return LB.LevelUp:ColoredName({ key = entry.class, name = name, class = entry.class, level = entry.level })
 end
 
----@param list Frame[]
----@param frame Frame
----@return boolean removed
-local function Remove(list, frame)
-	for index, entry in ipairs(list) do
-		if entry == frame then
-			table.remove(list, index)
+function Notice:PlaceBox()
+	local settings = Settings()
+	local measure = self.box.measure
+	local width = 1
 
-			return true
-		end
+	Font(measure)
+
+	for _, entry in ipairs(SAMPLE) do
+		measure:SetFormattedText(LB.L["%s reached level %d"], SampleName(entry), entry.level)
+		width = math.max(width, measure:GetStringWidth())
 	end
 
-	return false
-end
-
----@param frame Frame
-local function Finish(frame)
-	Remove(Notice.active, frame)
-	Remove(Notice.leaving, frame)
-	Notice.pool:Release(frame)
-	Notice:Layout()
-end
-
----@param frame Frame
----@param delta number
-local function OnUpdate(frame, delta)
-	frame.elapsed = frame.elapsed + delta
-	frame.offset = Notice:Ease(frame.offset, frame.target, delta)
-
-	if frame.evicted then
-		frame.evicted = frame.evicted + delta
-	end
-
-	if frame.elapsed >= DURATION or (frame.evicted and frame.evicted >= EVICT) then
-		Finish(frame)
-
-		return
-	end
-
-	Paint(frame)
+	NoticeStack:PlaceBox(self.box, settings.screen, width, NoticeStack:BoxHeight(LineHeight(measure)), -1)
 end
 
 ---@param name string the member's name, already class-coloured
 ---@param level integer
-function Notice:Show(name, level)
-	if #self.active >= MAX then
-		local oldest = table.remove(self.active)
-
-		oldest.evicted = 0
-		self.leaving[#self.leaving + 1] = oldest
-	end
-
-	local frame = self.pool:Acquire()
+---@param held boolean? stays on screen, for edit mode
+function Notice:Show(name, level, held)
+	local frame = self.stack:Acquire()
 
 	Build(frame)
 
@@ -264,28 +149,59 @@ function Notice:Show(name, level)
 	frame:SetFrameStrata(LB.Profile:Get("layout.strata") or "LOW")
 	Style(frame)
 
-	frame.elapsed = 0
-	frame.offset = 0
-	frame.target = 0
-	table.insert(self.active, 1, frame)
+	if Settings().detached then
+		self:PlaceBox()
+	end
 
-	frame:SetScript("OnUpdate", OnUpdate)
-	frame:Show()
-
-	self:Layout()
+	self.stack:Push(frame, held)
 end
 
 function Notice:ReleaseAll()
-	self.pool:ReleaseAll()
-	wipe(self.active)
-	wipe(self.leaving)
+	self.stack:ReleaseAll()
 end
 
 ---@return boolean
 local function Shown()
-	local settings = LB.Profile:Get("party.levelUp")
+	local settings = Settings()
 
 	return settings ~= nil and settings.enabled == true and settings.onScreen == true
+end
+
+---@return Frame? box the detached stack's box, placed, or nil while the notices sit on the bars
+function Notice:DetachedBox()
+	if not Shown() or not Settings().detached then
+		return nil
+	end
+
+	self:PlaceBox()
+
+	return self.box
+end
+
+---@param position LBFramePosition
+function Notice:SavePosition(position)
+	LB.Profile:Set("party.levelUp.screen", position)
+end
+
+---@param editing boolean
+function Notice:SetEditing(editing)
+	if self.editing == editing then
+		return
+	end
+
+	self.editing = editing
+
+	self:ReleaseAll()
+
+	if not editing or not self:DetachedBox() then
+		return
+	end
+
+	for index = NoticeStack.MAX, 1, -1 do
+		local entry = SAMPLE[index]
+
+		self:Show(SampleName(entry), entry.level, true)
+	end
 end
 
 function Notice:ShowSample()
@@ -304,12 +220,8 @@ function Notice:ShowSample()
 	self.sampleIndex = self.sampleIndex % #SAMPLE + 1
 
 	local entry = SAMPLE[self.sampleIndex]
-	local name = LOCALIZED_CLASS_NAMES_MALE and LOCALIZED_CLASS_NAMES_MALE[entry.class] or entry.class
 
-	self:Show(
-		LB.LevelUp:ColoredName({ key = entry.class, name = name, class = entry.class, level = entry.level }),
-		entry.level
-	)
+	self:Show(SampleName(entry), entry.level)
 end
 
 function Notice:Preview()
@@ -346,7 +258,7 @@ function Notice:ClearPreview()
 end
 
 Callbacks:Register("Settings", Notice, function(_, path)
-	if type(path) ~= "string" or not path:find("^party") then
+	if type(path) == "string" and not path:find("^party") then
 		return
 	end
 
@@ -356,15 +268,19 @@ Callbacks:Register("Settings", Notice, function(_, path)
 		return
 	end
 
-	if path:find("^party%.levelUp%.text") then
-		for _, frame in ipairs(Notice.active) do
+	if path == nil or path:find("^party%.levelUp%.text") then
+		for _, frame in ipairs(Notice.stack.active) do
 			Style(frame)
 		end
 
-		for _, frame in ipairs(Notice.leaving) do
+		for _, frame in ipairs(Notice.stack.leaving) do
 			Style(frame)
 		end
 	end
 
-	Notice:Layout()
+	if Settings().detached then
+		Notice:PlaceBox()
+	end
+
+	Notice.stack:Layout()
 end)

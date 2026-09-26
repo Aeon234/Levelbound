@@ -32,7 +32,9 @@ local HOVER_FADE = 0.5
 
 local TOOLBAR_INSET = 6
 local SLOT_MARGIN = 4
-local SLOT_OFFSETS = { TOP = -TOOLBAR_INSET, BOTTOM = TOOLBAR_INSET, CENTER = 0 }
+local BOTTOM_RAISE = 200
+local SCAN_STEP = 16
+local SLOT_OFFSETS = { TOP = -TOOLBAR_INSET, BOTTOM = BOTTOM_RAISE, CENTER = 0 }
 local HOVER_LEVEL = 100
 
 local EXIT_POPUP = "LEVELBOUND_EDIT_EXIT"
@@ -151,7 +153,7 @@ end
 ---@field hidden boolean the settings window is in front of the layout
 ---@field closing boolean? the layout is fading out after Save or Exit
 ---@field dragging boolean? a mover is being dragged, so the toolbar stands aside
----@field toolbarSlot "TOP" | "BOTTOM" | "CENTER" | nil where the toolbar sits, away from the bars
+---@field toolbarSlot string? where the toolbar sits, as point and offsets, away from the movers
 ---@field fromSettings boolean? the session began from the settings window, so it ends there too
 ---@field previewAll boolean? Preview All Bars on for Independent mode
 ---@field snapshot LBProfileData? the profile as it was when the session began
@@ -467,6 +469,8 @@ function EditMode:HideLayout(keepToolbar)
 		mover:Hide()
 	end
 
+	LB.LevelUpNotice:SetEditing(false)
+	LB.Gain:SetEditing(false)
 	LB.EditPanel:Hide()
 
 	if self.keyboard then
@@ -512,7 +516,8 @@ function EditMode:FadeIn()
 end
 
 ---@return LBEditTarget[]
-function EditMode:Targets()
+---@return table[] targets the bars' movers
+local function BarTargets()
 	local layout = LB.Profile:Get("layout")
 	local group = LB.BarGroup.frame
 	local targets = {}
@@ -543,12 +548,50 @@ function EditMode:Targets()
 	return targets
 end
 
+-- Notices detached from the bars, each one stack in its own box.
+local NOTICES = {
+	{ owner = "LevelUpNotice", label = L["Level-Up Notices"] },
+	{ owner = "Gain", label = L["Gain Indicator"] },
+}
+
+---@param key string
+---@return (LBLevelUpNotice | LBGain)? owner the notice a mover key belongs to
+local function NoticeFor(key)
+	for _, notice in ipairs(NOTICES) do
+		local owner = LB[notice.owner]
+
+		if owner.moverKey == key then
+			return owner
+		end
+	end
+
+	return nil
+end
+
+function EditMode:Targets()
+	local targets = BarTargets()
+
+	for _, notice in ipairs(NOTICES) do
+		local owner = LB[notice.owner]
+		local box = owner:DetachedBox()
+
+		if box then
+			targets[#targets + 1] = { key = owner.moverKey, label = notice.label, target = box, fixed = false }
+		end
+	end
+
+	return targets
+end
+
 function EditMode:RefreshMovers()
 	if not self:Showing() then
 		return
 	end
 
 	local seen = {}
+
+	LB.LevelUpNotice:SetEditing(true)
+	LB.Gain:SetEditing(true)
 
 	for _, target in ipairs(self:Targets()) do
 		local mover = self.movers[target.key]
@@ -619,7 +662,32 @@ function EditMode:SlotTaken(left, bottom, width, height)
 	return false
 end
 
----Keeps the toolbar off the bars: at the top unless a bar is there, then the bottom, then the screen's centre.
+---@param width number
+---@param height number
+---@return number? left a spot no mover covers, scanning down the centre, then the left and right edges
+---@return number? bottom
+function EditMode:FreeSpot(width, height)
+	local screenWidth, screenHeight = Screen()
+	local pixel = Pixel()
+	local columns = { (screenWidth - width) / 2, TOOLBAR_INSET, screenWidth - width - TOOLBAR_INSET }
+
+	for _, left in ipairs(columns) do
+		local bottom = screenHeight - TOOLBAR_INSET - height
+
+		while bottom >= TOOLBAR_INSET do
+			if not self:SlotTaken(left, bottom, width, height) then
+				return LB.Placement:ToPixel(left, pixel), LB.Placement:ToPixel(bottom, pixel)
+			end
+
+			bottom = bottom - SCAN_STEP
+		end
+	end
+
+	return nil, nil
+end
+
+---Keeps the toolbar off the movers: at the top, the screen's centre or raised off the bottom, whichever is free
+---first, else the first free spot anywhere; a screen with none left keeps it raised off the bottom.
 function EditMode:PlaceToolbar()
 	local toolbar = self.toolbar
 
@@ -629,25 +697,44 @@ function EditMode:PlaceToolbar()
 
 	local screenWidth, screenHeight = Screen()
 	local width, height = toolbar:GetWidth(), toolbar:GetHeight()
-	local left = (screenWidth - width) / 2
-	local slot = "TOP"
+	local centred = (screenWidth - width) / 2
+	local slots = {
+		{ point = "TOP", bottom = screenHeight - TOOLBAR_INSET - height },
+		{ point = "CENTER", bottom = (screenHeight - height) / 2 },
+		{ point = "BOTTOM", bottom = BOTTOM_RAISE },
+	}
+	local point, x, y, bottom = "BOTTOM", 0, SLOT_OFFSETS.BOTTOM, BOTTOM_RAISE
 
-	if self:SlotTaken(left, screenHeight - TOOLBAR_INSET - height, width, height) then
-		slot = self:SlotTaken(left, TOOLBAR_INSET, width, height) and "BOTTOM" or "CENTER"
+	for _, slot in ipairs(slots) do
+		if not self:SlotTaken(centred, slot.bottom, width, height) then
+			point, x, y, bottom = slot.point, 0, SLOT_OFFSETS[slot.point], slot.bottom
+
+			break
+		end
 	end
 
-	if slot == self.toolbarSlot then
+	if point == "BOTTOM" and self:SlotTaken(centred, BOTTOM_RAISE, width, height) then
+		local left, free = self:FreeSpot(width, height)
+
+		if left and free then
+			point, x, y, bottom = "BOTTOMLEFT", left, free, free
+		end
+	end
+
+	local placed = ("%s:%s:%s"):format(point, x, y)
+
+	if placed == self.toolbarSlot then
 		return
 	end
 
-	self.toolbarSlot = slot
+	self.toolbarSlot = placed
 
 	toolbar:ClearAllPoints()
-	toolbar:SetPoint(slot, UIParent, slot, 0, SLOT_OFFSETS[slot])
+	toolbar:SetPoint(point, UIParent, point, x, y)
 
 	toolbar.resume:ClearAllPoints()
 
-	if slot == "BOTTOM" then
+	if bottom < screenHeight / 2 then
 		toolbar.resume:SetPoint("BOTTOM", toolbar, "TOP", 0, GAP)
 	else
 		toolbar.resume:SetPoint("TOP", toolbar, "BOTTOM", 0, -GAP)
@@ -841,7 +928,11 @@ function EditMode:Commit(key, left, bottom)
 
 	self:MoveTarget(mover, left, bottom)
 
-	if key == "group" then
+	local notice = NoticeFor(key)
+
+	if notice then
+		notice:SavePosition(LB.Placement:Anchor(left, bottom, width, height, screenWidth, screenHeight))
+	elseif key == "group" then
 		local lock = layout.mode == "CONNECTED" and LB.Placement:StackLock(layout.growth) or nil
 		local position = LB.Placement:Anchor(left, bottom, width, height, screenWidth, screenHeight, lock)
 

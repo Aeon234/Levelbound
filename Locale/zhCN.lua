@@ -101,6 +101,8 @@ local L = select(2, ...).L
 -- L["Down"] = "Down"
 -- L["Horizontal Offset"] = "Horizontal Offset"
 -- L["Vertical Offset"] = "Vertical Offset"
+-- L["Detach from Bar"] = "Detach from Bar"
+-- L["Drag it into place in Edit Mode."] = "Drag it into place in Edit Mode."
 -- L["Fade Until Hovered"] = "Fade Until Hovered"
 -- L["Faded Opacity"] = "Faded Opacity"
 
@@ -205,6 +207,13 @@ local L = select(2, ...).L
 -- L["Dimmed Opacity"] = "Dimmed Opacity"
 -- L["Hiding"] = "Hiding"
 -- L["Hide the Bars in Combat"] = "Hide the Bars in Combat"
+
+-- Detached gain indicator, naming each progress type (UI/Gain.lua)
+-- L["Exp"] = "Exp"
+-- L["Pet Exp"] = "Pet Exp"
+-- L["Rep"] = "Rep"
+-- L["House Exp"] = "House Exp"
+-- L["Endeavor"] = "Endeavor"
 
 -- Settings window: Gain Indicator
 -- L["Gain Indicator"] = "Gain Indicator"

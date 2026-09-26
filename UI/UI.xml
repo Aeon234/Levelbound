@@ -1,6 +1,7 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/">
 	<Script file="TextSlot.lua" />
 	<Script file="Marker.lua" />
+	<Script file="NoticeStack.lua" />
 	<Script file="Gain.lua" />
 	<Script file="LevelUpNotice.lua" />
 	<Script file="Tooltip.lua" />
