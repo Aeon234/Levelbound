@@ -531,7 +531,8 @@ local function BarTargets()
 			local bar = LB.BarGroup.bars[id]
 
 			if bar and bar:IsShown() then
-				targets[#targets + 1] = { key = id, label = TypeLabel(id), target = bar, fixed = false }
+				targets[#targets + 1] =
+					{ key = id, label = TypeLabel(id), target = bar, fixed = false, outline = bar.border }
 			end
 		end
 
@@ -543,6 +544,7 @@ local function BarTargets()
 		label = layout.mode == "CONNECTED" and L["Bar Stack"] or L["Progress Bars"],
 		target = group,
 		fixed = layout.fullscreen ~= "OFF",
+		outline = LB.BarGroup.border,
 	}
 
 	return targets
@@ -601,7 +603,7 @@ function EditMode:RefreshMovers()
 			self.movers[target.key] = mover
 		end
 
-		mover:Attach(target.target, target.fixed)
+		mover:Attach(target.target, target.fixed, target.outline)
 		mover:Sync(Pixel())
 		mover:SetLabel(target.label)
 		mover:Show()
@@ -901,6 +903,8 @@ function EditMode:MoveTarget(mover, left, bottom)
 		return
 	end
 
+	left, bottom = mover:TargetPoint(left, bottom)
+
 	target:ClearAllPoints()
 	target:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", left, bottom)
 	mover:Sync(Pixel())
@@ -927,6 +931,9 @@ function EditMode:Commit(key, left, bottom)
 	bottom = LB.Placement:ToPixel(Clamp(bottom, 0, screenHeight - height), pixel)
 
 	self:MoveTarget(mover, left, bottom)
+
+	left, bottom = mover:TargetPoint(left, bottom)
+	width, height = mover.target:GetSize()
 
 	local notice = NoticeFor(key)
 

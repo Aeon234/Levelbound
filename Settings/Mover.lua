@@ -37,6 +37,7 @@ end
 ---@field edges Texture[]
 ---@field label FontString
 ---@field target Frame?
+---@field outline Frame? border
 ---@field fixed boolean? pinned to a screen edge, so it cannot be dragged
 ---@field drag LBMoverDrag?
 ---@field selected boolean?
@@ -46,12 +47,47 @@ LB.MoverMixin = MoverMixin
 
 ---@param target Frame
 ---@param fixed boolean
-function MoverMixin:Attach(target, fixed)
+---@param outline Frame? border
+function MoverMixin:Attach(target, fixed, outline)
 	self.target = target
 	self.fixed = fixed
+	self.outline = outline
 end
 
----Covers the target with edges on whole physical pixels, so the one-pixel border stays one pixel wherever it sits.
+---@return number left how far the shown border reaches past each side of the target
+---@return number bottom
+---@return number right
+---@return number top
+function MoverMixin:Padding()
+	local target, outline = self.target, self.outline
+
+	if not target or not outline or not outline:IsShown() then
+		return 0, 0, 0, 0
+	end
+
+	local left, bottom, width, height = target:GetRect()
+	local outerLeft, outerBottom, outerWidth, outerHeight = outline:GetRect()
+
+	if not left or not outerLeft then
+		return 0, 0, 0, 0
+	end
+
+	return math.max(left - outerLeft, 0),
+		math.max(bottom - outerBottom, 0),
+		math.max(outerLeft + outerWidth - left - width, 0),
+		math.max(outerBottom + outerHeight - bottom - height, 0)
+end
+
+---@param left number the mover's left edge, border included
+---@param bottom number
+---@return number left where the target's own edge goes
+---@return number bottom
+function MoverMixin:TargetPoint(left, bottom)
+	local padLeft, padBottom = self:Padding()
+
+	return left + padLeft, bottom + padBottom
+end
+
 ---@param pixel number the size of one physical pixel in UI units
 function MoverMixin:Sync(pixel)
 	if not self.target then
@@ -131,8 +167,12 @@ function MoverMixin:Rect()
 	end
 
 	local left, bottom, width, height = target:GetRect()
+	local padLeft, padBottom, padRight, padTop = self:Padding()
 
-	return left or 0, bottom or 0, width or 0, height or 0
+	return (left or 0) - padLeft,
+		(bottom or 0) - padBottom,
+		(width or 0) + padLeft + padRight,
+		(height or 0) + padBottom + padTop
 end
 
 ---@param button string
