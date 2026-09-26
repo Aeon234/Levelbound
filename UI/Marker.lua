@@ -126,6 +126,7 @@ local function Reset(_, frame)
 	LB:StopTween(frame)
 
 	frame.member = nil
+	frame.bar = nil
 	frame.placements = nil
 	frame.x = nil
 	frame.style = nil
@@ -187,7 +188,7 @@ local function OnEnter(frame)
 		return
 	end
 
-	GameTooltip:SetOwner(frame, "ANCHOR_CURSOR")
+	GameTooltip:SetOwner(frame, "ANCHOR_NONE")
 	GameTooltip:ClearLines()
 
 	for _, placement in ipairs(placements) do
@@ -198,11 +199,12 @@ local function OnEnter(frame)
 		end
 	end
 
-	GameTooltip:Show()
+	LB.Tooltip:Follow(frame, frame.bar and LB.Tooltip:Clearance(frame.bar))
 end
 
-local function OnLeave()
-	GameTooltip:Hide()
+---@param frame Frame
+local function OnLeave(frame)
+	LB.Tooltip:Hide(frame)
 end
 
 ---@param frame Frame
@@ -265,6 +267,7 @@ local function Draw(frame, bar, placement, placements)
 	Build(frame)
 
 	frame.member = member
+	frame.bar = bar
 	frame.placements = placements
 
 	local tall = style == "TICK"

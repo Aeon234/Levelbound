@@ -427,6 +427,34 @@ function TextSlot:SetHovered(bar, hovered)
 	self:UpdateTicker()
 end
 
+---@param frame Frame a bar or the group
+---@return number? top the highest shown text of that frame's slots, in screen pixels
+---@return number? bottom the lowest
+function TextSlot:Extent(frame)
+	local host = self.hosts[frame]
+	local top, bottom
+
+	if not host then
+		return nil, nil
+	end
+
+	for _, entry in pairs(host.entries) do
+		local fontString = entry.fontString
+
+		if fontString:IsVisible() then
+			local scale = fontString:GetEffectiveScale()
+			local stringTop, stringBottom = fontString:GetTop(), fontString:GetBottom()
+
+			if stringTop and stringBottom then
+				top = math.max(top or stringTop * scale, stringTop * scale)
+				bottom = math.min(bottom or stringBottom * scale, stringBottom * scale)
+			end
+		end
+	end
+
+	return top, bottom
+end
+
 ---@param editing boolean
 function TextSlot:SetEditing(editing)
 	if self.editing == editing then

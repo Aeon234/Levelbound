@@ -190,7 +190,7 @@ function BarMixin:OnLeave()
 
 	LB.Visibility:SetHovered(nil)
 	LB.TextSlot:SetHovered(self, false)
-	LB.Tooltip:Hide()
+	LB.Tooltip:Hide(self)
 end
 
 ---@param button string
