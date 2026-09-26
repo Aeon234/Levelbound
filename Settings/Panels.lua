@@ -603,6 +603,7 @@ Panels.sections = {
 			Header(L["Announcements"]),
 			Check(L["Announce My Level-Ups to Party"], "party.announce.levelUpParty"),
 			Check(L["Announce My Level-Ups to Guild"], "party.announce.levelUpGuild"),
+			Check(L["Announce Run Summaries to Party"], "party.announce.runParty"),
 		},
 	},
 	{

@@ -94,6 +94,8 @@ L["%dm"] = "%dm"
 L["%ds"] = "%ds"
 L["Reached level %d in %s"] = "Reached level %d in %s"
 L["Reached level %d"] = "Reached level %d"
+L["This run: +%s XP (%s of a level) in %s"] = "This run: +%s XP (%s of a level) in %s"
+L["%s XP/hr"] = "%s XP/hr"
 
 -- Bar text tags (Core/Tags.lua, looked up as "tag." .. tag), shown in the editor's tag panel
 L["tag.level"] = "Level"
@@ -299,6 +301,7 @@ L["Bottom Right"] = "Bottom Right"
 L["Announcements"] = "Announcements"
 L["Announce My Level-Ups to Party"] = "Announce My Level-Ups to Party"
 L["Announce My Level-Ups to Guild"] = "Announce My Level-Ups to Guild"
+L["Announce Run Summaries to Party"] = "Announce Run Summaries to Party"
 
 -- Settings window: Profiles, and its popups (Settings/Settings.lua)
 L["Profiles"] = "Profiles"

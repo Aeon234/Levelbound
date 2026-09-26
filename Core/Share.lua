@@ -15,8 +15,10 @@ local CHANNELS = {
 
 ---@class LBShare
 ---@field PREFIX string starts every message others see
+---@field SEPARATOR string between a message's parts
 local Share = {
 	PREFIX = PREFIX,
+	SEPARATOR = SEPARATOR,
 }
 LB.Share = Share
 
