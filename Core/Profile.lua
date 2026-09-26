@@ -138,6 +138,7 @@ local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 ---@field style "DOT" | "TICK" | "NOTCH" | "DIAMOND"
 ---@field size number
 ---@field levelUp LBLevelUpSettings
+---@field announce { levelUpParty: boolean, levelUpGuild: boolean, runParty: boolean } messages sent for the player
 
 ---@class LBDatabase
 ---@field version integer
@@ -243,6 +244,7 @@ local defaults = {
 		},
 	},
 	party = {
+		announce = { levelUpParty = true, levelUpGuild = false, runParty = false },
 		markers = true,
 		opacity = {
 			matchBar = true,

@@ -600,6 +600,9 @@ Panels.sections = {
 			Enabled(Dropdown(L["Font"], "party.levelUp.text.font", MediaOptions("font")), LevelUpOnScreen),
 			Enabled(Slider(L["Size"], "party.levelUp.text.size", 6, 32, 1), LevelUpOnScreen),
 			Enabled(Dropdown(L["Outline"], "party.levelUp.text.outline", OUTLINES), LevelUpOnScreen),
+			Header(L["Announcements"]),
+			Check(L["Announce My Level-Ups to Party"], "party.announce.levelUpParty"),
+			Check(L["Announce My Level-Ups to Guild"], "party.announce.levelUpGuild"),
 		},
 	},
 	{

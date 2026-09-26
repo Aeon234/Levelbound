@@ -4,6 +4,7 @@ local LB = select(2, ...)
 ---@field total number? seconds at the last reply
 ---@field level number? seconds at this level at the last reply
 ---@field stamp number? GetTime() when the values above were taken
+---@field completed number? seconds the level just finished took, kept across the reset for announcing it
 ---@field requested boolean
 local TimePlayed = {
 	requested = false,
@@ -38,6 +39,8 @@ function TimePlayed:OnReply(total, level)
 end
 
 function TimePlayed:OnLevelUp()
+	self.completed = self:LevelTime()
+
 	if not self.stamp then
 		return
 	end

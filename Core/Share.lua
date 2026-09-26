@@ -14,7 +14,10 @@ local CHANNELS = {
 }
 
 ---@class LBShare
-local Share = {}
+---@field PREFIX string starts every message others see
+local Share = {
+	PREFIX = PREFIX,
+}
 LB.Share = Share
 
 ---@param id string a progress type
