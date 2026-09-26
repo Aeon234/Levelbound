@@ -37,6 +37,15 @@ function Border:IsTextured(style)
 end
 
 ---@param style string
+---@return integer? pixels the line width of a flat style
+---@return string? path the edge file of a textured style
+function Border:Parts(style)
+	local name = EDGES[style]
+
+	return PIXELS[style], name and LB.Media:Fetch("border", name) or nil
+end
+
+---@param style string
 ---@param border { color: LBColor, customColor: boolean? }
 ---@return LBColor
 function Border:Color(style, border)

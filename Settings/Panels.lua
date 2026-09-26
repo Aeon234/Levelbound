@@ -81,6 +81,11 @@ local function Enabled(row, predicate)
 end
 
 ---@return boolean
+local function DividersOn()
+	return LB.Profile:Get("appearance.dividers.enabled") == true
+end
+
+---@return boolean
 local function BorderTextured()
 	return LB.Border:IsTextured(LB.Profile:Get("appearance.border.style"))
 end
@@ -323,6 +328,12 @@ local appearance = {
 		return not BorderTextured() or LB.Profile:Get("appearance.border.customColor") == true
 	end),
 	Alpha(L["Border Opacity"], "appearance.border.color"),
+	Header(L["XP Dividers"]),
+	Check(L["Show XP Dividers"], "appearance.dividers.enabled"),
+	Enabled(Check(L["Custom Color"], "appearance.dividers.customColor"), DividersOn),
+	Enabled(Color(L["Divider Color"], "appearance.dividers.color"), function()
+		return DividersOn() and LB.Profile:Get("appearance.dividers.customColor") == true
+	end),
 	Header(L["Spark"]),
 	Check(L["Progress Spark"], "appearance.spark.enabled"),
 	Color(L["Spark Color"], "appearance.spark.color"),

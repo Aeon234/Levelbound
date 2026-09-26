@@ -3,7 +3,7 @@ local LB = select(2, ...)
 local PADDING = 4
 local GAP = 2
 local SPACING = 6
-local LAYER = 6
+local LAYER = 7
 local TICK = 1
 
 local OUTLINES = {
@@ -435,6 +435,10 @@ function TextSlot:SetEditing(editing)
 
 	self.editing = editing
 
+	self:Refit()
+end
+
+function TextSlot:Refit()
 	for _, host in pairs(self.hosts) do
 		if host == self.group then
 			Show(host, LB.Visibility.state.hovered ~= nil)

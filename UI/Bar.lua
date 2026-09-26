@@ -27,6 +27,13 @@ local SHIMMER = 1.4
 local SHIMMER_WIDTH = 90
 local SHIMMER_ALPHA = 0.55
 
+local LEVEL_DIVIDERS = LEVEL_FILL + 2
+local DIVIDERS = 9
+local DIVIDER_MIN_SEGMENT = 16
+local DIVIDER_EDGE_SLICE = 0.125
+local NOTCH = { 0, 0, 0, 0.5 }
+local DIVIDED = { xp = true, petxp = true }
+
 ---@class LBBar : Frame
 ---@field id string
 ---@field clip Frame reveals the full-width fill art; only its width changes, so the art never stretches
@@ -204,6 +211,7 @@ end
 function BarMixin:SetGeometry(width, height)
 	LB:SetPixelSize(self, width, height)
 	self:PaintFill()
+	self:PlaceDividers()
 end
 
 function BarMixin:PaintFill()
@@ -298,7 +306,92 @@ function BarMixin:ApplyAppearance()
 	)
 
 	self:ApplySpark(appearance.spark)
+	self:ApplyDividers()
 	LB.TextSlot:ApplyBar(self)
+end
+
+function BarMixin:ApplyDividers()
+	if not DIVIDED[self.id] then
+		if self.dividers then
+			self.dividers:Hide()
+		end
+
+		return
+	end
+
+	local appearance = LB.Profile:Get("appearance")
+	local settings = appearance.dividers
+	local border = appearance.border
+	local pixels, path = LB.Border:Parts(border.style)
+	local color = LB.Border:Color(border.style, border)
+
+	if settings.customColor then
+		color = settings.color
+	elseif not pixels and not path then
+		color = NOTCH
+	end
+
+	if not self.dividers then
+		self.dividers = CreateFrame("Frame", nil, self)
+		self.dividers:SetAllPoints(self)
+		self.dividers.lines = {}
+
+		for index = 1, DIVIDERS do
+			self.dividers.lines[index] = self.dividers:CreateTexture(nil, "OVERLAY")
+		end
+	end
+
+	self.dividers:SetFrameLevel(self:GetFrameLevel() + LEVEL_DIVIDERS)
+	self.dividers.enabled = settings.enabled
+	self.dividers.pixels = pixels or 1
+	self.dividers.textured = path ~= nil
+
+	for _, line in ipairs(self.dividers.lines) do
+		if path then
+			line:SetTexture(path)
+			line:SetTexCoord(0, DIVIDER_EDGE_SLICE, 0, 1)
+		else
+			line:SetTexture(FLAT)
+			line:SetTexCoord(0, 1, 0, 1)
+		end
+
+		line:SetVertexColor(color[1], color[2], color[3], color[4] or 1)
+	end
+
+	self:PlaceDividers()
+end
+
+function BarMixin:PlaceDividers()
+	local dividers = self.dividers
+
+	if not dividers then
+		return
+	end
+
+	local width, height = self:GetSize()
+	local shown = dividers.enabled and width / (DIVIDERS + 1) >= DIVIDER_MIN_SEGMENT
+
+	dividers:SetShown(shown)
+
+	if not shown then
+		return
+	end
+
+	local pixel = LB:Pixel(self)
+	local lineWidth = dividers.pixels * pixel
+
+	if dividers.textured then
+		lineWidth = LB.Placement:ToPixel(LB.Border:EdgeMetrics(height), pixel)
+	end
+
+	for index, line in ipairs(dividers.lines) do
+		local x = LB.Placement:ToPixel(width * index / (DIVIDERS + 1) - lineWidth / 2, pixel)
+
+		line:ClearAllPoints()
+		line:SetPoint("TOPLEFT", self, "TOPLEFT", x, 0)
+		line:SetPoint("BOTTOMLEFT", self, "BOTTOMLEFT", x, 0)
+		line:SetWidth(math.max(lineWidth, pixel))
+	end
 end
 
 ---@param spark { enabled: boolean, color: LBColor }

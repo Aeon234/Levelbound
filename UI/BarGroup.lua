@@ -380,6 +380,7 @@ end
 function BarGroup:Settled()
 	self.settling = false
 
+	LB.TextSlot:Refit()
 	LB.Gain:OnLayoutSettled()
 end
 
