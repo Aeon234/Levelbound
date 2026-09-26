@@ -48,8 +48,6 @@ local SHIMMER_ALPHA = 0.55
 ---@field pending number[]? target the sweep settles on
 ---@field hovered boolean?
 ---@field sparkEnabled boolean?
----@field sparkColor LBColor? the spark's custom colour; nil matches the fill
----@field fillColors LBColor[]? the fill's first and, for a gradient, second colour
 ---@field heat number flare brightness, hot while the fill grows and resting otherwise
 ---@field growing boolean? a gain or level-up is moving the fill
 ---@field shimmerElapsed number?
@@ -213,10 +211,6 @@ function BarMixin:PaintFill()
 
 	self.clip:SetShown(fill > 0)
 	self.clip:SetWidth(math.max(fill * self:GetWidth(), 0.001))
-
-	if not self.sparkColor then
-		self:PaintSpark()
-	end
 end
 
 ---@return LBColor?
@@ -272,8 +266,6 @@ function BarMixin:ApplyAppearance()
 	local first, second = self:FillColors()
 	local fillTexture = self.fillTexture
 
-	self.fillColors = { first, second }
-
 	fillTexture:SetTexture(texture)
 
 	if second then
@@ -309,35 +301,17 @@ function BarMixin:ApplyAppearance()
 	LB.TextSlot:ApplyBar(self)
 end
 
----@param spark { enabled: boolean, color: LBColor, customColor: boolean }
+---@param spark { enabled: boolean, color: LBColor }
 function BarMixin:ApplySpark(spark)
+	local r, g, b, a = Unpack(spark.color)
+
 	self.sparkEnabled = spark.enabled
-	self.sparkColor = spark.customColor and spark.color or nil
 
 	LB:SetPixelWidth(self.spark, CORE_WIDTH)
-	self:PaintSpark()
-	self:PaintEffects()
-end
-
-function BarMixin:PaintSpark()
-	local r, g, b, a
-
-	if self.sparkColor then
-		r, g, b, a = Unpack(self.sparkColor)
-	else
-		local colors = self.fillColors
-		local first = colors and colors[1] or WHITE
-		local second = colors and colors[2] or first
-		local fill = self.values[1]
-
-		r = first[1] + (second[1] - first[1]) * fill
-		g = first[2] + (second[2] - first[2]) * fill
-		b = first[3] + (second[3] - first[3]) * fill
-		a = 1
-	end
-
 	self.spark:SetVertexColor(r, g, b, a)
 	self.flare:SetGradient("HORIZONTAL", CreateColor(r, g, b, 0), CreateColor(r, g, b, a * FLARE_PEAK))
+
+	self:PaintEffects()
 end
 
 ---@param heat number

@@ -4,7 +4,7 @@ local L = LB.L
 
 local DEFAULT_PROFILE = "Default"
 local FONT = LB.DEFAULT_FONT
-local SCHEMA_VERSION = 3
+local SCHEMA_VERSION = 2
 local EXPORT_FORMAT = 1
 local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 
@@ -82,7 +82,7 @@ local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 ---@field typeColors table<string, LBColor>
 ---@field standingColors table<string, LBColor> overrides on Blizzard's FACTION_BAR_COLORS
 ---@field border { style: string, color: LBColor, customColor: boolean }
----@field spark { enabled: boolean, color: LBColor, customColor: boolean } without customColor it matches the fill
+---@field spark { enabled: boolean, color: LBColor }
 ---@field shimmer boolean sweep a highlight across the fill on each gain
 
 ---@class LBTextSettings
@@ -189,7 +189,7 @@ local defaults = {
 		},
 		standingColors = {},
 		border = { style = "NONE", color = { 1, 1, 1, 1 }, customColor = false },
-		spark = { enabled = true, color = { 1, 1, 1, 1 }, customColor = false },
+		spark = { enabled = true, color = { 1, 1, 1, 1 } },
 		shimmer = true,
 	},
 	text = {
@@ -396,16 +396,6 @@ local migrations = {
 				end
 
 				party.visibility = nil
-			end
-		end
-	end,
-	[3] = function(db)
-		for _, profile in pairs(db.profiles or {}) do
-			local spark = profile.appearance and profile.appearance.spark
-			local color = spark and spark.color
-
-			if color and spark.customColor == nil then
-				spark.customColor = color[1] ~= 1 or color[2] ~= 1 or color[3] ~= 1 or (color[4] or 1) ~= 1
 			end
 		end
 	end,
