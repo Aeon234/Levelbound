@@ -4,7 +4,7 @@ local L = LB.L
 
 local DEFAULT_PROFILE = "Default"
 local FONT = LB.DEFAULT_FONT
-local SCHEMA_VERSION = 1
+local SCHEMA_VERSION = 2
 local EXPORT_FORMAT = 1
 local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 
@@ -118,9 +118,17 @@ local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 ---@field y number
 ---@field text LBLevelUpTextStyle
 
+---@class LBMarkerOpacitySettings
+---@field matchBar boolean
+---@field alpha number
+---@field fadeUntilHovered boolean
+---@field fadedAlpha number
+---@field fullInCombat boolean
+---@field fullWithTarget boolean
+
 ---@class LBPartySettings
 ---@field markers boolean
----@field visibility "ALWAYS" | "HOVER"
+---@field opacity LBMarkerOpacitySettings
 ---@field style "DOT" | "TICK" | "NOTCH" | "DIAMOND"
 ---@field size number
 ---@field levelUp LBLevelUpSettings
@@ -227,7 +235,14 @@ local defaults = {
 	},
 	party = {
 		markers = true,
-		visibility = "ALWAYS",
+		opacity = {
+			matchBar = true,
+			alpha = 1,
+			fadeUntilHovered = false,
+			fadedAlpha = 0.25,
+			fullInCombat = false,
+			fullWithTarget = false,
+		},
 		style = "DOT",
 		size = 8,
 		levelUp = {
@@ -363,7 +378,28 @@ function Profile:ResolveName()
 end
 
 ---@type table<integer, fun(db: LBDatabase)>
-local migrations = {}
+local migrations = {
+	[2] = function(db)
+		for _, profile in pairs(db.profiles or {}) do
+			local party = profile.party
+
+			if party then
+				if party.visibility == "HOVER" then
+					party.opacity = {
+						matchBar = false,
+						alpha = 1,
+						fadeUntilHovered = true,
+						fadedAlpha = 0,
+						fullInCombat = false,
+						fullWithTarget = false,
+					}
+				end
+
+				party.visibility = nil
+			end
+		end
+	end,
+}
 
 ---@param db LBDatabase
 ---@return integer from

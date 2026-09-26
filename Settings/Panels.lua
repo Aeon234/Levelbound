@@ -86,6 +86,11 @@ local function BorderTextured()
 end
 
 ---@return boolean
+local function MarkersSeparate()
+	return LB.Profile:Get("party.opacity.matchBar") ~= true
+end
+
+---@return boolean
 local function LevelUpOn()
 	return LB.Profile:Get("party.levelUp.enabled") == true
 end
@@ -501,10 +506,6 @@ Panels.sections = {
 		rows = {
 			Header(L["Party Markers"]),
 			Check(L["Show Party Markers"], "party.markers"),
-			Dropdown(L["Marker Visibility"], "party.visibility", {
-				{ value = "ALWAYS", label = ALWAYS },
-				{ value = "HOVER", label = L["On Hover"] },
-			}),
 			Dropdown(L["Marker Style"], "party.style", {
 				{ value = "DOT", label = L["Dot"] },
 				{ value = "TICK", label = L["Full-Height Tick"] },
@@ -512,6 +513,13 @@ Panels.sections = {
 				{ value = "DIAMOND", label = L["Diamond"] },
 			}),
 			Slider(L["Marker Size"], "party.size", 4, 24, 1),
+			Header(L["Marker Fading"]),
+			Check(L["Match Bar Opacity"], "party.opacity.matchBar"),
+			Enabled(Slider(L["Marker Opacity"], "party.opacity.alpha", 0, 1, 0.05, true), MarkersSeparate),
+			Enabled(Check(L["Fade Until Hovered"], "party.opacity.fadeUntilHovered"), MarkersSeparate),
+			Enabled(Slider(L["Faded Opacity"], "party.opacity.fadedAlpha", 0, 1, 0.05, true), MarkersSeparate),
+			Enabled(Check(L["Stay Fully Visible in Combat"], "party.opacity.fullInCombat"), MarkersSeparate),
+			Enabled(Check(L["Stay Fully Visible with a Target"], "party.opacity.fullWithTarget"), MarkersSeparate),
 			Header(L["Level-Up Notices"]),
 			Check(L["Show Level-Up Notices"], "party.levelUp.enabled"),
 			Enabled(Check(L["On-Screen Notice"], "party.levelUp.onScreen"), LevelUpOn),

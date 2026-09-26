@@ -127,6 +127,9 @@ local function Reset(_, frame)
 
 	frame.member = nil
 	frame.placements = nil
+	frame.x = nil
+	frame.style = nil
+	frame.barWidth = nil
 end
 
 ---@param bar LBBar
@@ -137,7 +140,14 @@ local function PoolFor(bar)
 	local shown = bar.markerShown or {}
 
 	if not bar.markerPool then
-		bar.markerPool = CreateFramePool("Frame", bar, nil, Reset)
+		bar.markerLayer = CreateFrame("Frame", nil, bar)
+		bar.markerLayer:SetAllPoints(bar)
+		bar.markerLayer:SetScript("OnSizeChanged", function()
+			if bar:IsShown() then
+				LB.Marker:Apply(bar)
+			end
+		end)
+		bar.markerPool = CreateFramePool("Frame", bar.markerLayer, nil, Reset)
 	end
 
 	bar.markerShown = shown
@@ -197,6 +207,51 @@ end
 
 ---@param frame Frame
 ---@param bar LBBar
+---@param x number
+local function Anchor(frame, bar, x)
+	frame:ClearAllPoints()
+
+	if frame.style == "NOTCH" then
+		frame:SetPoint("TOP", bar, "TOPLEFT", x, 0)
+	else
+		frame:SetPoint("CENTER", bar, "LEFT", x, 0)
+	end
+
+	frame.x = x
+end
+
+---@param frame Frame
+---@param bar LBBar
+---@param x number
+---@param style string
+local function Place(frame, bar, x, style)
+	local width = bar:GetWidth()
+	local from = frame.x
+	local glide = from ~= nil
+		and from ~= x
+		and width > 0
+		and frame.style == style
+		and frame.barWidth == width
+		and frame:IsVisible()
+
+	frame.style = style
+	frame.barWidth = width
+
+	LB:StopTween(frame)
+
+	if not glide then
+		Anchor(frame, bar, x)
+
+		return
+	end
+
+	LB:Tween(frame, LB.Bar:FillDuration((x - from) / width), function(eased)
+		Anchor(frame, bar, from + (x - from) * eased)
+	end)
+end
+
+---@param frame Frame
+---@param bar LBBar
 ---@param placement LBMarkerPlacement
 ---@param placements LBMarkerPlacement[]
 local function Draw(frame, bar, placement, placements)
@@ -218,13 +273,7 @@ local function Draw(frame, bar, placement, placements)
 	LB:SetPixelSize(frame, size, markerHeight)
 
 	frame:SetFrameLevel(bar:GetFrameLevel() + 10)
-	frame:ClearAllPoints()
-
-	if style == "NOTCH" then
-		frame:SetPoint("TOP", bar, "TOPLEFT", placement.x, 0)
-	else
-		frame:SetPoint("CENTER", bar, "LEFT", placement.x, 0)
-	end
+	Place(frame, bar, placement.x, style)
 
 	local texture = LB.Media.markerShapes[style]
 
@@ -247,7 +296,7 @@ local function Draw(frame, bar, placement, placements)
 
 	frame:SetAlpha(member.offline and OFFLINE_ALPHA or 1)
 
-	frame:EnableMouse(true)
+	frame:EnableMouse(bar.markerLayer.interactive ~= false)
 	frame:SetScript("OnEnter", OnEnter)
 	frame:SetScript("OnLeave", OnLeave)
 	frame:Show()
@@ -277,6 +326,7 @@ function Marker:Apply(bar)
 		return
 	end
 
+	local created = bar.markerLayer == nil
 	local pool, shown = PoolFor(bar)
 	local party = LB.Profile:Get("party")
 
@@ -321,23 +371,61 @@ function Marker:Apply(bar)
 		Draw(frame, bar, placement, placements)
 	end
 
-	self:SetHovered(bar, bar.hovered == true)
+	if created then
+		self:ApplyOpacity(false)
+	end
 end
 
----@param bar LBBar
----@param hovered boolean
-function Marker:SetHovered(bar, hovered)
-	local shown = bar.markerShown
+---@param animated boolean?
+function Marker:ApplyOpacity(animated)
+	local bar = LB.BarGroup.bars.xp
+	local layer = bar and bar.markerLayer
 
-	if not shown then
+	if not layer then
 		return
 	end
 
-	local visible = self.previewing or LB.Profile:Get("party.visibility") == "ALWAYS" or hovered
+	local opacity = LB.Profile:Get("party.opacity")
+	local alpha = 1
+	local fade = 1
 
-	for _, frame in pairs(shown) do
-		frame:SetShown(visible)
+	if not opacity.matchBar then
+		local visibility = LB.Visibility
+
+		alpha =
+			visibility:ResolveMarkers(opacity, LB.Profile:Get("visibility"), visibility.state, bar.id, self.previewing)
+		fade = bar.markerFade or 1
 	end
+
+	layer:SetIgnoreParentAlpha(not opacity.matchBar)
+	bar.markerAlpha = alpha
+
+	local interactive = alpha > 0
+
+	if layer.interactive ~= interactive then
+		layer.interactive = interactive
+
+		for _, frame in pairs(bar.markerShown) do
+			frame:EnableMouse(interactive)
+		end
+	end
+
+	LB.Visibility:SetAlpha(layer, layer, alpha * fade, animated)
+end
+
+---@param bar LBBar
+---@param factor number
+function Marker:FollowFade(bar, factor)
+	local layer = bar.markerLayer
+
+	bar.markerFade = factor
+
+	if not layer or not layer:IsIgnoringParentAlpha() then
+		return
+	end
+
+	LB:StopTween(layer)
+	layer:SetAlpha((bar.markerAlpha or 1) * factor)
 end
 
 function Marker:Refresh()
@@ -359,6 +447,7 @@ function Marker:Preview()
 	self.sample = self.sample or SampleMembers()
 
 	self:Refresh()
+	self:ApplyOpacity(true)
 end
 
 function Marker:ClearPreview()
@@ -369,6 +458,7 @@ function Marker:ClearPreview()
 	self.previewing = false
 
 	self:Refresh()
+	self:ApplyOpacity(true)
 end
 
 ---@param bar LBBar

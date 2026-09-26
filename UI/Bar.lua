@@ -57,6 +57,9 @@ local SHIMMER_ALPHA = 0.55
 ---@field markerPool any?
 ---@field markers table?
 ---@field markerShown table<string, Frame>?
+---@field markerLayer Frame?
+---@field markerAlpha number?
+---@field markerFade number?
 local BarMixin = {}
 LB.BarMixin = BarMixin
 
@@ -169,7 +172,6 @@ function BarMixin:OnEnter()
 
 	LB.Visibility:SetHovered(self.id)
 	LB.TextSlot:SetHovered(self, true)
-	LB.Marker:SetHovered(self, true)
 
 	if self.snapshot then
 		LB.Tooltip:Show(self, self.snapshot)
@@ -181,7 +183,6 @@ function BarMixin:OnLeave()
 
 	LB.Visibility:SetHovered(nil)
 	LB.TextSlot:SetHovered(self, false)
-	LB.Marker:SetHovered(self, false)
 	LB.Tooltip:Hide()
 end
 
@@ -565,11 +566,13 @@ function BarMixin:FadeOut(onFinished)
 
 	LB:Tween(self, FADE, function(eased)
 		self:SetAlpha(from * (1 - eased))
+		LB.Marker:FollowFade(self, 1 - eased)
 	end, function()
 		self.fading = nil
 
 		self:Hide()
 		self:SetAlpha(1)
+		LB.Marker:FollowFade(self, 1)
 
 		if onFinished then
 			onFinished()
@@ -586,6 +589,7 @@ function BarMixin:Appear()
 
 	if returning then
 		self:SetAlpha(1)
+		LB.Marker:FollowFade(self, 1)
 	end
 
 	self:Show()
