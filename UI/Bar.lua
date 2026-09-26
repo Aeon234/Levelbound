@@ -199,6 +199,12 @@ function BarMixin:OnMouseUp(button)
 		return
 	end
 
+	if IsShiftKeyDown() then
+		LB.Share:Insert(self.id)
+
+		return
+	end
+
 	local source = LB.Model:Source(self.id)
 
 	if source and source.Click then

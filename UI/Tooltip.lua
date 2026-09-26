@@ -230,16 +230,19 @@ end
 ---@param tip GameTooltip
 ---@param source LBSource?
 local function ClickHint(tip, source)
-	if not LB.Profile:Get("tooltip.clickActions") or not source or not source.ClickHint then
+	if not LB.Profile:Get("tooltip.clickActions") then
 		return
 	end
 
-	local hint = source:ClickHint()
+	local hint = source and source.ClickHint and source:ClickHint()
+
+	tip:AddLine(" ")
 
 	if hint then
-		tip:AddLine(" ")
 		tip:AddLine(("<%s>"):format(hint), HINT_COLOR[1], HINT_COLOR[2], HINT_COLOR[3])
 	end
+
+	tip:AddLine(("<%s>"):format(L["Shift-Click to Share"]), HINT_COLOR[1], HINT_COLOR[2], HINT_COLOR[3])
 end
 
 ---@param tip GameTooltip

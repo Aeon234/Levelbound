@@ -299,6 +299,12 @@ SlashCmdList.LEVELBOUND = function(message)
 		return
 	end
 
+	if command == "share" then
+		LB.Share:Command(argument)
+
+		return
+	end
+
 	if command == "preview" then
 		if LB.Preview:IsActive() then
 			LB.Preview:Exit()

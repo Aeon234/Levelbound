@@ -38,6 +38,9 @@ L["that profile string was made by a newer version of Levelbound."] =
 L["that profile string has no profile in it."] = "that profile string has no profile in it."
 L["the layout cannot be edited in combat."] = "the layout cannot be edited in combat."
 L["layout editing is paused for combat."] = "layout editing is paused for combat."
+L["there is no progress to share."] = "there is no progress to share."
+L["share to party, instance, raid, guild or say."] = "share to party, instance, raid, guild or say."
+L["you are not in a group or guild to share with."] = "you are not in a group or guild to share with."
 
 -- Party level-up notices, on screen and in chat (UI/LevelUpNotice.lua, Party/LevelUp.lua)
 L["%s reached level %d"] = "%s reached level %d"
@@ -81,6 +84,14 @@ L["Click to Open the PvP Window"] = "Click to Open the PvP Window"
 L["Click to Open the Traveler's Log"] = "Click to Open the Traveler's Log"
 L["Click to Open Journeys."] = "Click to Open Journeys."
 L["Click to Open the Reputation Panel"] = "Click to Open the Reputation Panel"
+L["Shift-Click to Share"] = "Shift-Click to Share"
+
+-- Sharing to chat (Core/Share.lua, Core/Format.lua); the "[Levelbound]" prefix itself is never translated
+L["%s to go"] = "%s to go"
+L["~%s at %s XP/hr"] = "~%s at %s XP/hr"
+L["%dh %dm"] = "%dh %dm"
+L["%dm"] = "%dm"
+L["%ds"] = "%ds"
 
 -- Bar text tags (Core/Tags.lua, looked up as "tag." .. tag), shown in the editor's tag panel
 L["tag.level"] = "Level"

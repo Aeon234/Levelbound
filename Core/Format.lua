@@ -72,6 +72,26 @@ function Format:Duration(seconds)
 	return SecondsToTime(seconds)
 end
 
+-- Compact, for chat: "1h 24m", "18m", "45s".
+---@param seconds number?
+---@return string?
+function Format:Short(seconds)
+	if not seconds or seconds <= 0 then
+		return nil
+	end
+
+	local hours = math.floor(seconds / 3600)
+	local minutes = math.floor(seconds % 3600 / 60)
+
+	if hours > 0 then
+		return LB.L["%dh %dm"]:format(hours, minutes)
+	elseif minutes > 0 then
+		return LB.L["%dm"]:format(minutes)
+	end
+
+	return LB.L["%ds"]:format(math.floor(seconds))
+end
+
 ---@param snapshot LBSnapshot
 ---@return number fraction
 local function SafeFraction(snapshot)
