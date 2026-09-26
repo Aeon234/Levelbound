@@ -302,7 +302,10 @@ local appearance = {
 	Alpha(L["Border Opacity"], "appearance.border.color"),
 	Header(L["Spark"]),
 	Check(L["Progress Spark"], "appearance.spark.enabled"),
-	Color(L["Spark Color"], "appearance.spark.color"),
+	Check(L["Custom Color"], "appearance.spark.customColor"),
+	Enabled(Color(L["Spark Color"], "appearance.spark.color"), function()
+		return LB.Profile:Get("appearance.spark.customColor") == true
+	end),
 	Check(L["Gain Shimmer"], "appearance.shimmer"),
 	Full(Button(L["Reset Colors"], RESET, function()
 		LB.Profile:Reset("appearance")
