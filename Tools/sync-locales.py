@@ -18,7 +18,8 @@ LOCALE_DIR = os.path.join(ROOT, "Locale")
 SOURCE = os.path.join(LOCALE_DIR, "enUS.lua")
 LOCALES = ["deDE", "esES", "esMX", "frFR", "itIT", "koKR", "ptBR", "ruRU", "zhCN", "zhTW"]
 
-STRING = r'"(?:[^"\\\n]|\\.)*"'
+# Either quote style: enUS.lua single-quotes text that contains double quotes.
+STRING = r'''(?:"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*')'''
 ENTRY = re.compile(r"^L\[(" + STRING + r")\]\s*=\s*(" + STRING + r")", re.M)
 SOURCE_ENTRY = re.compile(r"^L\[(" + STRING + r")\]\s*=\s*\n?\s*(" + STRING + r")", re.M)
 # Lua format specifiers, as string.format reads them; "%%" is a literal percent sign.

@@ -7,6 +7,8 @@ local LABEL_COLOR = { 1, 0.82, 0 }
 local SECTION_COLOR = { 1, 1, 1 }
 local DIM_COLOR = { 0.6, 0.6, 0.6 }
 local HINT_COLOR = { 0.1, 1, 0.1 }
+local AHEAD_COLOR = { 0.1, 1, 0.1 }
+local BEHIND_COLOR = { 1, 0.3, 0.3 }
 local GAP = 4
 
 ---@class LBTooltipClearance
@@ -137,6 +139,8 @@ local function WithShare(value, fraction)
 	return ("%s  %s"):format(value, Paint(DIM_COLOR, ("(%s)"):format(LB.Format:Percent(fraction))))
 end
 
+local titleLine = 1
+
 ---@class LBTooltipSection
 ---@field label string?
 ---@field lines { [1]: string, [2]: string, [3]: number[]? }[]
@@ -162,7 +166,7 @@ local function Flush(tip, section)
 		return
 	end
 
-	if tip:NumLines() > 1 then
+	if tip:NumLines() > titleLine then
 		tip:AddLine(" ")
 	end
 
@@ -194,6 +198,7 @@ local function Title(tip, left, right, rightColor)
 	local color = rightColor or VALUE_COLOR
 
 	tip:AddDoubleLine(left, right or "", LABEL_COLOR[1], LABEL_COLOR[2], LABEL_COLOR[3], color[1], color[2], color[3])
+	titleLine = tip:NumLines()
 end
 
 ---@param snapshot LBSnapshot
@@ -318,6 +323,106 @@ function Tooltip:Generic(tip, snapshot, source)
 	end
 
 	ClickHint(tip, source)
+end
+
+---@param mine LBSnapshot?
+---@param level integer
+---@param fraction number
+---@return string? text how far ahead or behind the player the member is, coloured
+local function Compared(mine, level, fraction)
+	if not mine or not mine.level or mine.max <= 0 then
+		return nil
+	end
+
+	local difference = (level + fraction) - (mine.level + Share(mine))
+	local distance = math.abs(difference)
+
+	if distance < 0.01 then
+		return L["Level with you"]
+	end
+
+	local ahead = difference > 0
+	local text
+
+	if distance >= 1 then
+		text = (ahead and L["%.1f levels ahead"] or L["%.1f levels behind"]):format(distance)
+	else
+		text = (ahead and L["%d%% of a level ahead"] or L["%d%% of a level behind"]):format(math.floor(distance * 100))
+	end
+
+	return Paint(ahead and AHEAD_COLOR or BEHIND_COLOR, text)
+end
+
+-- One block per party member; a stack of markers lists each, a blank line apart.
+---@param tip GameTooltip
+---@param member LBRosterMember
+---@param nameColor number[]
+function Tooltip:Member(tip, member, nameColor)
+	local Format = LB.Format
+	local appearance = LB.Profile:Get("appearance")
+	local state = member.state
+	local snapshot = { cur = state.xp, max = state.xpMax }
+	local share = Share(snapshot)
+
+	if tip:NumLines() > 0 then
+		tip:AddLine(" ")
+	end
+
+	Title(tip, Paint(nameColor, member.name), UNIT_LEVEL_TEMPLATE:format(state.level))
+
+	local progress = Section(L["Progress"])
+
+	if state.xpMax > 0 then
+		Add(progress, L["Current"], WithShare(Format:Fraction(state.xp, state.xpMax), share))
+		Add(progress, L["Remaining"], WithShare(Format:Number(state.xpMax - state.xp), 1 - share))
+	end
+
+	local compared = Compared(LB.Model:Get("xp"), state.level, member.fraction)
+
+	if compared then
+		Add(progress, L["Compared with you"], compared)
+	end
+
+	Flush(tip, progress)
+
+	local bonus = Section(L["Bonus"])
+
+	if state.rested and state.rested > 0 then
+		Add(
+			bonus,
+			L["Rested"],
+			WithShare(Format:Number(state.rested), ShareOf(snapshot, state.rested)),
+			appearance.restedColor
+		)
+	end
+
+	if state.quest and state.quest > 0 then
+		Add(
+			bonus,
+			L["Quests ready"],
+			WithShare(Format:Number(state.quest), ShareOf(snapshot, state.quest)),
+			appearance.questColor
+		)
+	end
+
+	Flush(tip, bonus)
+
+	local pace = Section(L["Pace"])
+
+	if state.rate then
+		Add(pace, L["XP per hour"], Format:Number(state.rate))
+		Add(pace, L["Time to level"], Format:Duration((state.xpMax - state.xp) / state.rate * 3600))
+	end
+
+	Flush(tip, pace)
+
+	if member.offline then
+		tip:AddLine(FRIENDS_LIST_OFFLINE, DIM_COLOR[1], DIM_COLOR[2], DIM_COLOR[3])
+	elseif member.updated then
+		local ago = Format:Duration(math.max(GetTime() - member.updated, 1))
+
+		tip:AddLine(L["Updated %s ago"]:format(ago), DIM_COLOR[1], DIM_COLOR[2], DIM_COLOR[3])
+	end
 end
 
 ---@param bar LBBar

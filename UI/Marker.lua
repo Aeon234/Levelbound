@@ -6,9 +6,11 @@ local FADE = 0.5
 local OFFLINE_ALPHA = 0.4
 local NEUTRAL = { 0.7, 0.7, 0.7 }
 
+local SAMPLE_XP_MAX = 100000
+
 local SAMPLE = {
-	{ class = "MAGE", fraction = 0.18, level = 41 },
-	{ class = "WARRIOR", fraction = 0.46, level = 42 },
+	{ class = "MAGE", fraction = 0.18, level = 41, quest = 12500, rested = 42000, rate = 58000 },
+	{ class = "WARRIOR", fraction = 0.46, level = 42, quest = 12500, rate = 71000 },
 	{ class = "PRIEST", fraction = 0.49, level = 42 },
 	{ class = "DRUID", fraction = 0.81, level = 43, offline = true },
 }
@@ -33,7 +35,17 @@ local function SampleMembers()
 		local member = {
 			name = LOCALIZED_CLASS_NAMES_MALE and LOCALIZED_CLASS_NAMES_MALE[entry.class] or entry.class,
 			class = entry.class,
-			state = { sequence = 0, level = entry.level, xp = 0, xpMax = 0, flags = 0, atMaxLevel = false },
+			state = {
+				sequence = 0,
+				level = entry.level,
+				xp = math.floor(entry.fraction * SAMPLE_XP_MAX),
+				xpMax = SAMPLE_XP_MAX,
+				flags = 0,
+				atMaxLevel = false,
+				rested = entry.rested,
+				quest = entry.quest,
+				rate = entry.rate,
+			},
 			offline = entry.offline == true,
 			fraction = entry.fraction,
 		}
@@ -195,7 +207,7 @@ local function OnEnter(frame)
 		if math.abs(placement.x - anchor) < size then
 			local other = placement.member
 
-			GameTooltip:AddDoubleLine(other.name, ("%s %d"):format(LEVEL, other.state.level), 1, 1, 1, 1, 0.82, 0)
+			LB.Tooltip:Member(GameTooltip, other, ClassColor(other))
 		end
 	end
 

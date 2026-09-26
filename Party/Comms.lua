@@ -17,6 +17,9 @@ local FLAG_MAX_LEVEL = 1
 ---@field xpMax integer
 ---@field flags integer
 ---@field atMaxLevel boolean
+---@field rested integer?
+---@field quest integer?
+---@field rate integer?
 
 ---@class LBComms
 ---@field sequence integer outgoing counter
@@ -83,6 +86,10 @@ function Comms.Parse(text)
 		return nil
 	end
 
+	local rested, quest, rate = text:match("^%d+:%d+:%d+:%d+:%d+:%d+:(%d+):(%d+):(%d+)")
+
+	rested, quest, rate = tonumber(rested), tonumber(quest), tonumber(rate)
+
 	return {
 		sequence = sequence,
 		level = level,
@@ -90,6 +97,9 @@ function Comms.Parse(text)
 		xpMax = xpMax,
 		flags = flags,
 		atMaxLevel = bit.band(flags, FLAG_MAX_LEVEL) ~= 0,
+		rested = rested,
+		quest = quest,
+		rate = rate and rate > 0 and rate or nil,
 	}
 end
 
@@ -110,8 +120,19 @@ function Comms:Encode()
 	self.sequence = (self.sequence + 1) % SEQUENCE_MAX
 
 	local flags = snapshot.atCap and FLAG_MAX_LEVEL or 0
+	local rate = LB.Session and LB.Session:Rate()
 
-	return ("%d:%d:%d:%d:%d:%d"):format(MAJOR, self.sequence, snapshot.level or 0, snapshot.cur, snapshot.max, flags)
+	return ("%d:%d:%d:%d:%d:%d:%d:%d:%d"):format(
+		MAJOR,
+		self.sequence,
+		snapshot.level or 0,
+		snapshot.cur,
+		snapshot.max,
+		flags,
+		math.floor(snapshot.overlays.rested or 0),
+		math.floor(snapshot.overlays.quest or 0),
+		rate and math.floor(rate * 3600) or 0
+	)
 end
 
 ---@return string? channel nil when not in a party the protocol should use

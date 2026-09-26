@@ -9,6 +9,7 @@ local MAX_PARTY = 4
 ---@field state LBPartyState
 ---@field offline boolean
 ---@field fraction number progress toward that member's next level
+---@field updated number? last update time
 
 ---@class LBRoster
 ---@field members table<string, LBRosterMember>
@@ -86,6 +87,7 @@ function Roster:Upsert(name, state)
 	if member then
 		member.state = state
 		member.fraction = fraction
+		member.updated = GetTime()
 	else
 		self.members[name] = {
 			name = name,
@@ -93,6 +95,7 @@ function Roster:Upsert(name, state)
 			state = state,
 			offline = false,
 			fraction = fraction,
+			updated = GetTime(),
 		}
 	end
 
