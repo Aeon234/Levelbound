@@ -53,19 +53,27 @@ L["Left-click: open settings"] = "Left-click: open settings"
 L["Right-click: open edit mode"] = "Right-click: open edit mode"
 
 -- Tooltip (UI/Tooltip.lua, Data/Reputation.lua)
+L["Progress"] = "Progress"
+L["Current"] = "Current"
 L["Remaining"] = "Remaining"
+L["Bonus"] = "Bonus"
 L["Rested"] = "Rested"
 L["Quests ready"] = "Quests ready"
 L["After turn-in"] = "After turn-in"
 L["Quests in log"] = "Quests in log"
 L["Past the level-up"] = "Past the level-up"
+L["Pace"] = "Pace"
 L["Time this level"] = "Time this level"
 L["Session"] = "Session"
 L["XP per hour"] = "XP per hour"
 L["Time to level"] = "Time to level"
-L["Standing"] = "Standing"
 L["Ready to upgrade"] = "Ready to upgrade"
 L["A paragon reward is waiting."] = "A paragon reward is waiting."
+L["Click to Open the Housing Dashboard"] = "Click to Open the Housing Dashboard"
+L["Click to Open the PvP Window"] = "Click to Open the PvP Window"
+L["Click to Open the Traveler's Log"] = "Click to Open the Traveler's Log"
+L["Click to Open Journeys."] = "Click to Open Journeys."
+L["Click to Open the Reputation Panel"] = "Click to Open the Reputation Panel"
 
 -- Bar text tags (Core/Tags.lua, looked up as "tag." .. tag), shown in the editor's tag panel
 L["tag.level"] = "Level"
@@ -287,13 +295,13 @@ L["Delete Current Profile"] = "Delete Current Profile"
 L["Reset This Profile"] = "Reset This Profile"
 L["Finish editing the layout to change profiles."] = "Finish editing the layout to change profiles."
 L["Name the new profile"] = "Name the new profile"
-L["Rename the profile \"%s\""] = "Rename the profile \"%s\""
+L['Rename the profile "%s"'] = 'Rename the profile "%s"'
 L["Name the copy"] = "Name the copy"
-L["Copy this string to share the profile \"%s\"."] = "Copy this string to share the profile \"%s\"."
+L['Copy this string to share the profile "%s".'] = 'Copy this string to share the profile "%s".'
 L["Paste a Levelbound profile string."] = "Paste a Levelbound profile string."
 L["Name the imported profile"] = "Name the imported profile"
-L["Delete the profile \"%s\"? This cannot be undone."] = "Delete the profile \"%s\"? This cannot be undone."
-L["Reset every setting in the profile \"%s\"?"] = "Reset every setting in the profile \"%s\"?"
+L['Delete the profile "%s"? This cannot be undone.'] = 'Delete the profile "%s"? This cannot be undone.'
+L['Reset every setting in the profile "%s"?'] = 'Reset every setting in the profile "%s"?'
 
 -- Edit mode: toolbar, mover panel and popups (Settings/EditMode.lua, Settings/EditPanel.lua)
 L["Exit"] = "Exit"

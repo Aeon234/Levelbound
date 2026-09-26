@@ -4,6 +4,9 @@ local L = LB.L
 
 local VALUE_COLOR = { 1, 1, 1 }
 local LABEL_COLOR = { 1, 0.82, 0 }
+local SECTION_COLOR = { 1, 1, 1 }
+local DIM_COLOR = { 0.6, 0.6, 0.6 }
+local HINT_COLOR = { 0.1, 1, 0.1 }
 local GAP = 4
 
 ---@class LBTooltipClearance
@@ -120,20 +123,118 @@ function Tooltip:Stop()
 	self.clearance = nil
 end
 
----@param tip GameTooltip
+---@param color number[]
+---@param text string
+---@return string
+local function Paint(color, text)
+	return CreateColor(color[1], color[2], color[3]):WrapTextInColorCode(text)
+end
+
+---@param value string
+---@param fraction number
+---@return string value followed by its share, dimmed so the number reads first
+local function WithShare(value, fraction)
+	return ("%s  %s"):format(value, Paint(DIM_COLOR, ("(%s)"):format(LB.Format:Percent(fraction))))
+end
+
+---@class LBTooltipSection
+---@field label string?
+---@field lines { [1]: string, [2]: string, [3]: number[]? }[]
+
+---@param label string?
+---@return LBTooltipSection
+local function Section(label)
+	return { label = label, lines = {} }
+end
+
+---@param section LBTooltipSection
 ---@param label string
 ---@param value string
-local function Line(tip, label, value)
-	tip:AddDoubleLine(
-		label,
-		value,
-		LABEL_COLOR[1],
-		LABEL_COLOR[2],
-		LABEL_COLOR[3],
-		VALUE_COLOR[1],
-		VALUE_COLOR[2],
-		VALUE_COLOR[3]
-	)
+---@param labelColor number[]? gold by default
+local function Add(section, label, value, labelColor)
+	section.lines[#section.lines + 1] = { label, value, labelColor }
+end
+
+---@param tip GameTooltip
+---@param section LBTooltipSection
+local function Flush(tip, section)
+	if #section.lines == 0 then
+		return
+	end
+
+	if tip:NumLines() > 1 then
+		tip:AddLine(" ")
+	end
+
+	if section.label then
+		tip:AddLine(section.label, SECTION_COLOR[1], SECTION_COLOR[2], SECTION_COLOR[3])
+	end
+
+	for _, line in ipairs(section.lines) do
+		local color = line[3] or LABEL_COLOR
+
+		tip:AddDoubleLine(
+			line[1],
+			line[2],
+			color[1],
+			color[2],
+			color[3],
+			VALUE_COLOR[1],
+			VALUE_COLOR[2],
+			VALUE_COLOR[3]
+		)
+	end
+end
+
+---@param tip GameTooltip
+---@param left string
+---@param right string?
+---@param rightColor number[]?
+local function Title(tip, left, right, rightColor)
+	local color = rightColor or VALUE_COLOR
+
+	tip:AddDoubleLine(left, right or "", LABEL_COLOR[1], LABEL_COLOR[2], LABEL_COLOR[3], color[1], color[2], color[3])
+end
+
+---@param snapshot LBSnapshot
+---@return number
+local function Share(snapshot)
+	return snapshot.max > 0 and math.min(math.max(snapshot.cur / snapshot.max, 0), 1) or 0
+end
+
+---@param snapshot LBSnapshot
+---@param amount number
+---@return number
+local function ShareOf(snapshot, amount)
+	return snapshot.max > 0 and amount / snapshot.max or 0
+end
+
+---@param tip GameTooltip
+---@param snapshot LBSnapshot
+---@param source LBSource?
+local function Progress(tip, snapshot, source)
+	local Format = LB.Format
+	local share = Share(snapshot)
+	local progress = Section(L["Progress"])
+
+	Add(progress, L["Current"], WithShare(Format:Value("VALUE", snapshot, source), share))
+	Add(progress, L["Remaining"], WithShare(Format:Value("REMAINING", snapshot, source), 1 - share))
+	Flush(tip, progress)
+end
+
+---@param tip GameTooltip
+---@param source LBSource?
+local function ClickHint(tip, source)
+	if not LB.Profile:Get("tooltip.clickActions") or not source or not source.ClickHint then
+		return
+	end
+
+	local hint = source:ClickHint()
+
+	if hint then
+		tip:AddLine(" ")
+		tip:AddLine(("<%s>"):format(hint), HINT_COLOR[1], HINT_COLOR[2], HINT_COLOR[3])
+	end
 end
 
 ---@param tip GameTooltip
@@ -141,72 +242,72 @@ end
 ---@param source LBSource?
 function Tooltip:XP(tip, snapshot, source)
 	local Format = LB.Format
+	local appearance = LB.Profile:Get("appearance")
+	local overlays = snapshot.overlays
 
-	tip:AddLine(COMBAT_XP_GAIN)
-	Line(tip, LEVEL, Format:Value("LEVEL", snapshot, source))
-	Line(
-		tip,
-		XP,
-		("%s (%s)"):format(Format:Value("VALUE", snapshot, source), Format:Value("PERCENT", snapshot, source))
-	)
-	Line(tip, L["Remaining"], Format:Value("REMAINING", snapshot, source))
+	Title(tip, COMBAT_XP_GAIN, UNIT_LEVEL_TEMPLATE:format(snapshot.level or 0))
+	Progress(tip, snapshot, source)
 
-	if snapshot.overlays.rested > 0 then
-		local fraction = snapshot.max > 0 and (snapshot.overlays.rested / snapshot.max) or 0
+	local bonus = Section(L["Bonus"])
 
-		Line(tip, L["Rested"], ("%s (%s)"):format(Format:Number(snapshot.overlays.rested), Format:Percent(fraction)))
+	if overlays.rested > 0 then
+		Add(
+			bonus,
+			L["Rested"],
+			WithShare(Format:Number(overlays.rested), ShareOf(snapshot, overlays.rested)),
+			appearance.restedColor
+		)
 	end
 
-	if snapshot.overlays.quest > 0 then
-		local fraction = snapshot.max > 0 and (snapshot.overlays.quest / snapshot.max) or 0
-
-		Line(
-			tip,
+	if overlays.quest > 0 then
+		Add(
+			bonus,
 			L["Quests ready"],
-			("%s (%s)"):format(Format:Number(snapshot.overlays.quest), Format:Percent(fraction))
+			WithShare(Format:Number(overlays.quest), ShareOf(snapshot, overlays.quest)),
+			appearance.questColor
 		)
-		Line(tip, L["After turn-in"], Format:Value("PERCENT_WITH_QUESTS", snapshot, source))
+		Add(bonus, L["After turn-in"], Format:Value("PERCENT_WITH_QUESTS", snapshot, source))
 	end
 
 	if source and source.IncompleteQuestXP then
 		local incomplete = source:IncompleteQuestXP()
 
 		if incomplete > 0 then
-			Line(tip, L["Quests in log"], Format:Number(incomplete))
+			Add(bonus, L["Quests in log"], Format:Number(incomplete))
 		end
 	end
 
 	local questOverflow, restedOverflow = LB.Model:Overflow(snapshot)
 
 	if questOverflow + restedOverflow > 0 then
-		Line(tip, L["Past the level-up"], Format:Number(questOverflow + restedOverflow))
+		Add(bonus, L["Past the level-up"], Format:Number(questOverflow + restedOverflow))
 	end
 
-	tip:AddLine(" ")
-	Line(tip, L["Time this level"], Format:Value("LEVEL_TIME", snapshot, source))
-	Line(tip, L["Session"], Format:Value("SESSION_TIME", snapshot, source))
-	Line(tip, L["XP per hour"], Format:Value("XP_PER_HOUR", snapshot, source))
-	Line(tip, L["Time to level"], Format:Value("TIME_TO_LEVEL", snapshot, source))
+	Flush(tip, bonus)
+
+	local pace = Section(L["Pace"])
+
+	Add(pace, L["Time this level"], Format:Value("LEVEL_TIME", snapshot, source))
+	Add(pace, L["Session"], Format:Value("SESSION_TIME", snapshot, source))
+	Add(pace, L["XP per hour"], Format:Value("XP_PER_HOUR", snapshot, source))
+	Add(pace, L["Time to level"], Format:Value("TIME_TO_LEVEL", snapshot, source))
+	Flush(tip, pace)
+
+	ClickHint(tip, source)
 end
 
 ---@param tip GameTooltip
 ---@param snapshot LBSnapshot
 ---@param source LBSource?
 function Tooltip:Generic(tip, snapshot, source)
-	local Format = LB.Format
+	local standing = snapshot.standing
 
-	tip:AddLine(Format:Value("NAME", snapshot, source))
-
-	if snapshot.standing and snapshot.standing ~= "" and snapshot.standing ~= snapshot.label then
-		Line(tip, L["Standing"], snapshot.standing)
+	if not standing or standing == "" or standing == snapshot.label then
+		standing = nil
 	end
 
-	Line(
-		tip,
-		XP,
-		("%s (%s)"):format(Format:Value("VALUE", snapshot, source), Format:Value("PERCENT", snapshot, source))
-	)
-	Line(tip, L["Remaining"], Format:Value("REMAINING", snapshot, source))
+	Title(tip, LB.Format:Value("NAME", snapshot, source), standing, snapshot.color)
+	Progress(tip, snapshot, source)
 
 	if snapshot.flags.readyToUpgrade then
 		tip:AddLine(L["Ready to upgrade"], 0, 1, 0)
@@ -215,6 +316,8 @@ function Tooltip:Generic(tip, snapshot, source)
 	if source and source.Tooltip then
 		source:Tooltip(tip)
 	end
+
+	ClickHint(tip, source)
 end
 
 ---@param bar LBBar

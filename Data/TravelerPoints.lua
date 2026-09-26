@@ -66,6 +66,9 @@ LB.Source:New("travelers", {
 		return changed
 	end,
 
+	ClickHint = function()
+		return LB.can.encounterJournal and LB.L["Click to Open the Traveler's Log"] or nil
+	end,
 	Click = function()
 		if LB.can.encounterJournal then
 			ToggleEncounterJournal()

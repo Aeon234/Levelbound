@@ -100,6 +100,9 @@ LB.Source:New("house", {
 		return changed
 	end,
 
+	ClickHint = function()
+		return LB.can.housingDashboard and LB.L["Click to Open the Housing Dashboard"] or nil
+	end,
 	Click = function()
 		if LB.can.housingDashboard then
 			HousingFramesUtil.ToggleHousingDashboard()

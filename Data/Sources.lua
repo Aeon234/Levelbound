@@ -38,6 +38,7 @@ local Events = LB.Events
 ---@field Events? fun(self: LBSource): string[]
 ---@field OnEvent? fun(self: LBSource, event: string, ...: any): boolean
 ---@field Click? fun(self: LBSource)
+---@field ClickHint? fun(self: LBSource): string?
 ---@field Tooltip? fun(self: LBSource, tip: GameTooltip)
 
 ---@class LBSourceMixin : LBSourceFields, LBSourceSpec

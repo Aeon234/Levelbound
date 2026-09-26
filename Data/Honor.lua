@@ -46,6 +46,9 @@ LB.Source:New("honor", {
 		return changed
 	end,
 
+	ClickHint = function()
+		return LB.can.pvpWindow and LB.L["Click to Open the PvP Window"] or nil
+	end,
 	Click = function()
 		if LB.can.pvpWindow then
 			TogglePVPUI()

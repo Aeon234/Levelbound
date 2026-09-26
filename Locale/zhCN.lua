@@ -41,19 +41,27 @@ local L = select(2, ...).L
 -- L["Right-click: open edit mode"] = "Right-click: open edit mode"
 
 -- Tooltip (UI/Tooltip.lua, Data/Reputation.lua)
+-- L["Progress"] = "Progress"
+-- L["Current"] = "Current"
 -- L["Remaining"] = "Remaining"
+-- L["Bonus"] = "Bonus"
 -- L["Rested"] = "Rested"
 -- L["Quests ready"] = "Quests ready"
 -- L["After turn-in"] = "After turn-in"
 -- L["Quests in log"] = "Quests in log"
 -- L["Past the level-up"] = "Past the level-up"
+-- L["Pace"] = "Pace"
 -- L["Time this level"] = "Time this level"
 -- L["Session"] = "Session"
 -- L["XP per hour"] = "XP per hour"
 -- L["Time to level"] = "Time to level"
--- L["Standing"] = "Standing"
 -- L["Ready to upgrade"] = "Ready to upgrade"
 -- L["A paragon reward is waiting."] = "A paragon reward is waiting."
+-- L["Click to Open the Housing Dashboard"] = "Click to Open the Housing Dashboard"
+-- L["Click to Open the PvP Window"] = "Click to Open the PvP Window"
+-- L["Click to Open the Traveler's Log"] = "Click to Open the Traveler's Log"
+-- L["Click to Open Journeys."] = "Click to Open Journeys."
+-- L["Click to Open the Reputation Panel"] = "Click to Open the Reputation Panel"
 
 -- Bar text tags (Core/Tags.lua, looked up as "tag." .. tag), shown in the editor's tag panel
 -- L["tag.level"] = "Level"

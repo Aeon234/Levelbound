@@ -209,6 +209,16 @@ LB.Source:New("reputation", {
 	end,
 
 	---@param self LBSource
+	---@return string?
+	ClickHint = function(self)
+		if self.factionID and self.snapshot.flags.major and LB.can.encounterJournal then
+			return L["Click to Open Journeys."]
+		end
+
+		return LB.can.characterPanel and L["Click to Open the Reputation Panel"] or nil
+	end,
+
+	---@param self LBSource
 	Click = function(self)
 		local factionID = self.factionID
 
