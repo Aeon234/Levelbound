@@ -12,6 +12,7 @@ local ARROW = 24
 local CLUSTER_GAP = 16
 local PINNED_HEIGHT = 32
 local OFFSET = 10
+local ABOVE_TOOLBAR = 20
 
 local WIDTH = PAD + LABEL_WIDTH + LABEL_GAP + BOX_WIDTH + CLUSTER_GAP + ARROW * 3 + PAD
 local HEIGHT = PAD * 2 + ARROW * 3
@@ -196,6 +197,11 @@ function EditPanel:Place(mover)
 	end
 
 	local _, bottom = mover:Rect()
+	local toolbar = LB.EditMode.toolbar
+
+	if toolbar then
+		frame:SetFrameLevel(toolbar:GetFrameLevel() + ABOVE_TOOLBAR)
+	end
 
 	frame:ClearAllPoints()
 
