@@ -32,9 +32,6 @@ local HOVER_FADE = 0.5
 
 local TOOLBAR_INSET = 6
 local SLOT_MARGIN = 4
-local BOTTOM_RAISE = 200
-local SCAN_STEP = 16
-local SLOT_OFFSETS = { TOP = -TOOLBAR_INSET, BOTTOM = BOTTOM_RAISE, CENTER = 0 }
 local HOVER_LEVEL = 100
 
 local EXIT_POPUP = "LEVELBOUND_EDIT_EXIT"
@@ -153,7 +150,7 @@ end
 ---@field hidden boolean the settings window is in front of the layout
 ---@field closing boolean? the layout is fading out after Save or Exit
 ---@field dragging boolean? a mover is being dragged, so the toolbar stands aside
----@field toolbarSlot string? where the toolbar sits, as point and offsets, away from the movers
+---@field toolbarSlot number? the toolbar's offset from the top of the screen, away from the movers
 ---@field fromSettings boolean? the session began from the settings window, so it ends there too
 ---@field snapshot LBProfileData? the profile as it was when the session began
 ---@field selected string?
@@ -624,8 +621,10 @@ end
 ---@param bottom number
 ---@param width number
 ---@param height number
----@return boolean taken a shown mover would sit under a toolbar placed here
-function EditMode:SlotTaken(left, bottom, width, height)
+---@return number? below the lowest bottom edge of the shown movers a toolbar placed here would cover
+function EditMode:Blocking(left, bottom, width, height)
+	local below = nil
+
 	for _, mover in pairs(self.movers) do
 		if mover:IsShown() then
 			local moverLeft, moverBottom, moverWidth, moverHeight = mover:GetRect()
@@ -643,40 +642,14 @@ function EditMode:SlotTaken(left, bottom, width, height)
 					moverHeight
 				)
 			then
-				return true
+				below = math.min(below or moverBottom, moverBottom)
 			end
 		end
 	end
 
-	return false
+	return below
 end
 
----@param width number
----@param height number
----@return number? left a spot no mover covers, scanning down the centre, then the left and right edges
----@return number? bottom
-function EditMode:FreeSpot(width, height)
-	local screenWidth, screenHeight = Screen()
-	local pixel = Pixel()
-	local columns = { (screenWidth - width) / 2, TOOLBAR_INSET, screenWidth - width - TOOLBAR_INSET }
-
-	for _, left in ipairs(columns) do
-		local bottom = screenHeight - TOOLBAR_INSET - height
-
-		while bottom >= TOOLBAR_INSET do
-			if not self:SlotTaken(left, bottom, width, height) then
-				return LB.Placement:ToPixel(left, pixel), LB.Placement:ToPixel(bottom, pixel)
-			end
-
-			bottom = bottom - SCAN_STEP
-		end
-	end
-
-	return nil, nil
-end
-
----Keeps the toolbar off the movers: at the top, the screen's centre or raised off the bottom, whichever is free
----first, else the first free spot anywhere; a screen with none left keeps it raised off the bottom.
 function EditMode:PlaceToolbar()
 	local toolbar = self.toolbar
 
@@ -686,44 +659,36 @@ function EditMode:PlaceToolbar()
 
 	local screenWidth, screenHeight = Screen()
 	local width, height = toolbar:GetWidth(), toolbar:GetHeight()
-	local centred = (screenWidth - width) / 2
-	local slots = {
-		{ point = "TOP", bottom = screenHeight - TOOLBAR_INSET - height },
-		{ point = "CENTER", bottom = (screenHeight - height) / 2 },
-		{ point = "BOTTOM", bottom = BOTTOM_RAISE },
-	}
-	local point, x, y, bottom = "BOTTOM", 0, SLOT_OFFSETS.BOTTOM, BOTTOM_RAISE
+	local left = (screenWidth - width) / 2
+	local top = screenHeight - TOOLBAR_INSET
+	local placed = top
 
-	for _, slot in ipairs(slots) do
-		if not self:SlotTaken(centred, slot.bottom, width, height) then
-			point, x, y, bottom = slot.point, 0, SLOT_OFFSETS[slot.point], slot.bottom
+	while top - height >= TOOLBAR_INSET do
+		local below = self:Blocking(left, top - height, width, height)
+
+		if not below then
+			placed = top
 
 			break
 		end
+
+		top = below - SLOT_MARGIN
 	end
 
-	if point == "BOTTOM" and self:SlotTaken(centred, BOTTOM_RAISE, width, height) then
-		local left, free = self:FreeSpot(width, height)
+	local y = LB.Placement:ToPixel(placed - screenHeight, Pixel())
 
-		if left and free then
-			point, x, y, bottom = "BOTTOMLEFT", left, free, free
-		end
-	end
-
-	local placed = ("%s:%s:%s"):format(point, x, y)
-
-	if placed == self.toolbarSlot then
+	if y == self.toolbarSlot then
 		return
 	end
 
-	self.toolbarSlot = placed
+	self.toolbarSlot = y
 
 	toolbar:ClearAllPoints()
-	toolbar:SetPoint(point, UIParent, point, x, y)
+	toolbar:SetPoint("TOP", UIParent, "TOP", 0, y)
 
 	toolbar.resume:ClearAllPoints()
 
-	if bottom < screenHeight / 2 then
+	if placed - height < screenHeight / 2 then
 		toolbar.resume:SetPoint("BOTTOM", toolbar, "TOP", 0, GAP)
 	else
 		toolbar.resume:SetPoint("TOP", toolbar, "BOTTOM", 0, -GAP)
@@ -1141,20 +1106,22 @@ end
 ---@field label FontString
 ---@field name string
 ---@field state fun(): string, boolean the state's name, and whether it counts as on
+---@field states string[] every name state can return, so the toggle is as wide as the widest
 ---@field hovered boolean?
 
----An EllesmereUI-style toolbar toggle: its name above its state, brighter while on or hovered.
 ---@param parent Frame
 ---@param name string
 ---@param state fun(): string, boolean
 ---@param onClick fun()
+---@param states string[]
 ---@return LBEditToggle
-local function Toggle(parent, name, state, onClick)
+local function Toggle(parent, name, state, onClick, states)
 	---@type LBEditToggle
 	local toggle = CreateFrame("Button", nil, parent)
 
 	toggle.name = name
 	toggle.state = state
+	toggle.states = states
 	toggle.label = toggle:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
 	toggle.label:SetPoint("LEFT")
 	toggle.label:SetJustifyH("LEFT")
@@ -1175,6 +1142,23 @@ local function Toggle(parent, name, state, onClick)
 	return toggle
 end
 
+---@param fontString FontString
+---@param texts string[]
+---@return number width the widest of the texts; the font string keeps what it showed
+local function Widest(fontString, texts)
+	local shown = fontString:GetText()
+	local widest = 0
+
+	for _, text in ipairs(texts) do
+		fontString:SetText(text)
+		widest = math.max(widest, fontString:GetStringWidth())
+	end
+
+	fontString:SetText(shown)
+
+	return widest
+end
+
 ---@param toggle LBEditToggle
 local function PaintToggle(toggle)
 	local text, on = toggle.state()
@@ -1182,7 +1166,13 @@ local function PaintToggle(toggle)
 
 	toggle.label:SetText(toggle.name .. "\n" .. text)
 	toggle.label:SetTextColor(1, 1, 1, alpha)
-	toggle:SetSize(toggle.label:GetStringWidth(), BUTTON_HEIGHT)
+	local texts = {}
+
+	for index, state in ipairs(toggle.states) do
+		texts[index] = toggle.name .. "\n" .. state
+	end
+
+	toggle:SetSize(Widest(toggle.label, texts), BUTTON_HEIGHT)
 end
 
 ---@return LBEditToolbar
@@ -1238,10 +1228,10 @@ function EditMode:BuildToolbar()
 			local settings = LB.Profile:Global().editMode
 
 			settings.snap = not settings.snap
-		end),
+		end, { L["Enabled"], L["Disabled"] }),
 		Toggle(toolbar, L["Grid Lines"], GridState, function()
 			self:CycleGrid()
-		end),
+		end, { L["Bright"], L["Dimmed"], L["Off"] }),
 		Toggle(toolbar, L["Hover Top Bar"], function()
 			local on = LB.Profile:Global().editMode.hoverBar == true
 
@@ -1252,7 +1242,7 @@ function EditMode:BuildToolbar()
 			settings.hoverBar = not settings.hoverBar
 
 			self:ApplyHover()
-		end),
+		end, { L["Enabled"], L["Disabled"] }),
 	}
 
 	toolbar.resume = ToolbarButton(toolbar, L["Resume Editing"], function()
@@ -1305,7 +1295,11 @@ function EditMode:LayoutToolbar()
 	toolbar.save:ClearAllPoints()
 	toolbar.save:SetPoint("RIGHT", -PAD, 0)
 
-	local titleWidth = toolbar.title:GetStringWidth()
+	local titleWidth = Widest(toolbar.title, {
+		LB.title .. "\n" .. L["Edit Mode"],
+		LB.title .. "\n" .. L["Paused"],
+		LB.title .. "\n" .. L["Paused for combat"],
+	})
 	local left = PAD + toolbar.exit:GetWidth() + GROUP_GAP + toolbar.mode:GetWidth() + GROUP_GAP
 	local right = GROUP_GAP + toggles + GROUP_GAP + toolbar.save:GetWidth() + PAD
 	local width = math.max(left, right) * 2 + titleWidth
