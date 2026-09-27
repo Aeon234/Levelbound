@@ -9,8 +9,8 @@ local NEUTRAL = { 0.7, 0.7, 0.7 }
 local SAMPLE_XP_MAX = 100000
 
 local SAMPLE = {
-	{ class = "MAGE", fraction = 0.18, level = 41, quest = 12500, rested = 42000, rate = 58000 },
-	{ class = "WARRIOR", fraction = 0.46, level = 42, quest = 12500, rate = 71000 },
+	{ class = "MAGE", fraction = 0.18, level = 41, quest = 12500, rested = 42000, rate = 58000 / 3600 },
+	{ class = "WARRIOR", fraction = 0.46, level = 42, quest = 12500, rate = 71000 / 3600 },
 	{ class = "PRIEST", fraction = 0.49, level = 42 },
 	{ class = "DRUID", fraction = 0.81, level = 43, offline = true },
 }
@@ -31,23 +31,25 @@ local function SampleMembers()
 	local members = {}
 
 	for index, entry in ipairs(SAMPLE) do
+		---@type LBPartyState
+		local state = {
+			sequence = 0,
+			level = entry.level,
+			xp = math.floor(entry.fraction * SAMPLE_XP_MAX),
+			xpMax = SAMPLE_XP_MAX,
+			flags = 0,
+			atMaxLevel = false,
+			rested = entry.rested,
+			quest = entry.quest,
+			rate = entry.rate,
+		}
 		---@type LBRosterMember
 		local member = {
 			name = LOCALIZED_CLASS_NAMES_MALE and LOCALIZED_CLASS_NAMES_MALE[entry.class] or entry.class,
 			class = entry.class,
-			state = {
-				sequence = 0,
-				level = entry.level,
-				xp = math.floor(entry.fraction * SAMPLE_XP_MAX),
-				xpMax = SAMPLE_XP_MAX,
-				flags = 0,
-				atMaxLevel = false,
-				rested = entry.rested,
-				quest = entry.quest,
-				rate = entry.rate,
-			},
+			state = state,
 			offline = entry.offline == true,
-			fraction = entry.fraction,
+			snapshot = LB.Roster.Snapshot(state),
 		}
 
 		members[index] = member
@@ -64,7 +66,7 @@ function Marker:Positions(members, width, size)
 	local placed = {}
 
 	for index, member in ipairs(members) do
-		placed[index] = { member = member, x = member.fraction * width }
+		placed[index] = { member = member, x = (LB.Progress.Fraction(member.snapshot) or 0) * width }
 	end
 
 	table.sort(placed, function(a, b)

@@ -8,7 +8,7 @@ local MAX_PARTY = 4
 ---@field class string?
 ---@field state LBPartyState
 ---@field offline boolean
----@field fraction number progress toward that member's next level
+---@field snapshot LBSnapshot
 ---@field updated number? last update time
 
 ---@class LBRoster
@@ -73,6 +73,19 @@ function Roster:IsMember(name)
 	return self:UnitFor(name) ~= nil
 end
 
+---@param state LBPartyState
+---@return LBSnapshot
+function Roster.Snapshot(state)
+	return {
+		cur = state.xp,
+		max = state.xpMax,
+		overlays = { quest = state.quest or 0, rested = state.rested or 0 },
+		level = state.level,
+		atCap = state.atMaxLevel,
+		flags = {},
+	}
+end
+
 ---@param name string
 ---@param state LBPartyState
 function Roster:Upsert(name, state)
@@ -82,11 +95,11 @@ function Roster:Upsert(name, state)
 		return
 	end
 
-	local fraction = state.xpMax > 0 and math.min(state.xp / state.xpMax, 1) or 0
+	local snapshot = Roster.Snapshot(state)
 
 	if member then
 		member.state = state
-		member.fraction = fraction
+		member.snapshot = snapshot
 		member.updated = GetTime()
 	else
 		self.members[name] = {
@@ -94,7 +107,7 @@ function Roster:Upsert(name, state)
 			unit = self:UnitFor(name),
 			state = state,
 			offline = false,
-			fraction = fraction,
+			snapshot = snapshot,
 			updated = GetTime(),
 		}
 	end

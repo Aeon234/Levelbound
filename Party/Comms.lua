@@ -19,7 +19,7 @@ local FLAG_MAX_LEVEL = 1
 ---@field atMaxLevel boolean
 ---@field rested integer?
 ---@field quest integer?
----@field rate integer?
+---@field rate number? XP per second
 
 ---@class LBComms
 ---@field sequence integer outgoing counter
@@ -99,7 +99,7 @@ function Comms.Parse(text)
 		atMaxLevel = bit.band(flags, FLAG_MAX_LEVEL) ~= 0,
 		rested = rested,
 		quest = quest,
-		rate = rate and rate > 0 and rate or nil,
+		rate = rate and rate > 0 and rate / 3600 or nil,
 	}
 end
 

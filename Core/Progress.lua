@@ -80,9 +80,9 @@ function Progress.Overflow(snapshot)
 end
 
 ---@param rate number XP per second
----@return number perHour whole XP per hour
+---@return number perHour whole XP per hour, rounded so a rate read back from the party message's per-hour figure returns it exactly
 function Progress.PerHour(rate)
-	return math.floor(rate * 3600)
+	return math.floor(rate * 3600 + 0.5)
 end
 
 ---@param snapshot LBSnapshot?
@@ -100,4 +100,17 @@ function Progress.TimeToLevel(snapshot, rate)
 	end
 
 	return remaining / rate
+end
+
+---@param from LBSnapshot
+---@param to LBSnapshot
+---@return number? levels how far `to` is ahead of `from`, negative when behind
+function Progress.Distance(from, to)
+	local mine, theirs = Progress.Fraction(from), Progress.Fraction(to)
+
+	if not mine or not theirs or not from.level or not to.level then
+		return nil
+	end
+
+	return (to.level + theirs) - (from.level + mine)
 end
