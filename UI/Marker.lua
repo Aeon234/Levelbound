@@ -452,12 +452,6 @@ function Marker:Refresh()
 end
 
 function Marker:Preview()
-	if not LB.Settings:IsOpen() then
-		self:ClearPreview()
-
-		return
-	end
-
 	self.previewing = true
 	self.sample = self.sample or SampleMembers()
 
@@ -485,3 +479,11 @@ function Marker:Release(bar)
 	bar.markerPool:ReleaseAll()
 	wipe(bar.markerShown)
 end
+
+LB.Callbacks:Register("Editing", Marker, function()
+	if LB.Editing:Demo() ~= "party" then
+		Marker:ClearPreview()
+	elseif not Marker.previewing then
+		Marker:Preview()
+	end
+end)

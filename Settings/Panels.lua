@@ -266,7 +266,7 @@ end
 ---@field id string
 ---@field title string
 ---@field rows LBSettingRow[]
----@field onSelect (fun())? run when the page is opened, for a page that demonstrates itself
+---@field demo LBEditingDemo? what the page shows samples of while it is open
 
 ---@class LBPanels
 ---@field sections LBSettingSection[]
@@ -483,9 +483,7 @@ Panels.sections = {
 	{
 		id = "text",
 		title = L["Text and Tooltip"],
-		onSelect = function()
-			LB.TextSlot:SetEditing(true)
-		end,
+		demo = "text",
 		rows = {
 			Header(L["Bar Text"]),
 			{
@@ -539,16 +537,11 @@ Panels.sections = {
 		id = "gain",
 		title = L["Gain Indicator"],
 		rows = gain,
-		onSelect = function()
-			LB.Gain:Preview()
-		end,
+		demo = "gain",
 	},
 	{
 		id = "party",
-		onSelect = function()
-			LB.Marker:Preview()
-			LB.LevelUpNotice:Preview()
-		end,
+		demo = "party",
 		title = L["Party"],
 		rows = {
 			Header(L["Party Markers"]),

@@ -366,12 +366,6 @@ function EditMode:Finish(reopen)
 
 	LB.Editing:Set(changes)
 
-	if not settingsOpen then
-		LB.Gain:ClearPreview()
-		LB.Marker:ClearPreview()
-		LB.LevelUpNotice:ClearPreview()
-	end
-
 	LB.Settings:PaintSession()
 	LB.Settings:Refresh()
 
@@ -464,8 +458,7 @@ function EditMode:HideLayout(keepToolbar)
 		mover:Hide()
 	end
 
-	LB.LevelUpNotice:SetEditing(false)
-	LB.Gain:SetEditing(false)
+	LB.Editing:Set({ movers = false })
 	LB.EditPanel:Hide()
 
 	if self.keyboard then
@@ -587,8 +580,7 @@ function EditMode:RefreshMovers()
 
 	local seen = {}
 
-	LB.LevelUpNotice:SetEditing(true)
-	LB.Gain:SetEditing(true)
+	LB.Editing:Set({ movers = true })
 
 	for _, target in ipairs(self:Targets()) do
 		local mover = self.movers[target.key]

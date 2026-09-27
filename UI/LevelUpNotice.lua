@@ -33,6 +33,7 @@ local OUTLINES = {
 local Notice = {
 	moverKey = "levelUp",
 	sampleIndex = 0,
+	editing = false,
 }
 LB.LevelUpNotice = Notice
 
@@ -205,7 +206,7 @@ function Notice:SetEditing(editing)
 end
 
 function Notice:ShowSample()
-	if not LB.Settings:IsOpen() then
+	if LB.Editing:Demo() ~= "party" then
 		self:ClearPreview()
 
 		return
@@ -225,12 +226,6 @@ function Notice:ShowSample()
 end
 
 function Notice:Preview()
-	if not LB.Settings:IsOpen() then
-		self:ClearPreview()
-
-		return
-	end
-
 	self.previewing = true
 
 	if not self.ticker then
@@ -283,4 +278,14 @@ Callbacks:Register("Settings", Notice, function(_, path)
 	end
 
 	Notice.stack:Layout()
+end)
+
+Callbacks:Register("Editing", Notice, function()
+	Notice:SetEditing(LB.Editing:MoversShowing())
+
+	if LB.Editing:Demo() ~= "party" then
+		Notice:ClearPreview()
+	elseif not Notice.previewing then
+		Notice:Preview()
+	end
 end)

@@ -455,17 +455,6 @@ function TextSlot:Extent(frame)
 	return top, bottom
 end
 
----@param editing boolean
-function TextSlot:SetEditing(editing)
-	if self.editing == editing then
-		return
-	end
-
-	self.editing = editing
-
-	self:Refit()
-end
-
 function TextSlot:Refit()
 	for _, host in pairs(self.hosts) do
 		if host == self.group then
@@ -477,3 +466,15 @@ function TextSlot:Refit()
 
 	self:UpdateTicker()
 end
+
+LB.Callbacks:Register("Editing", TextSlot, function()
+	local editing = LB.Editing:Demo() == "text"
+
+	if TextSlot.editing == editing then
+		return
+	end
+
+	TextSlot.editing = editing
+
+	TextSlot:Refit()
+end)

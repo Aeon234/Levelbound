@@ -412,11 +412,6 @@ function Panel:Select(id)
 
 	self.active = id
 
-	LB.Gain:ClearPreview()
-	LB.Marker:ClearPreview()
-	LB.LevelUpNotice:ClearPreview()
-	LB.TextSlot:SetEditing(false)
-
 	for sectionId, button in pairs(self.buttons) do
 		PaintCategory(button, sectionId == id)
 	end
@@ -428,10 +423,7 @@ function Panel:Select(id)
 			list.Header.Title:SetText(section.title)
 			list.Header.DefaultsButton:SetShown(LB.Profile:Defaults()[id] ~= nil)
 			list:Display(page.rows)
-
-			if section.onSelect then
-				section.onSelect()
-			end
+			LB.Editing:Set({ demo = section.demo or false })
 		end
 	end
 end
@@ -530,10 +522,6 @@ function Panel:Create()
 		end
 
 		frame:SetAlpha(1)
-		LB.Gain:ClearPreview()
-		LB.Marker:ClearPreview()
-		LB.LevelUpNotice:ClearPreview()
-		LB.TextSlot:SetEditing(false)
 
 		if LB.EditMode:IsActive() then
 			LB.Editing:Set({ settings = false })

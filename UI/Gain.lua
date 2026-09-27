@@ -64,6 +64,7 @@ local Gain = {
 	moverKey = "gain",
 	inCombat = false,
 	sampleIndex = 0,
+	editing = false,
 }
 LB.Gain = Gain
 
@@ -373,7 +374,7 @@ end
 function Gain:ShowSample()
 	local ids = SampleTypes()
 
-	if not LB.Settings:IsOpen() or not Settings().detached or #ids == 0 then
+	if LB.Editing:Demo() ~= "gain" or not Settings().detached or #ids == 0 then
 		self:ClearPreview()
 
 		return
@@ -387,7 +388,7 @@ function Gain:Preview()
 	local group = LB.BarGroup
 	local frame = group.frame
 
-	if not frame or not frame:IsShown() or not LB.Settings:IsOpen() then
+	if not frame or not frame:IsShown() or LB.Editing:Demo() ~= "gain" then
 		self:ClearPreview()
 
 		return
@@ -429,7 +430,7 @@ function Gain:OnLayoutSettled()
 		return
 	end
 
-	if LB.Settings:IsOpen() then
+	if LB.Editing:Demo() == "gain" then
 		self:Preview()
 	else
 		self:ClearPreview()
@@ -540,9 +541,19 @@ Callbacks:Register("Settings", Gain, function(_, path)
 		Gain.stack:Layout()
 	end
 
-	if LB.Settings:IsOpen() then
+	if LB.Editing:Demo() == "gain" then
 		LB.Events:Merge("gain:preview", PREVIEW_MERGE, function()
 			Gain:Preview()
 		end)
+	end
+end)
+
+Callbacks:Register("Editing", Gain, function()
+	Gain:SetEditing(LB.Editing:MoversShowing())
+
+	if LB.Editing:Demo() ~= "gain" then
+		Gain:ClearPreview()
+	elseif not Gain.previewing then
+		Gain:Preview()
 	end
 end)
