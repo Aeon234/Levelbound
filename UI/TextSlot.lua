@@ -343,7 +343,7 @@ end
 
 ---@return boolean
 local function Independent()
-	return LB.Profile:Get("layout.mode") == "INDEPENDENT"
+	return LB.Layout.Independent(LB.Profile:Get("layout"))
 end
 
 ---@param bar LBBar

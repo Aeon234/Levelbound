@@ -46,7 +46,7 @@ end
 local function Target()
 	local group = LB.BarGroup
 
-	if LB.Profile:Get("layout.mode") == "INDEPENDENT" and group.bars.xp then
+	if LB.Layout.Independent(LB.Profile:Get("layout")) and group.bars.xp then
 		return group.bars.xp
 	end
 

@@ -5,6 +5,7 @@
 	<Script file="Capabilities.lua" />
 	<Script file="Profile.lua" />
 	<Script file="Progress.lua" />
+	<Script file="Layout.lua" />
 	<Script file="Format.lua" />
 	<Script file="Editing.lua" />
 	<Script file="Tags.lua" />

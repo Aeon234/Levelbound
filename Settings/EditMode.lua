@@ -514,7 +514,7 @@ local function BarTargets()
 		return targets
 	end
 
-	if layout.mode == "INDEPENDENT" then
+	if LB.Layout.Independent(layout) then
 		for _, id in ipairs(LB.Preview:Ids()) do
 			local bar = LB.BarGroup.bars[id]
 
@@ -531,7 +531,7 @@ local function BarTargets()
 		key = "group",
 		label = layout.mode == "CONNECTED" and L["Bar Stack"] or L["Progress Bars"],
 		target = group,
-		fixed = layout.fullscreen ~= "OFF",
+		fixed = LB.Layout.Fullscreen(layout) ~= nil,
 		outline = LB.BarGroup.border,
 	}
 
@@ -1000,7 +1000,7 @@ function EditMode:SetGrowth(growth)
 		return
 	end
 
-	local stacked = frame and layout.mode == "CONNECTED" and layout.fullscreen == "OFF"
+	local stacked = frame and layout.mode == "CONNECTED" and not LB.Layout.Fullscreen(layout)
 	local left, bottom, _, total = nil, nil, nil, nil
 
 	if frame and stacked then
@@ -1220,15 +1220,11 @@ function EditMode:BuildToolbar()
 	toolbar.mode = CreateFrame("DropdownButton", nil, toolbar, "WowStyle1DropdownTemplate")
 	toolbar.mode:SetWidth(DROPDOWN_WIDTH)
 	toolbar.mode:SetupMenu(function(_, root)
-		for _, option in ipairs({
-			{ "SEGMENTED", L["Segmented"] },
-			{ "CONNECTED", L["Connected"] },
-			{ "INDEPENDENT", L["Independent"] },
-		}) do
-			root:CreateRadio(option[2], function()
-				return LB.Profile:Get("layout.mode") == option[1]
+		for _, option in ipairs(LB.Layout.MODES) do
+			root:CreateRadio(option.label, function()
+				return LB.Profile:Get("layout.mode") == option.value
 			end, function()
-				LB.Profile:Set("layout.mode", option[1])
+				LB.Profile:Set("layout.mode", option.value)
 			end)
 		end
 	end)

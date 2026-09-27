@@ -31,7 +31,7 @@ function Tooltip:Clearance(bar)
 	local group = LB.BarGroup.frame
 	local frames = { bar }
 
-	if LB.Profile:Get("layout.mode") ~= "INDEPENDENT" and group then
+	if not LB.Layout.Independent(LB.Profile:Get("layout")) and group then
 		frames = { group }
 
 		for _, other in pairs(LB.BarGroup.bars) do

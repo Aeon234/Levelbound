@@ -86,8 +86,7 @@ function BarGroup:ComputeLayout(ids, screenWidth)
 	local layout = LB.Profile:Get("layout")
 	local count = #ids
 	local rects = {}
-	local fullscreen = layout.mode ~= "INDEPENDENT" and layout.fullscreen ~= "OFF"
-	local width = fullscreen and screenWidth or layout.width
+	local width = LB.Layout.Fullscreen(layout) and screenWidth or layout.width
 
 	if count == 0 then
 		return rects, width, layout.height
@@ -107,11 +106,7 @@ function BarGroup:ComputeLayout(ids, screenWidth)
 		local step = layout.height + layout.gap
 		local total = layout.height * count + layout.gap * (count - 1)
 
-		local growth = layout.growth
-
-		if fullscreen then
-			growth = layout.fullscreen == "TOP" and "DOWN" or "UP"
-		end
+		local growth = LB.Layout.Growth(layout)
 
 		for index, id in ipairs(ids) do
 			local y = growth == "UP" and (total - layout.height - (index - 1) * step) or ((index - 1) * step)
@@ -290,15 +285,15 @@ function BarGroup:ApplyLayout(animated)
 
 	local layout = LB.Profile:Get("layout")
 	local ids = VisibleIds()
-	local fullscreen = layout.mode ~= "INDEPENDENT" and layout.fullscreen ~= "OFF"
+	local fullscreen = LB.Layout.Fullscreen(layout)
 	local rects, groupWidth, groupHeight = self:ComputeLayout(ids, UIParent:GetWidth())
 
 	frame:SetFrameStrata(layout.strata)
 	frame:ClearAllPoints()
 
 	if fullscreen then
-		local edge = layout.fullscreen == "TOP" and "TOPLEFT" or "BOTTOMLEFT"
-		local other = layout.fullscreen == "TOP" and "TOPRIGHT" or "BOTTOMRIGHT"
+		local edge = fullscreen == "TOP" and "TOPLEFT" or "BOTTOMLEFT"
+		local other = fullscreen == "TOP" and "TOPRIGHT" or "BOTTOMRIGHT"
 
 		frame:SetPoint(edge, UIParent, edge, 0, 0)
 		frame:SetPoint(other, UIParent, other, 0, 0)
@@ -326,7 +321,7 @@ function BarGroup:ApplyLayout(animated)
 
 	local lead = leadId and self.bars[leadId] or nil
 
-	LB.TextSlot:ApplyGroup(frame, lead, fullscreen and layout.fullscreen or nil)
+	LB.TextSlot:ApplyGroup(frame, lead, fullscreen)
 
 	if not animated then
 		LB:StopTween(driver)

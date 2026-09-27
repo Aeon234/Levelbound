@@ -79,7 +79,7 @@ end
 local function Update(self)
 	local inputs = self.inputs
 
-	inputs.independent = LB.Profile:Get("layout.mode") == "INDEPENDENT"
+	inputs.independent = LB.Layout.Independent(LB.Profile:Get("layout"))
 
 	local outputs = Editing.Resolve(inputs)
 	local changed = false

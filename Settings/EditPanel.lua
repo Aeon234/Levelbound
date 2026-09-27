@@ -238,7 +238,7 @@ function EditPanel:Refresh()
 	frame.pinned:SetShown(fixed)
 
 	if fixed then
-		local edge = LB.Profile:Get("layout.fullscreen")
+		local edge = LB.Layout.Fullscreen(LB.Profile:Get("layout"))
 
 		frame.pinned:SetText(edge == "TOP" and L["Pinned to Top Edge"] or L["Pinned to Bottom Edge"])
 		frame:SetSize(frame.pinned:GetStringWidth() + PAD * 2, PINNED_HEIGHT)

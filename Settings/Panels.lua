@@ -419,11 +419,7 @@ Panels.sections = {
 		title = L["Layout"],
 		rows = {
 			Header(L["Placement"]),
-			Dropdown(L["Layout Mode"], "layout.mode", {
-				{ value = "SEGMENTED", label = L["Segmented"] },
-				{ value = "CONNECTED", label = L["Connected"] },
-				{ value = "INDEPENDENT", label = L["Independent"] },
-			}),
+			Dropdown(L["Layout Mode"], "layout.mode", LB.Layout.MODES),
 			Dropdown(L["Fullscreen Edge"], "layout.fullscreen", {
 				{ value = "OFF", label = L["Off"] },
 				{ value = "TOP", label = L["Top"] },
