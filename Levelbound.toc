@@ -12,7 +12,7 @@
 
 ## Category: Quests & Leveling
 
-## X-Curse-Project-ID:
+## X-Curse-Project-ID: 1715108
 ## X-Wago-ID:
 
 Libs\embeds.xml
