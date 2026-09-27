@@ -933,7 +933,7 @@ function EditMode:Commit(key, left, bottom)
 		LB.Profile:Set("layout.positions." .. layout.mode, position)
 	else
 		local position = LB.Placement:Anchor(left, bottom, width, height, screenWidth, screenHeight)
-		local independent = LB:CopyTable(layout.independent)
+		local independent = layout.independent
 		local entry = independent[key] or {}
 
 		entry.position = position

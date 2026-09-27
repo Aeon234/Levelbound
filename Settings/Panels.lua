@@ -56,7 +56,7 @@ local function Alpha(label, path)
 			return color and color[4] or 1
 		end,
 		set = function(value)
-			local color = LB:CopyTable(LB.Profile:Get(path))
+			local color = LB.Profile:Get(path)
 
 			color[4] = value
 
@@ -214,7 +214,7 @@ local function GradientStop(index)
 	end
 
 	local function Write(value)
-		local gradient = LB:CopyTable(LB.Profile:Get("appearance.xpGradient"))
+		local gradient = LB.Profile:Get("appearance.xpGradient")
 
 		gradient[index] = value
 

@@ -496,7 +496,7 @@ function Profile:Set(path, value)
 		last = key
 	end
 
-	if not last or node[last] == value then
+	if not last or (type(value) ~= "table" and node[last] == value) then
 		return false
 	end
 

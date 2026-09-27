@@ -148,7 +148,7 @@ function BarGroup:Create()
 
 	local frame = CreateFrame("Frame", "LevelboundBarGroup", UIParent)
 
-	frame:SetFrameStrata(LB.Profile:Get("layout.strata") or "LOW")
+	frame:SetFrameStrata(LB.Profile:Get("layout.strata"))
 	frame:Hide()
 
 	self.frame = frame

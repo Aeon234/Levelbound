@@ -147,7 +147,7 @@ function Notice:Show(name, level, held)
 
 	frame.text:SetTextColor(1, 1, 1, 1)
 	frame.text:SetFormattedText(LB.L["%s reached level %d"], name, level)
-	frame:SetFrameStrata(LB.Profile:Get("layout.strata") or "LOW")
+	frame:SetFrameStrata(LB.Profile:Get("layout.strata"))
 	Style(frame)
 
 	if Settings().detached then

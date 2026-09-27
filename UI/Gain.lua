@@ -278,7 +278,7 @@ function Gain:ShowDetached(id, amount, held)
 	self.lines[id] = frame
 
 	Build(frame)
-	frame:SetFrameStrata(LB.Profile:Get("layout.strata") or "LOW")
+	frame:SetFrameStrata(LB.Profile:Get("layout.strata"))
 	Style(frame, true)
 	self:PlaceBox()
 	self.stack:Push(frame, held)
