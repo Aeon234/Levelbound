@@ -14,6 +14,7 @@ local Media = {
 LB.Media = Media
 
 Media.textures = {
+	logo = PATH .. [[Levelbound.tga]],
 	gainArrow = PATH .. [[Textures\GainArrowUp-White.tga]],
 	gainArrowReference = PATH .. [[Textures\GainArrowUp-Green.tga]],
 	markerDisc = PATH .. [[Textures\MarkerDisc-White.tga]],

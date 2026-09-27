@@ -124,7 +124,7 @@ function MoverMixin:Paint()
 	local r, g, b, a = ACCENT[1], ACCENT[2], ACCENT[3], self.hovered and BORDER_HOVER_ALPHA or BORDER_ALPHA
 
 	if self.selected then
-		r, g, b = NORMAL_FONT_COLOR:GetRGB()
+		r, g, b = LB.BRAND[1], LB.BRAND[2], LB.BRAND[3]
 		a = BORDER_SELECTED_ALPHA
 	end
 

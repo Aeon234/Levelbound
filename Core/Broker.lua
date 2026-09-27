@@ -42,7 +42,7 @@ function Broker:Create()
 
 	local launcher = broker:NewDataObject(LB.name, {
 		type = "launcher",
-		icon = LB.Media.textures.gainArrowReference,
+		icon = LB.Media.textures.logo,
 		OnClick = OnClick,
 		OnTooltipShow = OnTooltipShow,
 	})

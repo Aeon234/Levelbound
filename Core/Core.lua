@@ -55,8 +55,11 @@ LB.MESSAGE_PREFIX = "Levelbound"
 
 LB.DEFAULT_FONT = "Gilroy Bold"
 
-local PREFIX = "|cff7a63ffLevelbound|r: "
-local WARN_PREFIX = "|cff7a63ffLevelbound|r |cffff7f3fWarning|r: "
+-- The logo's gold, lifted to read as small text on a dark chat window.
+LB.BRAND = { 232 / 255, 182 / 255, 74 / 255 }
+
+local PREFIX = "|cffe8b64aLevelbound|r: "
+local WARN_PREFIX = "|cffe8b64aLevelbound|r |cffff4d4dWarning|r: "
 
 ---@param message string
 ---@param ... any
