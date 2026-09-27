@@ -523,14 +523,11 @@ function Panel:Create()
 
 		frame:SetAlpha(1)
 
+		LB.Editing:Set({ settings = false })
+
 		if LB.EditMode:IsActive() then
-			LB.Editing:Set({ settings = false })
 			LB.EditMode:OnSettingsHidden()
-
-			return
 		end
-
-		LB.Editing:Set({ settings = false, previewAll = false })
 	end)
 	frame:Hide()
 

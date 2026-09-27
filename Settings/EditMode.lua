@@ -358,15 +358,7 @@ function EditMode:Finish(reopen)
 
 	self:HideLayout(false)
 
-	local settingsOpen = LB.Settings:IsOpen() or reopen == true
-	---@type LBEditingChanges
-	local changes = { editMode = false, settings = settingsOpen }
-
-	if not settingsOpen then
-		changes.previewAll = false
-	end
-
-	LB.Editing:Set(changes)
+	LB.Editing:Set({ editMode = false, settings = LB.Settings:IsOpen() or reopen == true })
 
 	LB.Settings:PaintSession()
 	LB.Settings:Refresh()

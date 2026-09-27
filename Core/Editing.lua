@@ -7,6 +7,7 @@ local LB = select(2, ...)
 ---@field demo LBEditingDemo|false
 ---@field editMode boolean
 ---@field previewAll boolean
+---@field previewAllFromSettings boolean
 ---@field independent boolean
 ---@field empty boolean
 
@@ -31,6 +32,7 @@ local Editing = {
 		demo = false,
 		editMode = false,
 		previewAll = false,
+		previewAllFromSettings = false,
 		independent = false,
 		empty = false,
 	},
@@ -101,8 +103,18 @@ end
 
 ---@param changes LBEditingChanges
 function Editing:Set(changes)
+	local inputs = self.inputs
+
 	for key, value in pairs(changes) do
-		self.inputs[key] = value
+		inputs[key] = value
+	end
+
+	if changes.previewAll then
+		inputs.previewAllFromSettings = inputs.settings
+	end
+
+	if inputs.previewAllFromSettings and not inputs.settings and not inputs.editMode then
+		inputs.previewAll = false
 	end
 
 	Update(self)
