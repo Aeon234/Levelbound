@@ -139,9 +139,9 @@ local resolvers = {
 	end,
 
 	PERCENT_WITH_QUESTS = function(snapshot)
-		local _, quest = LB.Progress.Fills(snapshot)
+		local part = LB.Progress.Part(snapshot, snapshot.cur + snapshot.overlays.quest)
 
-		return quest and Format:Percent(quest) or DASH
+		return part and Format:Percent(part) or DASH
 	end,
 
 	SESSION_TIME = function()

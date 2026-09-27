@@ -67,18 +67,6 @@ function Progress.Remaining(snapshot)
 	return math.max(snapshot.max - snapshot.cur, 0)
 end
 
----@param snapshot LBSnapshot
----@return number quest quest XP past the level-up
----@return number rested rested XP past the level-up
-function Progress.Overflow(snapshot)
-	local remaining = Progress.Remaining(snapshot)
-	local questXP = Overlay(snapshot, "quest")
-	local quest = math.max(questXP - remaining, 0)
-	local rested = math.max(questXP + Overlay(snapshot, "rested") - remaining - quest, 0)
-
-	return quest, rested
-end
-
 ---@param rate number XP per second
 ---@return number perHour whole XP per hour, rounded so a rate read back from the party message's per-hour figure returns it exactly
 function Progress.PerHour(rate)

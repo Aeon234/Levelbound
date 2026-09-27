@@ -216,66 +216,44 @@ end
 
 ---@param tip GameTooltip
 ---@param snapshot LBSnapshot
----@param source LBSource?
+---@param source LBSource? the player's XP source, for the quests still in the log
 ---@param compared string? how far ahead or behind the player a party member is
 local function Progress(tip, snapshot, source, compared)
 	local Format = LB.Format
+	local appearance = LB.Profile:Get("appearance")
+	local overlays = snapshot.overlays
 	local share = Share(snapshot)
 	local progress = Section(L["Progress"])
+
+	if overlays.rested > 0 then
+		local rested = Paint(appearance.restedColor, Format:Number(overlays.rested))
+
+		Add(progress, L["Rested"], WithShare(rested, ShareOf(snapshot, overlays.rested)), appearance.restedColor)
+	end
 
 	Add(progress, L["Current"], WithShare(Format:Value("VALUE", snapshot, source), share))
 	Add(progress, L["Remaining"], WithShare(Format:Value("REMAINING", snapshot, source), 1 - share))
 
-	if compared then
-		Add(progress, L["Compared with you"], compared)
-	end
-
-	Flush(tip, progress)
-end
-
----@param tip GameTooltip
----@param snapshot LBSnapshot
----@param source LBSource? the player's XP source, for the quests still in the log
-local function Bonus(tip, snapshot, source)
-	local Format = LB.Format
-	local appearance = LB.Profile:Get("appearance")
-	local overlays = snapshot.overlays
-	local bonus = Section(L["Bonus"])
-
-	if overlays.rested > 0 then
-		Add(
-			bonus,
-			L["Rested"],
-			WithShare(Format:Number(overlays.rested), ShareOf(snapshot, overlays.rested)),
-			appearance.restedColor
-		)
-	end
-
 	if overlays.quest > 0 then
-		Add(
-			bonus,
-			L["Completed"],
-			WithShare(Format:Number(overlays.quest), ShareOf(snapshot, overlays.quest)),
-			appearance.questColor
-		)
-		Add(bonus, L["After Turn-In"], Format:Value("PERCENT_WITH_QUESTS", snapshot, source))
+		local completed = Paint(appearance.questColor, Format:Number(overlays.quest))
+
+		Add(progress, L["Completed"], WithShare(completed, ShareOf(snapshot, overlays.quest)), appearance.questColor)
+		Add(progress, L["After Turn-In"], Format:Value("PERCENT_WITH_QUESTS", snapshot, source))
 	end
 
 	if source and source.IncompleteQuestXP then
 		local incomplete = source:IncompleteQuestXP()
 
 		if incomplete > 0 then
-			Add(bonus, L["Quests in log"], Format:Number(incomplete))
+			Add(progress, L["Quests in Log"], WithShare(Format:Number(incomplete), ShareOf(snapshot, incomplete)))
 		end
 	end
 
-	local questOverflow, restedOverflow = LB.Progress.Overflow(snapshot)
-
-	if questOverflow + restedOverflow > 0 then
-		Add(bonus, L["Past the level-up"], Format:Number(questOverflow + restedOverflow))
+	if compared then
+		Add(progress, L["Compared with You"], compared)
 	end
 
-	Flush(tip, bonus)
+	Flush(tip, progress)
 end
 
 ---@param pace LBTooltipSection
@@ -284,8 +262,8 @@ end
 local function AddPace(pace, rate, seconds)
 	local Format = LB.Format
 
-	Add(pace, L["XP per hour"], Format:Number(rate and LB.Progress.PerHour(rate)))
-	Add(pace, L["Time to level"], Format:Duration(seconds))
+	Add(pace, L["XP per Hour"], Format:Number(rate and LB.Progress.PerHour(rate)))
+	Add(pace, L["Time to Level"], Format:Duration(seconds))
 end
 
 ---@param tip GameTooltip
@@ -314,11 +292,10 @@ function Tooltip:XP(tip, snapshot, source)
 
 	Title(tip, COMBAT_XP_GAIN, UNIT_LEVEL_TEMPLATE:format(snapshot.level or 0))
 	Progress(tip, snapshot, source)
-	Bonus(tip, snapshot, source)
 
 	local pace = Section(L["Pace"])
 
-	Add(pace, L["Time this level"], Format:Value("LEVEL_TIME", snapshot, source))
+	Add(pace, L["Time This Level"], Format:Value("LEVEL_TIME", snapshot, source))
 	Add(pace, L["Session"], Format:Value("SESSION_TIME", snapshot, source))
 	AddPace(pace, LB.Session:Rate(), LB.Session:TimeToLevel())
 	Flush(tip, pace)
@@ -340,7 +317,7 @@ function Tooltip:Generic(tip, snapshot, source)
 	Progress(tip, snapshot, source)
 
 	if snapshot.flags.readyToUpgrade then
-		tip:AddLine(L["Ready to upgrade"], 0, 1, 0)
+		tip:AddLine(L["Ready to Upgrade"], 0, 1, 0)
 	end
 
 	if source and source.Tooltip then
@@ -393,7 +370,6 @@ function Tooltip:Member(tip, member, nameColor)
 
 	Title(tip, Paint(nameColor, member.name), UNIT_LEVEL_TEMPLATE:format(snapshot.level))
 	Progress(tip, snapshot, nil, Compared(LB.Model:Get("xp"), snapshot))
-	Bonus(tip, snapshot, nil)
 
 	local pace = Section(L["Pace"])
 

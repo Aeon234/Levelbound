@@ -78,9 +78,7 @@ local resolvers = {
 		return LB.Format:PercentNumber(LB.Progress.Fraction(snapshot))
 	end,
 	percentquest = function(snapshot)
-		local _, quest = LB.Progress.Fills(snapshot)
-
-		return LB.Format:PercentNumber(quest)
+		return LB.Format:PercentNumber(LB.Progress.Part(snapshot, snapshot.cur + Overlay(snapshot, "quest")))
 	end,
 	rested = function(snapshot)
 		return LB.Format:Number(Overlay(snapshot, "rested"))
