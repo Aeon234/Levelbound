@@ -229,6 +229,34 @@ local function GradientStop(index)
 	return Read, Write
 end
 
+-- None and the flat lines lead; the textured styles follow in each locale's alphabetical order.
+---@return LBSettingOption[]
+local function BorderStyles()
+	local textured = {
+		{ value = "THICK", label = L["Stone"] },
+		{ value = "ROUNDED", label = L["Simple"] },
+		{ value = "ROUNDED_THICK", label = L["Simple Thick"] },
+		{ value = "FOREVER", label = L["Forever"] },
+		{ value = "METALLIC", label = L["Metallic"] },
+	}
+
+	table.sort(textured, function(a, b)
+		return strcmputf8i(a.label, b.label) < 0
+	end)
+
+	local options = {
+		{ value = "NONE", label = NONE },
+		{ value = "ONE_PIXEL", label = L["1 Pixel"] },
+		{ value = "TWO_PIXEL", label = L["2 Pixel"] },
+	}
+
+	for _, option in ipairs(textured) do
+		options[#options + 1] = option
+	end
+
+	return options
+end
+
 local OUTLINES = LB.Media.outlines
 
 ---@param id string
@@ -312,16 +340,7 @@ local appearance = {
 	Color(LB.Model:Label("travelers"), "appearance.typeColors.travelers", Capable("travelers")),
 	Color(LB.Model:Label("endeavor"), "appearance.typeColors.endeavor", Capable("endeavor")),
 	Header(L["Border"]),
-	Dropdown(L["Border Style"], "appearance.border.style", {
-		{ value = "NONE", label = NONE },
-		{ value = "ONE_PIXEL", label = L["1 Pixel"] },
-		{ value = "TWO_PIXEL", label = L["2 Pixel"] },
-		{ value = "THICK", label = L["Stone"] },
-		{ value = "ROUNDED", label = L["Simple"] },
-		{ value = "ROUNDED_THICK", label = L["Simple Thick"] },
-		{ value = "FOREVER", label = L["Forever"] },
-		{ value = "METALLIC", label = L["Metallic"] },
-	}),
+	Dropdown(L["Border Style"], "appearance.border.style", BorderStyles()),
 	Enabled(Check(L["Custom Color"], "appearance.border.customColor"), BorderTextured),
 	Enabled(Color(L["Border Color"], "appearance.border.color"), function()
 		return not BorderTextured() or LB.Profile:Get("appearance.border.customColor") == true
