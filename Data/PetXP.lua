@@ -1,6 +1,8 @@
 local LB = select(2, ...)
 
 LB.Source:New("petxp", {
+	label = LB.L["Pet Experience"],
+	shortLabel = LB.L["Pet Exp"],
 	Capability = function()
 		return LB.can.petXP == true
 	end,

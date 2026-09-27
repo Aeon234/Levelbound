@@ -11,16 +11,6 @@ local PREVIEW_EVERY = 1.5
 local TRAVEL = 20
 
 
-local LABELS = {
-	xp = L["Exp"],
-	petxp = L["Pet Exp"],
-	reputation = L["Rep"],
-	honor = HONOR,
-	house = L["House Exp"],
-	endeavor = L["Endeavor"],
-	travelers = MONTHLY_ACTIVITIES_POINTS,
-}
-
 local OUTLINES = {
 	NONE = "",
 	OUTLINE = "OUTLINE",
@@ -98,12 +88,6 @@ function Gain:Offset(fraction, barWidth, width, mode)
 	return math.min(math.max(x, width / 2), barWidth - width / 2)
 end
 
----@param id string a progress type
----@return string label the short name a detached line shows
-function Gain:Label(id)
-	return LABELS[id] or id
-end
-
 ---@param frame Frame
 local function Build(frame)
 	if frame.arrow then
@@ -146,7 +130,7 @@ local function Text(id, amount, labelled)
 
 	local color = TypeColor(id)
 
-	return ("%s %s"):format(text, CreateColor(color[1], color[2], color[3]):WrapTextInColorCode(Gain:Label(id)))
+	return ("%s %s"):format(text, CreateColor(color[1], color[2], color[3]):WrapTextInColorCode(LB.Model:Label(id, true)))
 end
 
 ---@param frame Frame
@@ -245,7 +229,7 @@ function Gain:PlaceBox()
 
 	Font(measure)
 
-	for id in pairs(LABELS) do
+	for _, id in ipairs(LB.Model:Order()) do
 		measure:SetText(Text(id, PREVIEW_AMOUNT, true))
 		width = math.max(width, measure:GetStringWidth())
 	end
@@ -351,14 +335,7 @@ local function SampleTypes()
 	local ids = {}
 
 	for _, id in ipairs(LB.Model:Order()) do
-		local source = LB.Model:Source(id)
-		local ok, capable = false, false
-
-		if source then
-			ok, capable = pcall(source.Capability, source)
-		end
-
-		if ok and capable then
+		if LB.Model:Capable(id) then
 			ids[#ids + 1] = id
 		end
 	end

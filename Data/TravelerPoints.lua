@@ -33,6 +33,8 @@ local function Progress()
 end
 
 LB.Source:New("travelers", {
+	label = LB.L["Travel Points"],
+	shortLabel = MONTHLY_ACTIVITIES_POINTS,
 	Capability = function()
 		return LB.can.travelers == true
 	end,

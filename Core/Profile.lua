@@ -287,11 +287,13 @@ defaults.text.slots.xp = {
 	BELOW_RIGHT = Slot(L["Completed:"] .. " [questpercent:color]% | " .. L["Rested:"] .. " [restedpercent:color]%"),
 }
 
-for _, id in ipairs({ "petxp", "reputation", "house", "endeavor", "travelers", "honor" }) do
-	defaults.text.slots[id] = {
-		INSIDE_LEFT = Slot("[name]"),
-		INSIDE_RIGHT = Slot("[percent]%"),
-	}
+for _, id in ipairs(LB.TYPE_ORDER) do
+	if id ~= "xp" then
+		defaults.text.slots[id] = {
+			INSIDE_LEFT = Slot("[name]"),
+			INSIDE_RIGHT = Slot("[percent]%"),
+		}
+	end
 end
 
 ---@type LBDatabase

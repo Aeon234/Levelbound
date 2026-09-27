@@ -49,6 +49,8 @@ local function Request()
 end
 
 LB.Source:New("endeavor", {
+	label = LB.L["Neighborhood Endeavor"],
+	shortLabel = LB.L["Endeavor"],
 	Capability = function()
 		return LB.can.endeavor == true
 	end,

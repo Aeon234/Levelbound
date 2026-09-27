@@ -33,7 +33,7 @@ local L = select(2, ...).L
 -- Party level-up notices, on screen and in chat (UI/LevelUpNotice.lua, Party/LevelUp.lua)
 -- L["%s reached level %d"] = "%s reached level %d"
 
--- Progress types (Data/House.lua, settings window)
+-- Progress type names (Data/*, shown in the settings window and edit mode)
 -- L["Pet Experience"] = "Pet Experience"
 -- L["Housing Exp"] = "Housing Exp"
 -- L["Neighborhood Endeavor"] = "Neighborhood Endeavor"
@@ -140,7 +140,7 @@ local L = select(2, ...).L
 -- L["Show Minimap Button"] = "Show Minimap Button"
 -- L["Request Time Played at Login"] = "Request Time Played at Login"
 
--- Settings window: Layout; mode names, sizes and "Off" are also used by edit mode
+-- Settings window: Layout; mode names (Core/Layout.lua), sizes and "Off" are also used by edit mode
 -- L["Layout"] = "Layout"
 -- L["Placement"] = "Placement"
 -- L["Layout Mode"] = "Layout Mode"
@@ -243,7 +243,7 @@ local L = select(2, ...).L
 -- L["Hiding"] = "Hiding"
 -- L["Hide the Bars in Combat"] = "Hide the Bars in Combat"
 
--- Detached gain indicator, naming each progress type (UI/Gain.lua)
+-- Short progress type names, for the detached gain indicator (Data/*)
 -- L["Exp"] = "Exp"
 -- L["Pet Exp"] = "Pet Exp"
 -- L["Rep"] = "Rep"

@@ -31,6 +31,8 @@ local Events = LB.Events
 ---@field atMaxLevel boolean? for xp
 
 ---@class LBSourceSpec
+---@field label string
+---@field shortLabel string
 ---@field Read fun(self: LBSource, snapshot: LBSnapshot): boolean
 ---@field IsAvailable? fun(self: LBSource): boolean
 ---@field Capability? fun(self: LBSource): boolean
@@ -121,7 +123,7 @@ local Model = {
 }
 LB.Model = Model
 
-local ORDER = { "xp", "petxp", "reputation", "house", "endeavor", "travelers", "honor" }
+local ORDER = LB.TYPE_ORDER
 
 ---@class LBSourceFactory
 local Source = {}
@@ -175,6 +177,33 @@ function Model:Order()
 	end
 
 	return order
+end
+
+---@param id string
+---@param short boolean? the short name a detached gain line shows
+---@return string label the type's name, or its id when there is no such type
+function Model:Label(id, short)
+	local source = self.sources[id]
+
+	if not source then
+		return id
+	end
+
+	return short and source.shortLabel or source.label
+end
+
+---@param id string
+---@return boolean capable this client has the type
+function Model:Capable(id)
+	local source = self.sources[id]
+
+	if not source then
+		return false
+	end
+
+	local ok, capable = pcall(source.Capability, source)
+
+	return ok and capable == true
 end
 
 ---@return string[] ids visible now, in the fixed order
@@ -291,8 +320,7 @@ function Model:Sync()
 		end
 
 		if source then
-			local present, capable = pcall(source.Capability, source)
-			local wanted = present and capable == true and source:IsEnabled()
+			local wanted = self:Capable(id) and source:IsEnabled()
 
 			if wanted and not source.subscribed then
 				source.subscribed = true

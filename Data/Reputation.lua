@@ -65,6 +65,8 @@ local function StandingText(factionID, reaction)
 end
 
 LB.Source:New("reputation", {
+	label = REPUTATION,
+	shortLabel = L["Rep"],
 	Capability = function()
 		return C_Reputation ~= nil and C_Reputation.GetWatchedFactionData ~= nil
 	end,

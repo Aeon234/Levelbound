@@ -56,6 +56,8 @@ end
 
 LB.MESSAGE_PREFIX = "Levelbound"
 
+LB.TYPE_ORDER = { "xp", "petxp", "reputation", "house", "endeavor", "travelers", "honor" }
+
 LB.DEFAULT_FONT = "Gilroy Bold"
 
 -- The logo's gold, lifted to read as small text on a dark chat window.

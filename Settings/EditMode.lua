@@ -97,7 +97,7 @@ end
 ---@param id string
 ---@return string
 local function TypeLabel(id)
-	return LB.Panels.typeLabels[id] or id
+	return LB.Model:Label(id)
 end
 
 ---@param mode string

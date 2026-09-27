@@ -39,6 +39,8 @@ end
 ---@field questXP number
 ---@field incompleteQuestXP number
 local XP = LB.Source:New("xp", {
+	label = COMBAT_XP_GAIN,
+	shortLabel = LB.L["Exp"],
 	questXP = 0,
 	incompleteQuestXP = 0,
 	atMaxLevel = false,

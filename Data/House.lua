@@ -21,6 +21,8 @@ local function Ask(guid)
 end
 
 LB.Source:New("house", {
+	label = LB.L["Housing Exp"],
+	shortLabel = LB.L["House Exp"],
 	Capability = function()
 		return LB.can.house == true
 	end,

@@ -233,22 +233,31 @@ local OUTLINES = {
 	{ value = "SLUG_THICKOUTLINE", label = L["Slug Thick Outline"] },
 }
 
-local TYPE_LABELS = {
-	xp = COMBAT_XP_GAIN,
-	petxp = L["Pet Experience"],
-	reputation = REPUTATION,
-	house = L["Housing Exp"],
-	endeavor = L["Neighborhood Endeavor"],
-	travelers = L["Travel Points"],
-	honor = HONOR,
-}
+---@param id string
+---@return fun(): boolean gate shows a row only on a client that has the type
+local function Capable(id)
+	return function()
+		return LB.Model:Capable(id)
+	end
+end
+
+---@return LBSettingRow[]
+local function TypeRows()
+	local rows = {}
+
+	for _, id in ipairs(LB.Model:Order()) do
+		rows[#rows + 1] = Check(LB.Model:Label(id), "types." .. id, Capable(id))
+	end
+
+	return rows
+end
 
 ---@return LBSettingRow[]
 local function GainColorRows()
 	local rows = {}
 
 	for _, id in ipairs(LB.Model:Order()) do
-		rows[#rows + 1] = Color(TYPE_LABELS[id] or id, "gain.colors." .. id)
+		rows[#rows + 1] = Color(LB.Model:Label(id), "gain.colors." .. id)
 	end
 
 	return rows
@@ -271,12 +280,10 @@ end
 ---@class LBPanels
 ---@field sections LBSettingSection[]
 ---@field outlines LBSettingOption[]
----@field typeLabels table<string, string>
 local Panels = {}
 LB.Panels = Panels
 
 Panels.outlines = OUTLINES
-Panels.typeLabels = TYPE_LABELS
 
 local gradientStartGet, gradientStartSet = GradientStop(1)
 local gradientEndGet, gradientEndSet = GradientStop(2)
@@ -305,15 +312,9 @@ local appearance = {
 	Color(BACKGROUND, "appearance.background"),
 	Alpha(L["Background Opacity"], "appearance.background"),
 	Header(L["Type Colors"]),
-	Color(TYPE_LABELS.house, "appearance.typeColors.house", function()
-		return LB.can.house == true
-	end),
-	Color(TYPE_LABELS.travelers, "appearance.typeColors.travelers", function()
-		return LB.can.travelers == true
-	end),
-	Color(TYPE_LABELS.endeavor, "appearance.typeColors.endeavor", function()
-		return LB.can.endeavor == true
-	end),
+	Color(LB.Model:Label("house"), "appearance.typeColors.house", Capable("house")),
+	Color(LB.Model:Label("travelers"), "appearance.typeColors.travelers", Capable("travelers")),
+	Color(LB.Model:Label("endeavor"), "appearance.typeColors.endeavor", Capable("endeavor")),
 	Header(L["Border"]),
 	Dropdown(L["Border Style"], "appearance.border.style", {
 		{ value = "NONE", label = NONE },
@@ -451,25 +452,7 @@ Panels.sections = {
 	{
 		id = "types",
 		title = L["Progress Types"],
-		rows = {
-			Check(TYPE_LABELS.xp, "types.xp"),
-			Check(TYPE_LABELS.petxp, "types.petxp", function()
-				return LB.can.petXP == true
-			end),
-			Check(TYPE_LABELS.reputation, "types.reputation"),
-			Check(TYPE_LABELS.house, "types.house", function()
-				return LB.can.house == true
-			end),
-			Check(TYPE_LABELS.endeavor, "types.endeavor", function()
-				return LB.can.endeavor == true
-			end),
-			Check(TYPE_LABELS.travelers, "types.travelers", function()
-				return LB.can.travelers == true
-			end),
-			Check(TYPE_LABELS.honor, "types.honor", function()
-				return LB.can.honor == true
-			end),
-		},
+		rows = TypeRows(),
 	},
 	{
 		id = "appearance",
