@@ -5,12 +5,14 @@ local SAMPLE_CUR = 6200
 local SAMPLE_QUEST = 1600
 local SAMPLE_RESTED = 1400
 
+local Editing = LB.Editing
+
 ---@class LBPreview
----@field active boolean
----@field editing boolean the settings window is open
+---@field previewAll boolean
+---@field editing boolean
 ---@field snapshots table<string, LBSnapshot>
 local Preview = {
-	active = false,
+	previewAll = false,
 	editing = false,
 	snapshots = {},
 }
@@ -30,11 +32,6 @@ local function Sample(id)
 		atCap = false,
 		flags = {},
 	}
-end
-
----@return boolean
-function Preview:IsActive()
-	return self.active
 end
 
 ---@return string[] ids every enabled type, in the fixed display order
@@ -65,39 +62,21 @@ function Preview:Snapshot(id)
 	return snapshot
 end
 
-function Preview:Enter()
-	if self.active then
-		return
-	end
-
-	self.active = true
-
-	LB.Callbacks:Fire("Layout")
-end
-
 ---@param id string
 ---@return boolean
 function Preview:Covers(id)
-	return self.active or (self.editing and id == "xp")
+	return Editing:PreviewAll() or (Editing:IsEditing() and id == "xp")
 end
 
----@param editing boolean
-function Preview:SetEditing(editing)
-	if self.editing == editing then
+LB.Callbacks:Register("Editing", Preview, function()
+	local previewAll, editing = Editing:PreviewAll(), Editing:IsEditing()
+
+	if previewAll == Preview.previewAll and editing == Preview.editing then
 		return
 	end
 
-	self.editing = editing
+	Preview.previewAll = previewAll
+	Preview.editing = editing
 
 	LB.Callbacks:Fire("Layout")
-end
-
-function Preview:Exit()
-	if not self.active then
-		return
-	end
-
-	self.active = false
-
-	LB.Callbacks:Fire("Layout")
-end
+end)

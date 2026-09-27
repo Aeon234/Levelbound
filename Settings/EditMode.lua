@@ -155,7 +155,6 @@ end
 ---@field dragging boolean? a mover is being dragged, so the toolbar stands aside
 ---@field toolbarSlot string? where the toolbar sits, as point and offsets, away from the movers
 ---@field fromSettings boolean? the session began from the settings window, so it ends there too
----@field previewAll boolean? Preview All Bars on for Independent mode
 ---@field snapshot LBProfileData? the profile as it was when the session began
 ---@field selected string?
 ---@field movers table<string, LBMover>
@@ -248,9 +247,7 @@ function EditMode:Enter(fromSettings)
 		end)
 	end
 
-	LB.Visibility:SetEditing(true)
-	LB.Preview:SetEditing(true)
-	self:SyncPreview()
+	LB.Editing:Set({ editMode = true })
 
 	if LB.Settings:IsOpen() then
 		LB.Settings:Close()
@@ -359,11 +356,15 @@ function EditMode:Finish(reopen)
 
 	self:HideLayout(false)
 
-	local settingsOpen = LB.Settings:IsOpen() or reopen
+	local settingsOpen = LB.Settings:IsOpen() or reopen == true
+	---@type LBEditingChanges
+	local changes = { editMode = false, settings = settingsOpen }
 
-	if not settingsOpen or self.previewAll then
-		LB.Preview:Exit()
+	if not settingsOpen then
+		changes.previewAll = false
 	end
+
+	LB.Editing:Set(changes)
 
 	if not settingsOpen then
 		LB.Gain:ClearPreview()
@@ -371,10 +372,6 @@ function EditMode:Finish(reopen)
 		LB.LevelUpNotice:ClearPreview()
 	end
 
-	self.previewAll = false
-
-	LB.Preview:SetEditing(settingsOpen)
-	LB.Visibility:SetEditing(settingsOpen)
 	LB.Settings:PaintSession()
 	LB.Settings:Refresh()
 
@@ -434,8 +431,6 @@ function EditMode:OnSettingsHidden()
 	end
 
 	self.hidden = false
-
-	LB.Visibility:SetEditing(true)
 
 	self:ShowLayout()
 end
@@ -1639,21 +1634,8 @@ function EditMode:Build()
 	self.hoverWatch = CreateFrame("Frame")
 end
 
-function EditMode:SyncPreview()
-	local independent = LB.Profile:Get("layout.mode") == "INDEPENDENT"
-
-	if independent and not LB.Preview:IsActive() then
-		self.previewAll = true
-		LB.Preview:Enter()
-	elseif not independent and self.previewAll then
-		self.previewAll = false
-		LB.Preview:Exit()
-	end
-end
-
 LB.Callbacks:Register("Settings", EditMode, function()
 	if EditMode.active then
-		EditMode:SyncPreview()
 		EditMode:RefreshMovers()
 		EditMode:PaintToolbar()
 	end

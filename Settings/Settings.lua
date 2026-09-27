@@ -519,8 +519,7 @@ function Panel:Create()
 	frame:SetScript("OnDragStart", frame.StartMoving)
 	frame:SetScript("OnDragStop", frame.StopMovingOrSizing)
 	frame:SetScript("OnShow", function()
-		LB.Visibility:SetEditing(true)
-		LB.Preview:SetEditing(true)
+		LB.Editing:Set({ settings = true })
 		LB.EditMode:OnSettingsShown()
 		self:PaintPreviewButton()
 		self:PaintSession()
@@ -537,14 +536,13 @@ function Panel:Create()
 		LB.TextSlot:SetEditing(false)
 
 		if LB.EditMode:IsActive() then
+			LB.Editing:Set({ settings = false })
 			LB.EditMode:OnSettingsHidden()
 
 			return
 		end
 
-		LB.Preview:Exit()
-		LB.Preview:SetEditing(false)
-		LB.Visibility:SetEditing(false)
+		LB.Editing:Set({ settings = false, previewAll = false })
 	end)
 	frame:Hide()
 
@@ -607,11 +605,7 @@ function Panel:Create()
 	preview:SetPoint("TOPLEFT", 16, -28)
 	preview:SetSize(PREVIEW_WIDTH, BUTTON_HEIGHT)
 	preview:SetScript("OnClick", function()
-		if LB.Preview:IsActive() then
-			LB.Preview:Exit()
-		else
-			LB.Preview:Enter()
-		end
+		LB.Editing:Set({ previewAll = not LB.Editing:PreviewAll() })
 	end)
 
 	local edit = CreateFrame("Button", nil, frame, BUTTON_TEMPLATE)
@@ -659,7 +653,7 @@ function Panel:PaintPreviewButton()
 	local button = self.previewButton
 
 	if button then
-		button:SetText(LB.Preview:IsActive() and L["Stop Preview"] or L["Preview All Bars"])
+		button:SetText(LB.Editing:PreviewAll() and L["Stop Preview"] or L["Preview All Bars"])
 	end
 end
 

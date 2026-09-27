@@ -32,7 +32,7 @@ LB.BarGroup = BarGroup
 
 ---@return string[]
 local function VisibleIds()
-	if LB.Preview:IsActive() then
+	if LB.Editing:PreviewAll() then
 		return LB.Preview:Ids()
 	end
 

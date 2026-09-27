@@ -11,6 +11,7 @@ local addonName = ...
 ---@field Callbacks LBCallbacks
 ---@field Events LBEvents
 ---@field Profile LBProfile
+---@field Editing LBEditing
 ---@field Media LBMedia
 ---@field Model LBModel
 ---@field Source LBSourceFactory
@@ -276,6 +277,18 @@ function LB:PrintDiagnostics()
 		tostring(self.TimePlayed:TotalTime()),
 		tostring(self.TimePlayed.requested)
 	)
+
+	local inputs = self.Editing.inputs
+
+	self:Print(
+		"editing %s, preview all %s (settings %s, edit mode %s, preview all %s, independent %s)",
+		tostring(self.Editing:IsEditing()),
+		tostring(self.Editing:PreviewAll()),
+		tostring(inputs.settings),
+		tostring(inputs.editMode),
+		tostring(inputs.previewAll),
+		tostring(inputs.independent)
+	)
 end
 
 SLASH_LEVELBOUND1 = "/levelbound"
@@ -309,11 +322,7 @@ SlashCmdList.LEVELBOUND = function(message)
 	end
 
 	if command == "preview" then
-		if LB.Preview:IsActive() then
-			LB.Preview:Exit()
-		else
-			LB.Preview:Enter()
-		end
+		LB.Editing:Set({ previewAll = not LB.Editing:PreviewAll() })
 
 		return
 	end

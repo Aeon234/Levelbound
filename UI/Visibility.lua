@@ -162,13 +162,6 @@ function Visibility:Apply(animated)
 	LB.Marker:ApplyOpacity(animated)
 end
 
----@param editing boolean
-function Visibility:SetEditing(editing)
-	self.state.editing = editing
-
-	self:Apply(true)
-end
-
 ---@param id string? the bar under the cursor, or nil when the cursor left one
 function Visibility:SetHovered(id)
 	if self.state.hovered == id then
@@ -232,4 +225,16 @@ end
 
 Callbacks:Register("Settings", Visibility, function()
 	Visibility:Refresh(true)
+end)
+
+Callbacks:Register("Editing", Visibility, function()
+	local editing = LB.Editing:IsEditing()
+
+	if Visibility.state.editing == editing then
+		return
+	end
+
+	Visibility.state.editing = editing
+
+	Visibility:Apply(true)
 end)
