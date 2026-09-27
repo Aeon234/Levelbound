@@ -81,6 +81,11 @@ local function Enabled(row, predicate)
 end
 
 ---@return boolean
+local function Grouped()
+	return not LB.Layout.Independent(LB.Profile:Get("layout"))
+end
+
+---@return boolean
 local function DividersOn()
 	return LB.Profile:Get("appearance.dividers.enabled") == true
 end
@@ -412,11 +417,14 @@ Panels.sections = {
 		rows = {
 			Header(L["Placement"]),
 			Dropdown(L["Layout Mode"], "layout.mode", LB.Layout.MODES),
-			Dropdown(L["Fullscreen Edge"], "layout.fullscreen", {
-				{ value = "OFF", label = L["Off"] },
-				{ value = "TOP", label = L["Top"] },
-				{ value = "BOTTOM", label = L["Bottom"] },
-			}),
+			Enabled(
+				Dropdown(L["Fullscreen Edge"], "layout.fullscreen", {
+					{ value = "OFF", label = L["Off"] },
+					{ value = "TOP", label = L["Top"] },
+					{ value = "BOTTOM", label = L["Bottom"] },
+				}),
+				Grouped
+			),
 			Header(L["Size"]),
 			Slider(L["Width"], "layout.width", 100, 1600, 10),
 			Slider(L["Height"], "layout.height", 4, 64, 1),
