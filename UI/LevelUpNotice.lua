@@ -26,12 +26,10 @@ local OUTLINES = {
 ---@field stack LBNoticeStack
 ---@field box Frame where the notices sit when detached from the bars
 ---@field previewing boolean?
----@field editing boolean?
 ---@field ticker any?
 ---@field sampleIndex integer
 local Notice = {
 	sampleIndex = 0,
-	editing = false,
 }
 LB.LevelUpNotice = Notice
 
@@ -137,8 +135,7 @@ end
 
 ---@param name string the member's name, already class-coloured
 ---@param level integer
----@param held boolean? stays on screen, for edit mode
-function Notice:Show(name, level, held)
+function Notice:Show(name, level)
 	local frame = self.stack:Acquire()
 
 	Build(frame)
@@ -152,7 +149,7 @@ function Notice:Show(name, level, held)
 		self:PlaceBox()
 	end
 
-	self.stack:Push(frame, held)
+	self.stack:Push(frame)
 end
 
 function Notice:ReleaseAll()
@@ -201,27 +198,6 @@ function Notice:EditTargets()
 			end,
 		},
 	}
-end
-
----@param editing boolean
-function Notice:SetEditing(editing)
-	if self.editing == editing then
-		return
-	end
-
-	self.editing = editing
-
-	self:ReleaseAll()
-
-	if not editing or not DetachedBox() then
-		return
-	end
-
-	for index = NoticeStack.MAX, 1, -1 do
-		local entry = SAMPLE[index]
-
-		self:Show(SampleName(entry), entry.level, true)
-	end
 end
 
 function Notice:ShowSample()
@@ -300,8 +276,6 @@ Callbacks:Register("Settings", Notice, function(_, path)
 end)
 
 Callbacks:Register("Editing", Notice, function()
-	Notice:SetEditing(LB.Editing:MoversShowing())
-
 	if LB.Editing:Demo() ~= "party" then
 		Notice:ClearPreview()
 	elseif not Notice.previewing then

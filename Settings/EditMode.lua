@@ -460,7 +460,6 @@ function EditMode:HideLayout(keepToolbar)
 		mover:Hide()
 	end
 
-	LB.Editing:Set({ movers = false })
 	LB.EditPanel:Hide()
 
 	if self.keyboard then
@@ -527,8 +526,6 @@ function EditMode:RefreshMovers()
 	end
 
 	local seen = {}
-
-	LB.Editing:Set({ movers = true })
 
 	self.targets = {}
 

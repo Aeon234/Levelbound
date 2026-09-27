@@ -9,11 +9,11 @@ local Editing = LB.Editing
 
 ---@class LBPreview
 ---@field previewAll boolean
----@field editing boolean
+---@field xpSample boolean
 ---@field snapshots table<string, LBSnapshot>
 local Preview = {
 	previewAll = false,
-	editing = false,
+	xpSample = false,
 	snapshots = {},
 }
 LB.Preview = Preview
@@ -65,18 +65,18 @@ end
 ---@param id string
 ---@return boolean
 function Preview:Covers(id)
-	return Editing:PreviewAll() or (Editing:IsEditing() and id == "xp")
+	return Editing:PreviewAll() or (Editing:XPSample() and id == "xp")
 end
 
 LB.Callbacks:Register("Editing", Preview, function()
-	local previewAll, editing = Editing:PreviewAll(), Editing:IsEditing()
+	local previewAll, xpSample = Editing:PreviewAll(), Editing:XPSample()
 
-	if previewAll == Preview.previewAll and editing == Preview.editing then
+	if previewAll == Preview.previewAll and xpSample == Preview.xpSample then
 		return
 	end
 
 	Preview.previewAll = previewAll
-	Preview.editing = editing
+	Preview.xpSample = xpSample
 
 	LB.Callbacks:Fire("Layout")
 end)

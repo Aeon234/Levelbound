@@ -6,21 +6,20 @@ local LB = select(2, ...)
 ---@field settings boolean
 ---@field demo LBEditingDemo|false
 ---@field editMode boolean
----@field movers boolean
 ---@field previewAll boolean
 ---@field independent boolean
+---@field empty boolean
 
 ---@class LBEditingOutputs
 ---@field editing boolean
 ---@field demo LBEditingDemo|false
----@field movers boolean
+---@field xpSample boolean
 ---@field previewAll boolean
 
 ---@class LBEditingChanges
 ---@field settings boolean?
 ---@field demo (LBEditingDemo|false)?
 ---@field editMode boolean?
----@field movers boolean?
 ---@field previewAll boolean?
 
 ---@class LBEditing
@@ -31,14 +30,14 @@ local Editing = {
 		settings = false,
 		demo = false,
 		editMode = false,
-		movers = false,
 		previewAll = false,
 		independent = false,
+		empty = false,
 	},
 	outputs = {
 		editing = false,
 		demo = false,
-		movers = false,
+		xpSample = false,
 		previewAll = false,
 	},
 }
@@ -50,12 +49,12 @@ function Editing.Resolve(inputs)
 	return {
 		editing = inputs.settings or inputs.editMode,
 		demo = inputs.settings and inputs.demo,
-		movers = inputs.movers,
-		previewAll = inputs.previewAll or (inputs.editMode and inputs.independent),
+		xpSample = inputs.settings,
+		previewAll = inputs.previewAll or (inputs.editMode and (inputs.independent or inputs.empty)),
 	}
 end
 
----@return boolean editing the settings window or edit mode is open, so the XP bar shows its sample and fading holds
+---@return boolean editing the settings window or edit mode is open, so fading holds
 function Editing:IsEditing()
 	return self.outputs.editing
 end
@@ -65,9 +64,9 @@ function Editing:Demo()
 	return self.outputs.demo or nil
 end
 
----@return boolean showing edit mode's movers are on screen
-function Editing:MoversShowing()
-	return self.outputs.movers
+---@return boolean xpSample the XP bar shows its sample, so the settings can recolour its overlays
+function Editing:XPSample()
+	return self.outputs.xpSample
 end
 
 ---@return boolean previewAll every enabled type shows a sample bar
@@ -80,6 +79,7 @@ local function Update(self)
 	local inputs = self.inputs
 
 	inputs.independent = LB.Layout.Independent(LB.Profile:Get("layout"))
+	inputs.empty = #LB.Model:VisibleOrder() == 0
 
 	local outputs = Editing.Resolve(inputs)
 	local changed = false
@@ -109,5 +109,9 @@ function Editing:Set(changes)
 end
 
 LB.Callbacks:Register("Settings", Editing, function()
+	Update(Editing)
+end)
+
+LB.Callbacks:Register("Layout", Editing, function()
 	Update(Editing)
 end)

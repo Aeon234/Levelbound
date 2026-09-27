@@ -10,7 +10,6 @@ local PREVIEW_MERGE = 0.1
 local PREVIEW_EVERY = 1.5
 local TRAVEL = 20
 
-local SAMPLE_TYPES = { "xp", "reputation", "honor" }
 
 local LABELS = {
 	xp = L["Exp"],
@@ -55,14 +54,12 @@ end
 ---@field previewing boolean?
 ---@field ticker any? adds a detached sample every PREVIEW_EVERY seconds while the Gain page is open
 ---@field sampleIndex integer
----@field editing boolean?
 local Gain = {
 	pool = CreateFramePool("Frame", UIParent, nil, Reset),
 	active = {},
 	lines = {},
 	inCombat = false,
 	sampleIndex = 0,
-	editing = false,
 }
 LB.Gain = Gain
 
@@ -482,25 +479,6 @@ function Gain:EditTargets()
 	}
 end
 
----@param editing boolean
-function Gain:SetEditing(editing)
-	if self.editing == editing then
-		return
-	end
-
-	self.editing = editing
-
-	self:ReleaseAll()
-
-	if not editing or not DetachedBox() then
-		return
-	end
-
-	for index = #SAMPLE_TYPES, 1, -1 do
-		self:ShowDetached(SAMPLE_TYPES[index], PREVIEW_AMOUNT, true)
-	end
-end
-
 ---@param bar LBBar
 function Gain:Release(bar)
 	local frame = self.active[bar]
@@ -565,8 +543,6 @@ Callbacks:Register("Settings", Gain, function(_, path)
 end)
 
 Callbacks:Register("Editing", Gain, function()
-	Gain:SetEditing(LB.Editing:MoversShowing())
-
 	if LB.Editing:Demo() ~= "gain" then
 		Gain:ClearPreview()
 	elseif not Gain.previewing then

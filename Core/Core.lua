@@ -283,16 +283,17 @@ function LB:PrintDiagnostics()
 	local inputs = self.Editing.inputs
 
 	self:Print(
-		"editing %s, demo %s, movers %s, preview all %s (settings %s, page %s, edit mode %s, preview all %s, independent %s)",
+		"editing %s, demo %s, xp sample %s, preview all %s (settings %s, page %s, edit mode %s, preview all %s, independent %s, empty %s)",
 		tostring(self.Editing:IsEditing()),
 		tostring(self.Editing:Demo()),
-		tostring(self.Editing:MoversShowing()),
+		tostring(self.Editing:XPSample()),
 		tostring(self.Editing:PreviewAll()),
 		tostring(inputs.settings),
 		tostring(inputs.demo),
 		tostring(inputs.editMode),
 		tostring(inputs.previewAll),
-		tostring(inputs.independent)
+		tostring(inputs.independent),
+		tostring(inputs.empty)
 	)
 end
 
