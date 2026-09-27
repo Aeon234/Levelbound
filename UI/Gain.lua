@@ -11,15 +11,6 @@ local PREVIEW_EVERY = 1.5
 local TRAVEL = 20
 
 
-local OUTLINES = {
-	NONE = "",
-	OUTLINE = "OUTLINE",
-	THICKOUTLINE = "THICKOUTLINE",
-	SLUG = "SLUG",
-	SLUG_OUTLINE = "SLUG, OUTLINE",
-	SLUG_THICKOUTLINE = "SLUG, THICKOUTLINE",
-}
-
 ---@param frame Frame
 local function Reset(_, frame)
 	frame:SetScript("OnUpdate", nil)
@@ -107,16 +98,6 @@ local function TypeColor(id)
 	return colors[id] or colors.xp
 end
 
----@param fontString FontString
-local function Font(fontString)
-	local style = Settings().text
-	local path = LB.Media:FetchOrDefault("font", style.font)
-
-	if path then
-		fontString:SetFont(path, style.size, OUTLINES[style.outline] or "")
-	end
-end
-
 ---@param id string
 ---@param amount number
 ---@param labelled boolean detached lines name their type, in its colour
@@ -144,7 +125,7 @@ local function Style(frame, labelled)
 	frame.arrow:SetVertexColor(color[1], color[2], color[3], color[4] or 1)
 	LB:SetPixelSize(frame.arrow, size, size)
 
-	Font(frame.text)
+	LB.Media:SetFont(frame.text, Settings().text)
 	frame.text:SetTextColor(style.color[1], style.color[2], style.color[3], style.color[4] or 1)
 	frame.text:SetText(Text(frame.id, frame.amount, labelled))
 
@@ -227,7 +208,7 @@ function Gain:PlaceBox()
 	local measure = self.box.measure
 	local width = 1
 
-	Font(measure)
+	LB.Media:SetFont(measure, Settings().text)
 
 	for _, id in ipairs(LB.Model:Order()) do
 		measure:SetText(Text(id, PREVIEW_AMOUNT, true))

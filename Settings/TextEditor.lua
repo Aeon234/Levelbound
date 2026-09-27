@@ -421,7 +421,7 @@ function LevelboundTextEditorMixin:BuildSlotControls()
 	self.outline:SetPoint("TOPLEFT", LABEL_WIDTH, y + 4)
 	self.outline:SetWidth(180)
 	self.outline:SetupMenu(function(_, root)
-		for _, option in ipairs(LB.Panels.outlines) do
+		for _, option in ipairs(LB.Media.outlines) do
 			root:CreateRadio(option.label, function()
 				return self:Effective("outline") == option.value
 			end, function()

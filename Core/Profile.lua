@@ -21,16 +21,15 @@ local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 ---| "BELOW_RIGHT"
 ---@alias LBTextVisibility "HIDDEN" | "HOVER" | "ALWAYS"
 
----@class LBTextStyle
+---@class LBFontStyle
 ---@field font string LibSharedMedia font name
 ---@field size number
----@field color LBColor
 ---@field outline "NONE" | "OUTLINE" | "THICKOUTLINE" | "SLUG" | "SLUG_OUTLINE" | "SLUG_THICKOUTLINE"
 
----@class LBLevelUpTextStyle
----@field font string LibSharedMedia font name
----@field size number
----@field outline "NONE" | "OUTLINE" | "THICKOUTLINE" | "SLUG" | "SLUG_OUTLINE" | "SLUG_THICKOUTLINE"
+---@class LBTextStyle : LBFontStyle
+---@field color LBColor
+
+---@class LBLevelUpTextStyle : LBFontStyle
 
 ---@class LBGainTextStyle : LBTextStyle
 ---@field side "LEFT" | "RIGHT"

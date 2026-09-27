@@ -6,15 +6,6 @@ local SPACING = 6
 local LAYER = 7
 local TICK = 1
 
-local OUTLINES = {
-	NONE = "",
-	OUTLINE = "OUTLINE",
-	THICKOUTLINE = "THICKOUTLINE",
-	SLUG = "SLUG",
-	SLUG_OUTLINE = "SLUG, OUTLINE",
-	SLUG_THICKOUTLINE = "SLUG, THICKOUTLINE",
-}
-
 ---@class LBSlotAnchor
 ---@field host FramePoint
 ---@field own FramePoint
@@ -129,12 +120,9 @@ local function Configure(host, keys, typeId)
 			local fontString = StringFor(host, key)
 			local anchor = ANCHORS[key]
 			local style = LB.Profile:ResolveStyle(slot)
-			local path = LB.Media:FetchOrDefault("font", style.font)
 			local parts = LB.Tags:Compile(slot.text)
 
-			if path then
-				fontString:SetFont(path, style.size, OUTLINES[style.outline] or "")
-			end
+			LB.Media:SetFont(fontString, style)
 
 			local color = style.color
 

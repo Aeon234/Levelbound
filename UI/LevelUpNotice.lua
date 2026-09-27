@@ -13,15 +13,6 @@ local SAMPLE = {
 	{ class = "DRUID", level = 44 },
 }
 
-local OUTLINES = {
-	NONE = "",
-	OUTLINE = "OUTLINE",
-	THICKOUTLINE = "THICKOUTLINE",
-	SLUG = "SLUG",
-	SLUG_OUTLINE = "SLUG, OUTLINE",
-	SLUG_THICKOUTLINE = "SLUG, THICKOUTLINE",
-}
-
 ---@class LBLevelUpNotice
 ---@field stack LBNoticeStack
 ---@field box Frame where the notices sit when detached from the bars
@@ -89,16 +80,6 @@ local function Build(frame)
 end
 
 ---@param fontString FontString
-local function Font(fontString)
-	local style = Settings().text
-	local path = LB.Media:FetchOrDefault("font", style.font)
-
-	if path then
-		fontString:SetFont(path, style.size, OUTLINES[style.outline] or "")
-	end
-end
-
----@param fontString FontString
 ---@return number
 local function LineHeight(fontString)
 	return math.max(fontString:GetStringHeight(), Settings().text.size)
@@ -106,7 +87,7 @@ end
 
 ---@param frame Frame
 local function Style(frame)
-	Font(frame.text)
+	LB.Media:SetFont(frame.text, Settings().text)
 	LB:SetPixelSize(frame, math.max(frame.text:GetStringWidth(), 1), LineHeight(frame.text))
 end
 
@@ -123,7 +104,7 @@ function Notice:PlaceBox()
 	local measure = self.box.measure
 	local width = 1
 
-	Font(measure)
+	LB.Media:SetFont(measure, Settings().text)
 
 	for _, entry in ipairs(SAMPLE) do
 		measure:SetFormattedText(LB.L["%s reached level %d"], SampleName(entry), entry.level)

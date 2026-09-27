@@ -224,14 +224,7 @@ local function GradientStop(index)
 	return Read, Write
 end
 
-local OUTLINES = {
-	{ value = "NONE", label = NONE },
-	{ value = "OUTLINE", label = L["Outline"] },
-	{ value = "THICKOUTLINE", label = L["Thick Outline"] },
-	{ value = "SLUG", label = L["Slug"] },
-	{ value = "SLUG_OUTLINE", label = L["Slug Outline"] },
-	{ value = "SLUG_THICKOUTLINE", label = L["Slug Thick Outline"] },
-}
+local OUTLINES = LB.Media.outlines
 
 ---@param id string
 ---@return fun(): boolean gate shows a row only on a client that has the type
@@ -279,11 +272,9 @@ end
 
 ---@class LBPanels
 ---@field sections LBSettingSection[]
----@field outlines LBSettingOption[]
 local Panels = {}
 LB.Panels = Panels
 
-Panels.outlines = OUTLINES
 
 local gradientStartGet, gradientStartSet = GradientStop(1)
 local gradientEndGet, gradientEndSet = GradientStop(2)

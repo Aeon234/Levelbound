@@ -35,6 +35,24 @@ Media.markerShapes = {
 	DIAMOND = Media.textures.markerDiamond,
 }
 
+Media.outlines = {
+	{ value = "NONE", label = NONE },
+	{ value = "OUTLINE", label = LB.L["Outline"] },
+	{ value = "THICKOUTLINE", label = LB.L["Thick Outline"] },
+	{ value = "SLUG", label = LB.L["Slug"] },
+	{ value = "SLUG_OUTLINE", label = LB.L["Slug Outline"] },
+	{ value = "SLUG_THICKOUTLINE", label = LB.L["Slug Thick Outline"] },
+}
+
+local OUTLINE_FLAGS = {
+	NONE = "",
+	OUTLINE = "OUTLINE",
+	THICKOUTLINE = "THICKOUTLINE",
+	SLUG = "SLUG",
+	SLUG_OUTLINE = "SLUG, OUTLINE",
+	SLUG_THICKOUTLINE = "SLUG, THICKOUTLINE",
+}
+
 local fonts = {
 	[LB.DEFAULT_FONT] = PATH .. [[Fonts\GilroyBold.ttf]],
 }
@@ -81,4 +99,14 @@ end
 ---@return string? path the requested media, or LibSharedMedia's default for the type
 function Media:FetchOrDefault(mediaType, name)
 	return LSM:Fetch(mediaType, name)
+end
+
+---@param fontString FontString
+---@param style LBFontStyle
+function Media:SetFont(fontString, style)
+	local path = self:FetchOrDefault("font", style.font)
+
+	if path then
+		fontString:SetFont(path, style.size, OUTLINE_FLAGS[style.outline] or "")
+	end
 end
