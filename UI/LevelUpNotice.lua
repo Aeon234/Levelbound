@@ -25,13 +25,11 @@ local OUTLINES = {
 ---@class LBLevelUpNotice
 ---@field stack LBNoticeStack
 ---@field box Frame where the notices sit when detached from the bars
----@field moverKey string
 ---@field previewing boolean?
 ---@field editing boolean?
 ---@field ticker any?
 ---@field sampleIndex integer
 local Notice = {
-	moverKey = "levelUp",
 	sampleIndex = 0,
 	editing = false,
 }
@@ -169,19 +167,40 @@ local function Shown()
 end
 
 ---@return Frame? box the detached stack's box, placed, or nil while the notices sit on the bars
-function Notice:DetachedBox()
+local function DetachedBox()
 	if not Shown() or not Settings().detached then
 		return nil
 	end
 
-	self:PlaceBox()
+	Notice:PlaceBox()
 
-	return self.box
+	return Notice.box
 end
 
----@param position LBFramePosition
-function Notice:SavePosition(position)
-	LB.Profile:Set("party.levelUp.screen", position)
+---@return LBEditTarget[] targets the detached box, when there is one
+function Notice:EditTargets()
+	local box = DetachedBox()
+
+	if not box then
+		return {}
+	end
+
+	return {
+		{
+			key = "levelUp",
+			label = LB.L["Level-Up Notices"],
+			frame = box,
+			fixed = false,
+			save = function(left, bottom, width, height)
+				local screenWidth, screenHeight = UIParent:GetWidth(), UIParent:GetHeight()
+
+				LB.Profile:Set(
+					"party.levelUp.screen",
+					LB.Placement:Anchor(left, bottom, width, height, screenWidth, screenHeight)
+				)
+			end,
+		},
+	}
 end
 
 ---@param editing boolean
@@ -194,7 +213,7 @@ function Notice:SetEditing(editing)
 
 	self:ReleaseAll()
 
-	if not editing or not self:DetachedBox() then
+	if not editing or not DetachedBox() then
 		return
 	end
 

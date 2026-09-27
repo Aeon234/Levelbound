@@ -1,6 +1,7 @@
 local LB = select(2, ...)
 
 local Callbacks = LB.Callbacks
+local L = LB.L
 
 local SEPARATOR = 2
 local REFLOW = 0.25
@@ -370,6 +371,108 @@ function BarGroup:ApplyLayout(animated)
 
 		self:Settled()
 	end)
+end
+
+---@param left number
+---@param bottom number
+---@param width number
+---@param height number
+---@param lock LBVerticalLock?
+---@return LBFramePosition
+local function Anchor(left, bottom, width, height, lock)
+	return LB.Placement:Anchor(left, bottom, width, height, UIParent:GetWidth(), UIParent:GetHeight(), lock)
+end
+
+---@return LBEditTarget[] targets the group, or each shown bar in Independent mode
+function BarGroup:EditTargets()
+	local layout = LB.Profile:Get("layout")
+	local frame = self.frame
+	local targets = {}
+
+	if not frame then
+		return targets
+	end
+
+	if LB.Layout.Independent(layout) then
+		for _, id in ipairs(LB.Preview:Ids()) do
+			local bar = self.bars[id]
+
+			if bar and bar:IsShown() then
+				targets[#targets + 1] = {
+					key = id,
+					typeId = id,
+					frame = bar,
+					fixed = false,
+					outline = bar.border,
+					save = function(left, bottom, width, height)
+						local independent = LB.Profile:Get("layout.independent")
+						local entry = independent[id] or {}
+
+						entry.position = Anchor(left, bottom, width, height)
+						independent[id] = entry
+
+						LB.Profile:Set("layout.independent", independent)
+					end,
+				}
+			end
+		end
+
+		return targets
+	end
+
+	targets[1] = {
+		key = "group",
+		label = layout.mode == "CONNECTED" and L["Bar Stack"] or L["Progress Bars"],
+		frame = frame,
+		fixed = LB.Layout.Fullscreen(layout) ~= nil,
+		outline = self.border,
+		save = function(left, bottom, width, height)
+			local current = LB.Profile:Get("layout")
+			local lock = current.mode == "CONNECTED" and LB.Placement:StackLock(current.growth) or nil
+
+			LB.Profile:Set("layout.positions." .. current.mode, Anchor(left, bottom, width, height, lock))
+		end,
+	}
+
+	return targets
+end
+
+---Changes a connected stack's growth direction, keeping the lead bar where it is.
+---@param growth "UP" | "DOWN"
+function BarGroup:SetGrowth(growth)
+	local layout = LB.Profile:Get("layout")
+	local frame = self.frame
+
+	if layout.growth == growth then
+		return
+	end
+
+	local stacked = frame and layout.mode == "CONNECTED" and not LB.Layout.Fullscreen(layout)
+	local left, bottom, _, total = nil, nil, nil, nil
+
+	if frame and stacked then
+		left, bottom, _, total = frame:GetRect()
+	end
+
+	LB.Profile:Set("layout.growth", growth)
+
+	if left and bottom and total then
+		local leadBottom = growth == "DOWN" and bottom or (bottom + total - layout.height)
+
+		LB.Profile:Set(
+			"layout.positions.CONNECTED",
+			LB.Placement:Stack(
+				left,
+				leadBottom,
+				layout.width,
+				layout.height,
+				total,
+				growth,
+				UIParent:GetWidth(),
+				UIParent:GetHeight()
+			)
+		)
+	end
 end
 
 function BarGroup:Settled()

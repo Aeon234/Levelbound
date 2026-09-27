@@ -51,7 +51,6 @@ end
 ---@field stack LBNoticeStack the grouped indicators when detached
 ---@field lines table<string, Frame> the detached line showing each progress type
 ---@field box Frame where the detached indicators sit
----@field moverKey string
 ---@field inCombat boolean
 ---@field previewing boolean?
 ---@field ticker any? adds a detached sample every PREVIEW_EVERY seconds while the Gain page is open
@@ -61,7 +60,6 @@ local Gain = {
 	pool = CreateFramePool("Frame", UIParent, nil, Reset),
 	active = {},
 	lines = {},
-	moverKey = "gain",
 	inCombat = false,
 	sampleIndex = 0,
 	editing = false,
@@ -449,21 +447,39 @@ function Gain:ClearPreview()
 end
 
 ---@return Frame? box the detached stack's box, placed, or nil while the indicators sit on the bars
-function Gain:DetachedBox()
+local function DetachedBox()
 	local settings = Settings()
 
 	if not settings.enabled or not settings.detached then
 		return nil
 	end
 
-	self:PlaceBox()
+	Gain:PlaceBox()
 
-	return self.box
+	return Gain.box
 end
 
----@param position LBFramePosition
-function Gain:SavePosition(position)
-	LB.Profile:Set("gain.screen", position)
+---@return LBEditTarget[] targets the detached box, when there is one
+function Gain:EditTargets()
+	local box = DetachedBox()
+
+	if not box then
+		return {}
+	end
+
+	return {
+		{
+			key = "gain",
+			label = L["Gain Indicator"],
+			frame = box,
+			fixed = false,
+			save = function(left, bottom, width, height)
+				local screenWidth, screenHeight = UIParent:GetWidth(), UIParent:GetHeight()
+
+				LB.Profile:Set("gain.screen", LB.Placement:Anchor(left, bottom, width, height, screenWidth, screenHeight))
+			end,
+		},
+	}
 end
 
 ---@param editing boolean
@@ -476,7 +492,7 @@ function Gain:SetEditing(editing)
 
 	self:ReleaseAll()
 
-	if not editing or not self:DetachedBox() then
+	if not editing or not DetachedBox() then
 		return
 	end
 

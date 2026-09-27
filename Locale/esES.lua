@@ -49,8 +49,8 @@ local L = select(2, ...).L
 -- L["Remaining"] = "Remaining"
 -- L["Bonus"] = "Bonus"
 -- L["Rested"] = "Rested"
--- L["Quests ready"] = "Quests ready"
--- L["After turn-in"] = "After turn-in"
+-- L["Completed"] = "Completed"
+-- L["After Turn-In"] = "After Turn-In"
 -- L["Quests in log"] = "Quests in log"
 -- L["Past the level-up"] = "Past the level-up"
 -- L["Pace"] = "Pace"
@@ -93,7 +93,7 @@ local L = select(2, ...).L
 -- L["tag.max"] = "Progress needed"
 -- L["tag.remaining"] = "Progress remaining"
 -- L["tag.percent"] = "Progress, as a number"
--- L["tag.percentquest"] = "Progress after turn-in"
+-- L["tag.percentquest"] = "Progress After Turn-In"
 -- L["tag.rested"] = "Rested XP"
 -- L["tag.rested:color"] = "Rested XP, in the rested color"
 -- L["tag.restedpercent"] = "Rested XP, as a share of the level"
@@ -318,7 +318,7 @@ local L = select(2, ...).L
 -- L['Delete the profile "%s"? This cannot be undone.'] = 'Delete the profile "%s"? This cannot be undone.'
 -- L['Reset every setting in the profile "%s"?'] = 'Reset every setting in the profile "%s"?'
 
--- Edit mode: toolbar, mover panel and popups (Settings/EditMode.lua, Settings/EditPanel.lua)
+-- Edit mode: toolbar, mover panel, popups and the bars' mover labels (Settings/EditMode.lua, Settings/EditPanel.lua, UI/BarGroup.lua)
 -- L["Exit"] = "Exit"
 -- L["Snap"] = "Snap"
 -- L["Enabled"] = "Enabled"

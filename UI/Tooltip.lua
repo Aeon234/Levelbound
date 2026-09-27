@@ -254,11 +254,11 @@ local function Bonus(tip, snapshot, source)
 	if overlays.quest > 0 then
 		Add(
 			bonus,
-			L["Quests ready"],
+			L["Completed"],
 			WithShare(Format:Number(overlays.quest), ShareOf(snapshot, overlays.quest)),
 			appearance.questColor
 		)
-		Add(bonus, L["After turn-in"], Format:Value("PERCENT_WITH_QUESTS", snapshot, source))
+		Add(bonus, L["After Turn-In"], Format:Value("PERCENT_WITH_QUESTS", snapshot, source))
 	end
 
 	if source and source.IncompleteQuestXP then

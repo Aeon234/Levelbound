@@ -127,9 +127,12 @@ end
 
 ---@class LBEditTarget
 ---@field key string
----@field label string
----@field target Frame
+---@field label string?
+---@field typeId string? a progress type
+---@field frame Frame
+---@field outline Frame?
 ---@field fixed boolean
+---@field save fun(left: number, bottom: number, width: number, height: number)
 
 ---@class LBEditToolbar : Frame
 ---@field title FontString
@@ -155,6 +158,7 @@ end
 ---@field snapshot LBProfileData? the profile as it was when the session began
 ---@field selected string?
 ---@field movers table<string, LBMover>
+---@field targets table<string, LBEditTarget>
 ---@field toolbar LBEditToolbar?
 ---@field keyboard Frame?
 ---@field guides { x: Texture, y: Texture }?
@@ -169,6 +173,7 @@ local EditMode = {
 	inCombat = false,
 	hidden = false,
 	movers = {},
+	targets = {},
 }
 LB.EditMode = EditMode
 
@@ -500,70 +505,16 @@ function EditMode:FadeIn()
 	end)
 end
 
+local OWNERS = { LB.BarGroup, LB.LevelUpNotice, LB.Gain }
+
 ---@return LBEditTarget[]
----@return table[] targets the bars' movers
-local function BarTargets()
-	local layout = LB.Profile:Get("layout")
-	local group = LB.BarGroup.frame
+function EditMode:Targets()
 	local targets = {}
 
-	if not group then
-		return targets
-	end
-
-	if LB.Layout.Independent(layout) then
-		for _, id in ipairs(LB.Preview:Ids()) do
-			local bar = LB.BarGroup.bars[id]
-
-			if bar and bar:IsShown() then
-				targets[#targets + 1] =
-					{ key = id, label = TypeLabel(id), target = bar, fixed = false, outline = bar.border }
-			end
-		end
-
-		return targets
-	end
-
-	targets[1] = {
-		key = "group",
-		label = layout.mode == "CONNECTED" and L["Bar Stack"] or L["Progress Bars"],
-		target = group,
-		fixed = LB.Layout.Fullscreen(layout) ~= nil,
-		outline = LB.BarGroup.border,
-	}
-
-	return targets
-end
-
--- Notices detached from the bars, each one stack in its own box.
-local NOTICES = {
-	{ owner = "LevelUpNotice", label = L["Level-Up Notices"] },
-	{ owner = "Gain", label = L["Gain Indicator"] },
-}
-
----@param key string
----@return (LBLevelUpNotice | LBGain)? owner the notice a mover key belongs to
-local function NoticeFor(key)
-	for _, notice in ipairs(NOTICES) do
-		local owner = LB[notice.owner]
-
-		if owner.moverKey == key then
-			return owner
-		end
-	end
-
-	return nil
-end
-
-function EditMode:Targets()
-	local targets = BarTargets()
-
-	for _, notice in ipairs(NOTICES) do
-		local owner = LB[notice.owner]
-		local box = owner:DetachedBox()
-
-		if box then
-			targets[#targets + 1] = { key = owner.moverKey, label = notice.label, target = box, fixed = false }
+	for _, owner in ipairs(OWNERS) do
+		for _, target in ipairs(owner:EditTargets()) do
+			target.label = target.label or TypeLabel(target.typeId or target.key)
+			targets[#targets + 1] = target
 		end
 	end
 
@@ -579,17 +530,21 @@ function EditMode:RefreshMovers()
 
 	LB.Editing:Set({ movers = true })
 
+	self.targets = {}
+
 	for _, target in ipairs(self:Targets()) do
 		local mover = self.movers[target.key]
+
+		self.targets[target.key] = target
 
 		if not mover then
 			mover = LB.Mover:Create(target.key)
 			self.movers[target.key] = mover
 		end
 
-		mover:Attach(target.target, target.fixed, target.outline)
+		mover:Attach(target.frame, target.fixed, target.outline)
 		mover:Sync(Pixel())
-		mover:SetLabel(target.label)
+		mover:SetLabel(target.label or target.key)
 		mover:Show()
 
 		seen[target.key] = true
@@ -868,15 +823,14 @@ end
 ---@param bottom number
 function EditMode:Commit(key, left, bottom)
 	local mover = self.movers[key]
+	local target = self.targets[key]
 
-	if not mover or mover.fixed then
+	if not mover or not target or mover.fixed then
 		return
 	end
 
 	local _, _, width, height = mover:Rect()
 	local screenWidth, screenHeight = Screen()
-	local layout = LB.Profile:Get("layout")
-
 	local pixel = Pixel()
 
 	left = LB.Placement:ToPixel(Clamp(left, 0, screenWidth - width), pixel)
@@ -887,26 +841,7 @@ function EditMode:Commit(key, left, bottom)
 	left, bottom = mover:TargetPoint(left, bottom)
 	width, height = mover.target:GetSize()
 
-	local notice = NoticeFor(key)
-
-	if notice then
-		notice:SavePosition(LB.Placement:Anchor(left, bottom, width, height, screenWidth, screenHeight))
-	elseif key == "group" then
-		local lock = layout.mode == "CONNECTED" and LB.Placement:StackLock(layout.growth) or nil
-		local position = LB.Placement:Anchor(left, bottom, width, height, screenWidth, screenHeight, lock)
-
-		LB.Profile:Set("layout.positions." .. layout.mode, position)
-	else
-		local position = LB.Placement:Anchor(left, bottom, width, height, screenWidth, screenHeight)
-		local independent = layout.independent
-		local entry = independent[key] or {}
-
-		entry.position = position
-		independent[key] = entry
-
-		LB.Profile:Set("layout.independent", independent)
-	end
-
+	target.save(left, bottom, width, height)
 	LB.EditPanel:Refresh()
 end
 
@@ -953,36 +888,6 @@ function EditMode:SetPosition(key, x, y)
 	local left, bottom = LB.Placement:FromCentre(x, y, width, height, screenWidth, screenHeight)
 
 	self:Commit(key, left, bottom)
-end
-
----Changes a connected stack's growth direction, keeping the lead bar where it is.
----@param growth "UP" | "DOWN"
-function EditMode:SetGrowth(growth)
-	local layout = LB.Profile:Get("layout")
-	local frame = LB.BarGroup.frame
-
-	if layout.growth == growth then
-		return
-	end
-
-	local stacked = frame and layout.mode == "CONNECTED" and not LB.Layout.Fullscreen(layout)
-	local left, bottom, _, total = nil, nil, nil, nil
-
-	if frame and stacked then
-		left, bottom, _, total = frame:GetRect()
-	end
-
-	LB.Profile:Set("layout.growth", growth)
-
-	if left and bottom and total then
-		local screenWidth, screenHeight = Screen()
-		local leadBottom = growth == "DOWN" and bottom or (bottom + total - layout.height)
-
-		LB.Profile:Set(
-			"layout.positions.CONNECTED",
-			LB.Placement:Stack(left, leadBottom, layout.width, layout.height, total, growth, screenWidth, screenHeight)
-		)
-	end
 end
 
 ---@param key string

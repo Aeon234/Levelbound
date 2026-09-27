@@ -435,7 +435,7 @@ Panels.sections = {
 					{ value = "DOWN", label = L["Down"] },
 				}),
 				function(value)
-					LB.EditMode:SetGrowth(value)
+					LB.BarGroup:SetGrowth(value)
 				end
 			),
 			Slider(L["Gap Between Bars"], "layout.gap", 0, 10, 1),
