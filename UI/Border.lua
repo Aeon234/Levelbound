@@ -14,6 +14,7 @@ local EDGES = {
 	ROUNDED = "Levelbound Ring Medium",
 	ROUNDED_THICK = "Levelbound Ring Thick",
 	FOREVER = "Levelbound Forever",
+	METALLIC = "Levelbound Metallic",
 }
 
 local RING = { 102 / 255, 98 / 255, 92 / 255 }
@@ -22,11 +23,13 @@ local NATIVE = {
 	ROUNDED = RING,
 	ROUNDED_THICK = RING,
 	FOREVER = { 186 / 255, 152 / 255, 108 / 255 },
+	METALLIC = { 195 / 255, 133 / 255, 84 / 255 },
 }
 
 local OUTSET = 1 / 4
 local OUTSETS = {
 	FOREVER = 8.5 / 32,
+	METALLIC = 27.5 / 64,
 }
 
 ---@class LBBorderFrame : Frame, BackdropTemplate
