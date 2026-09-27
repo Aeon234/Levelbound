@@ -47,7 +47,3 @@ Open settings with `/lb`, the minimap button or the addon compartment.
 ## Translating
 
 Translations are welcome by pull request. See [TRANSLATING.md](TRANSLATING.md).
-
-## License
-
-[MIT](LICENSE)
