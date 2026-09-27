@@ -181,6 +181,7 @@ local L = select(2, ...).L
 -- L["Thick"] = "Thick"
 -- L["Rounded"] = "Rounded"
 -- L["Rounded Thick"] = "Rounded Thick"
+-- L["Forever"] = "Forever"
 -- L["Custom Color"] = "Custom Color"
 -- L["Border Color"] = "Border Color"
 -- L["Border Opacity"] = "Border Opacity"

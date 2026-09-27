@@ -13,6 +13,7 @@ local EDGES = {
 	THICK = "Levelbound Thick",
 	ROUNDED = "Levelbound Ring Medium",
 	ROUNDED_THICK = "Levelbound Ring Thick",
+	FOREVER = "Levelbound Forever",
 }
 
 local RING = { 102 / 255, 98 / 255, 92 / 255 }
@@ -20,6 +21,12 @@ local NATIVE = {
 	THICK = { 165 / 255, 165 / 255, 165 / 255 },
 	ROUNDED = RING,
 	ROUNDED_THICK = RING,
+	FOREVER = { 186 / 255, 152 / 255, 108 / 255 },
+}
+
+local OUTSET = 1 / 4
+local OUTSETS = {
+	FOREVER = 8.5 / 32,
 }
 
 ---@class LBBorderFrame : Frame, BackdropTemplate
@@ -83,12 +90,13 @@ function Border:Create(host)
 end
 
 ---@param height number the bordered frame's height
+---@param style string?
 ---@return number edge
 ---@return number outset
-function Border:EdgeMetrics(height)
+function Border:EdgeMetrics(height, style)
 	local edge = math.max(math.min(EDGE_SIZE, math.floor(height * 2 / 3)), 2)
 
-	return edge, edge / 4
+	return edge, edge * (OUTSETS[style] or OUTSET)
 end
 
 ---@param pixels number
@@ -150,7 +158,7 @@ function BorderMixin:Apply(style, color, height)
 		self:SetPoint("BOTTOMRIGHT", host, "BOTTOMRIGHT", outset, -outset)
 		self:PlaceEdges(pixels, r, g, b, a)
 	else
-		local edge, outset = Border:EdgeMetrics(height)
+		local edge, outset = Border:EdgeMetrics(height, style)
 
 		for _, texture in ipairs(self.edges) do
 			texture:Hide()

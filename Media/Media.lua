@@ -44,6 +44,7 @@ local borders = {
 	["Levelbound Thick"] = PATH .. [[Borders\ThickBorderWhite.tga]],
 	["Levelbound Ring Medium"] = PATH .. [[Borders\RingBorderMediumWhite.tga]],
 	["Levelbound Ring Thick"] = PATH .. [[Borders\RingBorderThickWhite.tga]],
+	["Levelbound Forever"] = PATH .. [[Borders\ForeverBorderWhite.tga]],
 }
 
 function Media:Register()

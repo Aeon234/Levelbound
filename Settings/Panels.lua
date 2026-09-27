@@ -322,6 +322,7 @@ local appearance = {
 		{ value = "THICK", label = L["Thick"] },
 		{ value = "ROUNDED", label = L["Rounded"] },
 		{ value = "ROUNDED_THICK", label = L["Rounded Thick"] },
+		{ value = "FOREVER", label = L["Forever"] },
 	}),
 	Enabled(Check(L["Custom Color"], "appearance.border.customColor"), BorderTextured),
 	Enabled(Color(L["Border Color"], "appearance.border.color"), function()
