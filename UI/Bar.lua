@@ -614,7 +614,9 @@ function BarMixin:SetSnapshot(snapshot, animate, gained)
 	LB.TextSlot:UpdateBar(self)
 	LB.Marker:Apply(self)
 
-	local fill, quest, rested = LB.Model:Fractions(snapshot)
+	local fill, quest, rested = LB.Progress.Fills(snapshot)
+
+	fill, quest, rested = fill or 0, quest or 0, rested or 0
 	local level = snapshot.level or 0
 	local levelled = gained == true and self.level > 0 and level > self.level
 

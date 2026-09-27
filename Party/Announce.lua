@@ -74,11 +74,11 @@ end
 
 ---@param gained number
 ---@param seconds number
----@param levelMax number XP needed for the current level
+---@param snapshot LBSnapshot the current level, which the gain is measured against
 ---@return string
-function Announce:RunText(gained, seconds, levelMax)
+function Announce:RunText(gained, seconds, snapshot)
 	local Format = LB.Format
-	local share = levelMax > 0 and gained / levelMax or 0
+	local share = LB.Progress.Part(snapshot, gained) or 0
 	local parts = {
 		L["This run: +%s XP (%s of a level) in %s"]:format(
 			AbbreviateNumbers(gained),
@@ -88,7 +88,7 @@ function Announce:RunText(gained, seconds, levelMax)
 	}
 
 	if seconds >= RATE_AFTER then
-		parts[#parts + 1] = L["%s XP/hr"]:format(AbbreviateNumbers(math.floor(gained / seconds * 3600)))
+		parts[#parts + 1] = L["%s XP/hr"]:format(AbbreviateNumbers(LB.Progress.PerHour(gained / seconds)))
 	end
 
 	return ("%s %s"):format(LB.Share.PREFIX, table.concat(parts, LB.Share.SEPARATOR))
@@ -129,7 +129,7 @@ function Announce:OnRunComplete()
 		return
 	end
 
-	self:Send(self:RunText(gained, GetTime() - run.started, snapshot.max), channel)
+	self:Send(self:RunText(gained, GetTime() - run.started, snapshot), channel)
 end
 
 LB.Events:Register("PLAYER_ENTERING_WORLD", Announce, function(owner)

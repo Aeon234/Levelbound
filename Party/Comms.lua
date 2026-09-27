@@ -131,7 +131,7 @@ function Comms:Encode()
 		flags,
 		math.floor(snapshot.overlays.rested or 0),
 		math.floor(snapshot.overlays.quest or 0),
-		rate and math.floor(rate * 3600) or 0
+		rate and LB.Progress.PerHour(rate) or 0
 	)
 end
 

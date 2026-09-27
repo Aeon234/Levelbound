@@ -321,7 +321,7 @@ function Gain:Show(bar, amount, held)
 	Style(frame, false)
 
 	local snapshot = bar.snapshot or LB.Model:Get(bar.id)
-	local fraction = snapshot and LB.Model:Fractions(snapshot) or 0
+	local fraction = snapshot and LB.Progress.Fraction(snapshot) or 0
 	local width, height = frame:GetSize()
 
 	Anchor(frame, bar, self:Offset(fraction, bar:GetWidth(), width, settings.position), height)

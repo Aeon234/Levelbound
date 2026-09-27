@@ -73,25 +73,7 @@ end
 
 ---@return number? seconds
 function Session:TimeToLevel()
-	local rate = self:Rate()
-
-	if not rate or rate <= 0 then
-		return nil
-	end
-
-	local snapshot = LB.Model:Get("xp")
-
-	if not snapshot or snapshot.max <= 0 then
-		return nil
-	end
-
-	local remaining = snapshot.max - snapshot.cur
-
-	if remaining <= 0 then
-		return nil
-	end
-
-	return remaining / rate
+	return LB.Progress.TimeToLevel(LB.Model:Get("xp"), self:Rate())
 end
 
 function Session:RefreshAFK()

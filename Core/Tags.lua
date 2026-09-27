@@ -46,17 +46,6 @@ local COLOURS = {
 }
 
 ---@param snapshot LBSnapshot
----@param amount number
----@return number? fraction of the level, nil when there is no level to measure against
-local function Share(snapshot, amount)
-	if not snapshot.max or snapshot.max <= 0 then
-		return nil
-	end
-
-	return amount / snapshot.max
-end
-
----@param snapshot LBSnapshot
 ---@param key "quest" | "rested"
 ---@return number
 local function Overlay(snapshot, key)
@@ -86,26 +75,24 @@ local resolvers = {
 		return LB.Format:Value("REMAINING", snapshot, source)
 	end,
 	percent = function(snapshot)
-		local share = Share(snapshot, snapshot.cur)
-
-		return LB.Format:PercentNumber(share and math.min(share, 1))
+		return LB.Format:PercentNumber(LB.Progress.Fraction(snapshot))
 	end,
 	percentquest = function(snapshot)
-		local share = Share(snapshot, snapshot.cur + Overlay(snapshot, "quest"))
+		local _, quest = LB.Progress.Fills(snapshot)
 
-		return LB.Format:PercentNumber(share and math.min(share, 1))
+		return LB.Format:PercentNumber(quest)
 	end,
 	rested = function(snapshot)
 		return LB.Format:Number(Overlay(snapshot, "rested"))
 	end,
 	restedpercent = function(snapshot)
-		return LB.Format:PercentNumber(Share(snapshot, Overlay(snapshot, "rested")))
+		return LB.Format:PercentNumber(LB.Progress.Part(snapshot, Overlay(snapshot, "rested")))
 	end,
 	quest = function(snapshot)
 		return LB.Format:Number(Overlay(snapshot, "quest"))
 	end,
 	questpercent = function(snapshot)
-		return LB.Format:PercentNumber(Share(snapshot, Overlay(snapshot, "quest")))
+		return LB.Format:PercentNumber(LB.Progress.Part(snapshot, Overlay(snapshot, "quest")))
 	end,
 	xph = function(snapshot, source)
 		return LB.Format:Value("XP_PER_HOUR", snapshot, source)

@@ -29,7 +29,7 @@ LB.Share = Share
 function Share:Text(id, snapshot, source)
 	local Format = LB.Format
 	local parts = { PREFIX }
-	local share = snapshot.max > 0 and math.min(snapshot.cur / snapshot.max, 1) or 0
+	local share = LB.Progress.Fraction(snapshot) or 0
 
 	if id == "xp" then
 		parts[#parts + 1] = UNIT_LEVEL_TEMPLATE:format(snapshot.level or 0)
@@ -44,14 +44,14 @@ function Share:Text(id, snapshot, source)
 	parts[#parts + 1] = Format:Percent(share)
 
 	if snapshot.max > 0 then
-		parts[#parts + 1] = L["%s xp to go"]:format(AbbreviateNumbers(math.max(snapshot.max - snapshot.cur, 0)))
+		parts[#parts + 1] = L["%s xp to go"]:format(AbbreviateNumbers(LB.Progress.Remaining(snapshot)))
 	end
 
 	local rate = id == "xp" and LB.Session and LB.Session:Rate()
 	local left = rate and Format:Short(LB.Session:TimeToLevel())
 
 	if rate and left then
-		parts[#parts + 1] = L["~%s at %s XP/hr"]:format(left, AbbreviateNumbers(math.floor(rate * 3600)))
+		parts[#parts + 1] = L["~%s at %s XP/hr"]:format(left, AbbreviateNumbers(LB.Progress.PerHour(rate)))
 	end
 
 	return table.concat(parts, SEPARATOR)

@@ -204,14 +204,14 @@ end
 ---@param snapshot LBSnapshot
 ---@return number
 local function Share(snapshot)
-	return snapshot.max > 0 and math.min(math.max(snapshot.cur / snapshot.max, 0), 1) or 0
+	return LB.Progress.Fraction(snapshot) or 0
 end
 
 ---@param snapshot LBSnapshot
 ---@param amount number
 ---@return number
 local function ShareOf(snapshot, amount)
-	return snapshot.max > 0 and amount / snapshot.max or 0
+	return LB.Progress.Part(snapshot, amount) or 0
 end
 
 ---@param tip GameTooltip
@@ -285,7 +285,7 @@ function Tooltip:XP(tip, snapshot, source)
 		end
 	end
 
-	local questOverflow, restedOverflow = LB.Model:Overflow(snapshot)
+	local questOverflow, restedOverflow = LB.Progress.Overflow(snapshot)
 
 	if questOverflow + restedOverflow > 0 then
 		Add(bonus, L["Past the level-up"], Format:Number(questOverflow + restedOverflow))

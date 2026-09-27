@@ -5,9 +5,29 @@ local DASH = "—"
 local PERCENT_WHOLE = PERCENTAGE_STRING
 local PERCENT_DECIMAL = PERCENTAGE_STRING:gsub("%%d", "%%.1f")
 
+---@class LBFormatOptions
+---@field compact boolean
+---@field decimals boolean
+
 ---@class LBFormat
+---@field options LBFormatOptions? read from the profile on first use and dropped on every settings change
 local Format = {}
 LB.Format = Format
+
+---@return LBFormatOptions
+local function Options()
+	local options = Format.options
+
+	if not options then
+		options = {
+			compact = LB.Profile:Get("text.compactNumbers") == true,
+			decimals = LB.Profile:Get("text.decimals") == true,
+		}
+		Format.options = options
+	end
+
+	return options
+end
 
 ---@param value number?
 ---@return string
@@ -16,7 +36,7 @@ function Format:Number(value)
 		return DASH
 	end
 
-	if LB.Profile:Get("text.compactNumbers") then
+	if Options().compact then
 		return AbbreviateNumbers(value)
 	end
 
@@ -30,7 +50,7 @@ function Format:Percent(fraction)
 		return DASH
 	end
 
-	if LB.Profile:Get("text.decimals") then
+	if Options().decimals then
 		return PERCENT_DECIMAL:format(fraction * 100)
 	end
 
@@ -44,7 +64,7 @@ function Format:PercentNumber(fraction)
 		return DASH
 	end
 
-	if LB.Profile:Get("text.decimals") then
+	if Options().decimals then
 		return ("%.1f"):format(fraction * 100)
 	end
 
@@ -92,16 +112,6 @@ function Format:Short(seconds)
 	return LB.L["%ds"]:format(math.floor(seconds))
 end
 
----@param snapshot LBSnapshot
----@return number fraction
-local function SafeFraction(snapshot)
-	if snapshot.max <= 0 then
-		return 0
-	end
-
-	return math.min(snapshot.cur / snapshot.max, 1)
-end
-
 ---@type table<string, fun(snapshot: LBSnapshot, source: LBSource?): string>
 local resolvers = {
 	LEVEL = function(snapshot)
@@ -121,19 +131,17 @@ local resolvers = {
 	end,
 
 	PERCENT = function(snapshot)
-		return Format:Percent(SafeFraction(snapshot))
+		return Format:Percent(LB.Progress.Fraction(snapshot) or 0)
 	end,
 
 	REMAINING = function(snapshot)
-		return Format:Number(math.max(snapshot.max - snapshot.cur, 0))
+		return Format:Number(LB.Progress.Remaining(snapshot))
 	end,
 
 	PERCENT_WITH_QUESTS = function(snapshot)
-		if snapshot.max <= 0 then
-			return DASH
-		end
+		local _, quest = LB.Progress.Fills(snapshot)
 
-		return Format:Percent(math.min((snapshot.cur + snapshot.overlays.quest) / snapshot.max, 1))
+		return quest and Format:Percent(quest) or DASH
 	end,
 
 	SESSION_TIME = function()
@@ -155,7 +163,7 @@ local resolvers = {
 
 		local rate = LB.Session:Rate()
 
-		return rate and Format:Number(math.floor(rate * 3600)) or DASH
+		return rate and Format:Number(LB.Progress.PerHour(rate)) or DASH
 	end,
 
 	TIME_TO_LEVEL = function()
@@ -176,3 +184,7 @@ function Format:Value(kind, snapshot, source)
 
 	return resolver(snapshot, source)
 end
+
+LB.Callbacks:Register("Settings", Format, function()
+	Format.options = nil
+end)

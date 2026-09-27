@@ -12,6 +12,7 @@ local addonName = ...
 ---@field Events LBEvents
 ---@field Profile LBProfile
 ---@field Editing LBEditing
+---@field Progress LBProgress
 ---@field Media LBMedia
 ---@field Model LBModel
 ---@field Source LBSourceFactory

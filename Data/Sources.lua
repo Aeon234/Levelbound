@@ -114,23 +114,6 @@ function SourceMixin:OnEvent(event)
 	return self:Refresh()
 end
 
----@return number fraction 0-1
-function SourceMixin:Fraction()
-	local snapshot = self.snapshot
-
-	if snapshot.max <= 0 then
-		return 0
-	end
-
-	return math.min(snapshot.cur / snapshot.max, 1)
-end
-
----@return number questOverflow
----@return number restedOverflow
-function SourceMixin:Overflow()
-	return LB.Model:Overflow(self.snapshot)
-end
-
 ---@class LBModel
 ---@field sources table<string, LBSource>
 local Model = {
@@ -167,35 +150,6 @@ function Source:New(id, spec)
 	Model.sources[id] = source
 
 	return source
-end
-
----@param snapshot LBSnapshot
----@return number fill
----@return number quest
----@return number rested
-function Model:Fractions(snapshot)
-	if snapshot.max <= 0 then
-		return 0, 0, 0
-	end
-
-	local overlays = snapshot.overlays
-	local fill = math.min(snapshot.cur / snapshot.max, 1)
-	local quest = math.min((snapshot.cur + overlays.quest) / snapshot.max, 1)
-	local rested = math.min((snapshot.cur + overlays.quest + overlays.rested) / snapshot.max, 1)
-
-	return fill, quest, rested
-end
-
----@param snapshot LBSnapshot
----@return number questOverflow
----@return number restedOverflow
-function Model:Overflow(snapshot)
-	local overlays = snapshot.overlays
-	local remaining = math.max(snapshot.max - snapshot.cur, 0)
-	local quest = math.max(overlays.quest - remaining, 0)
-	local rested = math.max(overlays.quest + overlays.rested - remaining - quest, 0)
-
-	return quest, rested
 end
 
 ---@param id string

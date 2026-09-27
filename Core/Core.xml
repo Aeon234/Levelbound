@@ -4,8 +4,9 @@
 	<Script file="Events.lua" />
 	<Script file="Capabilities.lua" />
 	<Script file="Profile.lua" />
-	<Script file="Editing.lua" />
+	<Script file="Progress.lua" />
 	<Script file="Format.lua" />
+	<Script file="Editing.lua" />
 	<Script file="Tags.lua" />
 	<Script file="Share.lua" />
 	<Script file="Placement.lua" />
