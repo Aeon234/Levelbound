@@ -104,7 +104,7 @@ local function Read(unit)
 end
 
 ---@param member LBLevelUpMember
----@return string name the name in class colour when the class is known
+---@return string name the name in class color when the class is known
 function LevelUp:ColoredName(member)
 	local color = member.class and C_ClassColor.GetClassColor(member.class)
 

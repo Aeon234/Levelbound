@@ -66,7 +66,7 @@ function Editing:Demo()
 	return self.outputs.demo or nil
 end
 
----@return boolean xpSample the XP bar shows its sample, so the settings can recolour its overlays
+---@return boolean xpSample the XP bar shows its sample, so the settings can recolor its overlays
 function Editing:XPSample()
 	return self.outputs.xpSample
 end

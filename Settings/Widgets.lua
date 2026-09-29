@@ -62,7 +62,7 @@ local HIGHLIGHT_ALPHA = 0.15
 local swatches = {}
 local rows = {}
 
----@param swatch any Blizzard's colour swatch button, skinned below
+---@param swatch any Blizzard's color swatch button, skinned below
 local function PaintSwatch(swatch)
 	local row = swatch.lbRow
 

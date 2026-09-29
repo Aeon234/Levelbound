@@ -102,7 +102,7 @@ end
 
 ---@param mode string
 ---@return number line
----@return number centre
+---@return number center
 local function GridAlpha(mode)
 	if mode == "BRIGHT" then
 		return GRID_BRIGHT, GRID_CENTRE_BRIGHT
@@ -152,7 +152,7 @@ end
 ---@field inCombat boolean
 ---@field hidden boolean the settings window is in front of the layout
 ---@field closing boolean? the layout is fading out after Save or Exit
----@field dragging boolean? a mover is being dragged, so the toolbar stands aside
+---@field dragging boolean? a mover is being dragged; the toolbar is faded out
 ---@field toolbarSlot number? the toolbar's offset from the top of the screen, away from the movers
 ---@field fromSettings boolean? the session began from the settings window, so it ends there too
 ---@field snapshot LBProfileData? the profile as it was when the session began
@@ -639,7 +639,7 @@ function EditMode:PlaceToolbar()
 	end
 end
 
----The toolbar fades out of the way while a bar is dragged, so a bar can be taken right up to the screen edge.
+---Fades the toolbar out during a drag so a bar can be placed at the screen edge.
 function EditMode:BeginDrag()
 	self.dragging = true
 
@@ -729,7 +729,7 @@ function EditMode:Selected()
 end
 
 ---@param key string
----@return number x offset of the centre from the screen's centre
+---@return number x offset of the center from the screen's center
 ---@return number y
 function EditMode:Position(key)
 	local mover = self.movers[key]
@@ -863,7 +863,7 @@ function EditMode:Nudge(dx, dy)
 end
 
 ---@param key string
----@param x number offset of the centre from the screen's centre
+---@param x number offset of the center from the screen's center
 ---@param y number
 function EditMode:SetPosition(key, x, y)
 	local mover = self.movers[key]
@@ -1154,7 +1154,7 @@ function EditMode:BuildToolbar()
 	return toolbar
 end
 
----Exit and the mode dropdown sit left of the centred title, the toggles and Save to its right, and the bar
+---Exit and the mode dropdown sit left of the centered title, the toggles and Save to its right, and the bar
 ---is as wide as its busier side needs so the title stays in the middle.
 function EditMode:LayoutToolbar()
 	local toolbar = self.toolbar
@@ -1284,7 +1284,7 @@ local function GridLine(grid, index)
 	return line
 end
 
----Lines one physical pixel wide, GRID_SPACING pixels apart, counted out from a brighter centre cross.
+---Lines one physical pixel wide, GRID_SPACING pixels apart, counted out from a brighter center cross.
 function EditMode:RefreshGrid()
 	local grid = self.grid
 

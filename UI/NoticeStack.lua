@@ -95,7 +95,7 @@ function NoticeStack:Place(anchor, direction)
 	return "TOP" .. side, -1
 end
 
----@param centre number the box's horizontal centre
+---@param centre number the box's horizontal center
 ---@param screenWidth number
 ---@return string align "LEFT", "RIGHT" or ""
 function NoticeStack:Align(centre, screenWidth)
@@ -125,10 +125,10 @@ function NoticeStack:CreateBox(name)
 end
 
 ---@param box Frame
----@param position LBFramePosition? nil for the default place beside the screen's centre
+---@param position LBFramePosition? nil for the default place beside the screen's center
 ---@param width number
 ---@param height number
----@param side integer -1 to default left of the centre, 1 to default right of it
+---@param side integer -1 to default left of the center, 1 to default right of it
 function NoticeStack:PlaceBox(box, position, width, height, side)
 	position = position or { point = "CENTER", x = side * (CENTRE_GAP + width / 2), y = 0 }
 

@@ -220,7 +220,7 @@ local function Showing(host, key, hovered)
 	return visibility == "ALWAYS" or (visibility == "HOVER" and (hovered or TextSlot.editing))
 end
 
--- Centre goes first, then right; the left is kept and cut off with an ellipsis if it is too wide on its own.
+-- Center goes first, then right; the left is kept and cut off with an ellipsis if it is too wide on its own.
 ---@param host LBTextHost
 ---@param row string[]
 ---@param shown table<string, boolean>

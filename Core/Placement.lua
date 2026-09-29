@@ -128,13 +128,13 @@ end
 ---@param height number
 ---@param screenWidth number
 ---@param screenHeight number
----@return number x offset of the rectangle's centre from the screen's centre
+---@return number x offset of the rectangle's center from the screen's center
 ---@return number y
 function Placement:Centre(left, bottom, width, height, screenWidth, screenHeight)
 	return self:Round(left + width / 2 - screenWidth / 2), self:Round(bottom + height / 2 - screenHeight / 2)
 end
 
----@param x number offset of the centre from the screen's centre
+---@param x number offset of the center from the screen's center
 ---@param y number
 ---@param width number
 ---@param height number
@@ -210,7 +210,7 @@ local function Nearest(start, size, lines, threshold)
 	return best or 0, bestLine
 end
 
----Moves a rectangle so its nearest edge or centre meets a line within `threshold` on each axis.
+---Moves a rectangle so its nearest edge or center meets a line within `threshold` on each axis.
 ---@param left number
 ---@param bottom number
 ---@param width number

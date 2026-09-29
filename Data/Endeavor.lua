@@ -98,7 +98,7 @@ LB.Source:New("endeavor", {
 		local max = info.progressRequired or 0
 		local complete = max > 0 and cur >= max
 
-		-- A completed endeavor leaves and the rest reflow (Monobrow follow-up, decision 5).
+		-- A completed endeavor is removed and the remaining bars reflow.
 		local changed = snapshot.cur ~= cur or snapshot.max ~= max or snapshot.label ~= info.title
 
 		snapshot.cur = cur

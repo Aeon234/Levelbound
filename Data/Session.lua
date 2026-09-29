@@ -56,7 +56,7 @@ function Session:SetAFK(afk)
 	end
 end
 
----@return number? xpPerSecond nil until the first gain of the session (scenario E4)
+---@return number? xpPerSecond nil until the session's first gain
 function Session:Rate()
 	if not self.started then
 		return nil

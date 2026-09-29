@@ -17,7 +17,7 @@ local SAMPLE = {
 
 ---@class LBMarkerPlacement
 ---@field member LBRosterMember
----@field x number centre of the marker, in bar coordinates
+---@field x number center of the marker, in bar coordinates
 
 ---@class LBMarker
 ---@field previewing boolean?

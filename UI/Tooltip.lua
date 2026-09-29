@@ -329,7 +329,7 @@ end
 
 ---@param mine LBSnapshot?
 ---@param theirs LBSnapshot
----@return string? text how far ahead or behind the player the member is, coloured
+---@return string? text how far ahead or behind the player the member is, colored
 local function Compared(mine, theirs)
 	local difference = mine and LB.Progress.Distance(mine, theirs)
 

@@ -9,7 +9,7 @@ local EPSILON = 0.01
 ---@class LBVisibilityState
 ---@field inCombat boolean
 ---@field hasTarget boolean
----@field blocked boolean pet battle/vehiclke
+---@field blocked boolean a pet battle or vehicle UI is active
 ---@field hovered string? id of the bar under the cursor
 ---@field editing boolean?
 

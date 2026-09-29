@@ -60,7 +60,7 @@ LB.TYPE_ORDER = { "xp", "petxp", "reputation", "house", "endeavor", "travelers",
 
 LB.DEFAULT_FONT = "Gilroy Bold"
 
--- The logo's gold, lifted to read as small text on a dark chat window.
+-- Logo gold, brightened for legibility as small text on dark chat backgrounds.
 LB.BRAND = { 232 / 255, 182 / 255, 74 / 255 }
 
 local PREFIX = "|cffe8b64aLevelbound|r: "
@@ -86,7 +86,7 @@ function LB:Warn(message, ...)
 	print(WARN_PREFIX .. message)
 end
 
----Is Secret Value checker.
+---Returns `value` unless it is a secret value, in which case returns `fallback`.
 ---@generic T
 ---@param value T
 ---@param fallback T?

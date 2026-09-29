@@ -68,7 +68,7 @@ Gain.box = NoticeStack:CreateBox("LevelboundGainIndicators")
 ---@param barWidth number
 ---@param width number the indicator's own width
 ---@param mode string "FILL_EDGE" or "RIGHT_END"
----@return number x centre of the indicator, in bar coordinates
+---@return number x center of the indicator, in bar coordinates
 function Gain:Offset(fraction, barWidth, width, mode)
 	if width >= barWidth then
 		return barWidth / 2
@@ -100,7 +100,7 @@ end
 
 ---@param id string
 ---@param amount number
----@param labelled boolean detached lines name their type, in its colour
+---@param labelled boolean detached lines name their type, in its color
 ---@return string
 local function Text(id, amount, labelled)
 	local text = ("+%s"):format(LB.Format:Number(amount))

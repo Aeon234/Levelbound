@@ -50,12 +50,12 @@ local DIVIDED = { xp = true, petxp = true }
 ---@field alphaDriver Frame
 ---@field level number last drawn level
 ---@field values number[]
----@field sweeping boolean? lvl up sweep animation running
+---@field sweeping boolean? level-up sweep animation is running
 ---@field fading boolean?
 ---@field pending number[]? target the sweep settles on
 ---@field hovered boolean?
 ---@field sparkEnabled boolean?
----@field heat number flare brightness, hot while the fill grows and resting otherwise
+---@field heat number flare brightness; raised while the fill grows, at rest level otherwise
 ---@field growing boolean? a gain or level-up is moving the fill
 ---@field shimmerElapsed number?
 ---@field effectDriver Frame
@@ -245,7 +245,7 @@ local function ClassColor()
 end
 
 ---@return LBColor first
----@return LBColor? second nil when the fill is a flat colour rather than a gradient
+---@return LBColor? second nil when the fill is a flat color rather than a gradient
 function BarMixin:FillColors()
 	local appearance = LB.Profile:Get("appearance")
 
@@ -416,7 +416,7 @@ end
 ---@param heat number
 ---@param growing boolean
 ---@param delta number seconds since the last step
----@return number heat hot while the fill grows, then cooling to rest over FLARE_COOL seconds
+---@return number heat raised while the fill grows, then decaying to rest level over FLARE_COOL seconds
 function Bar:FlareHeat(heat, growing, delta)
 	if growing then
 		return FLARE_HOT

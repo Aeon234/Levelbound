@@ -41,7 +41,7 @@ local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 ---@field visibility LBTextVisibility
 ---@field x number
 ---@field y number
----@field style table over-ridden settings
+---@field style table overridden settings
 
 ---@class LBFramePosition
 ---@field point FramePoint
@@ -74,7 +74,7 @@ local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 ---@field texture string LibSharedMedia statusbar name
 ---@field xpGradient LBColor[] two stops
 ---@field xpUseClassColor boolean
----@field xpStoredGradient LBColor[]? the gradient in use before the class-colour toggle went on
+---@field xpStoredGradient LBColor[]? the gradient in use before the class-color toggle went on
 ---@field questColor LBColor
 ---@field restedColor LBColor
 ---@field background LBColor
@@ -105,7 +105,7 @@ local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 ---@field position "FILL_EDGE" | "RIGHT_END"
 ---@field detached boolean
 ---@field direction "UP" | "DOWN"
----@field screen LBFramePosition? the detached stack's place; nil sits it right of the screen's centre
+---@field screen LBFramePosition? the detached stack's place; nil sits it right of the screen's center
 ---@field colors table<string, LBColor>
 ---@field text LBGainTextStyle
 
@@ -120,7 +120,7 @@ local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 ---@field x number
 ---@field y number
 ---@field detached boolean
----@field screen LBFramePosition? the detached stack's place; nil sits it left of the screen's centre
+---@field screen LBFramePosition? the detached stack's place; nil sits it left of the screen's center
 ---@field text LBLevelUpTextStyle
 
 ---@class LBMarkerOpacitySettings

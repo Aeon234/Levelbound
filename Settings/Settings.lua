@@ -189,7 +189,7 @@ local INNER_ATLAS = "Options_InnerFrame"
 local INNER_EDGE = 0.45
 
 ---@param parent Frame
----@return Frame? frame nil when the client has no such atlas, which leaves the panel plain, not broken
+---@return Frame? frame nil when the client lacks the atlas; the panel is then drawn without it
 local function InnerFrame(parent)
 	local info = C_Texture.GetAtlasInfo(INNER_ATLAS)
 

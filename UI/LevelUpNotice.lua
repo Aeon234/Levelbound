@@ -92,7 +92,7 @@ local function Style(frame)
 end
 
 ---@param entry { class: string, level: integer }
----@return string name coloured by class
+---@return string name colored by class
 local function SampleName(entry)
 	local name = LOCALIZED_CLASS_NAMES_MALE and LOCALIZED_CLASS_NAMES_MALE[entry.class] or entry.class
 
@@ -114,7 +114,7 @@ function Notice:PlaceBox()
 	NoticeStack:PlaceBox(self.box, settings.screen, width, NoticeStack:BoxHeight(LineHeight(measure)), -1)
 end
 
----@param name string the member's name, already class-coloured
+---@param name string the member's name, already class-colored
 ---@param level integer
 function Notice:Show(name, level)
 	local frame = self.stack:Acquire()
