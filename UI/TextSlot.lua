@@ -55,12 +55,10 @@ local INSIDE = { INSIDE_LEFT = true, INSIDE_CENTER = true, INSIDE_RIGHT = true }
 ---@class LBTextSlotRenderer
 ---@field hosts table<Frame, LBTextHost>
 ---@field group LBTextHost?
----@field editing boolean the Text settings page is open, so On Hover slots show
 ---@field ticker table?
 ---@field warned boolean
 local TextSlot = {
 	hosts = {},
-	editing = false,
 	warned = false,
 }
 LB.TextSlot = TextSlot
@@ -217,7 +215,7 @@ local function Showing(host, key, hovered)
 
 	local visibility = entry.slot.visibility
 
-	return visibility == "ALWAYS" or (visibility == "HOVER" and (hovered or TextSlot.editing))
+	return visibility == "ALWAYS" or (visibility == "HOVER" and hovered)
 end
 
 -- Center goes first, then right; the left is kept and cut off with an ellipsis if it is too wide on its own.
@@ -489,14 +487,3 @@ function TextSlot:Refit()
 	self:UpdateTicker()
 end
 
-LB.Callbacks:Register("Editing", TextSlot, function()
-	local editing = LB.Editing:Demo() == "text"
-
-	if TextSlot.editing == editing then
-		return
-	end
-
-	TextSlot.editing = editing
-
-	TextSlot:Refit()
-end)

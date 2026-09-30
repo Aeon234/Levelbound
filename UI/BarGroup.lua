@@ -486,7 +486,6 @@ function BarGroup:Settled()
 	self.settling = false
 
 	LB.TextSlot:Refit()
-	LB.Gain:OnLayoutSettled()
 end
 
 ---@param animated boolean?

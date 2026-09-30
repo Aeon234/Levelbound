@@ -9,11 +9,9 @@ local Editing = LB.Editing
 
 ---@class LBPreview
 ---@field previewAll boolean
----@field xpSample boolean
 ---@field snapshots table<string, LBSnapshot>
 local Preview = {
 	previewAll = false,
-	xpSample = false,
 	snapshots = {},
 }
 LB.Preview = Preview
@@ -73,21 +71,21 @@ function Preview:Snapshot(id)
 	return snapshot
 end
 
----@param id string
+---Whether a bar draws its sample in place of its data: every bar, while edit mode previews them all.
+---@param _ string the progress type
 ---@return boolean
-function Preview:Covers(id)
-	return Editing:PreviewAll() or (Editing:XPSample() and id == "xp")
+function Preview:Covers(_)
+	return Editing:PreviewAll()
 end
 
 LB.Callbacks:Register("Editing", Preview, function()
-	local previewAll, xpSample = Editing:PreviewAll(), Editing:XPSample()
+	local previewAll = Editing:PreviewAll()
 
-	if previewAll == Preview.previewAll and xpSample == Preview.xpSample then
+	if previewAll == Preview.previewAll then
 		return
 	end
 
 	Preview.previewAll = previewAll
-	Preview.xpSample = xpSample
 
 	LB.Callbacks:Fire("Layout")
 end)

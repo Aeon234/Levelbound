@@ -16,8 +16,7 @@ local SAMPLE = {
 ---@class LBLevelUpNotice
 ---@field stack LBNoticeStack
 ---@field box Frame where the notices sit when detached from the bars
----@field previewing boolean?
----@field ticker any?
+---@field sampleTicker any? adds a notice to a settings preview's sample
 ---@field sampleIndex integer
 local Notice = {
 	sampleIndex = 0,
@@ -255,53 +254,6 @@ function Notice:EditTargets()
 	}
 end
 
-function Notice:ShowSample()
-	if LB.Editing:Demo() ~= "party" then
-		self:ClearPreview()
-
-		return
-	end
-
-	if not Shown() then
-		self:ReleaseAll()
-
-		return
-	end
-
-	self.sampleIndex = self.sampleIndex % #SAMPLE + 1
-
-	local entry = SAMPLE[self.sampleIndex]
-
-	self:Show(SampleName(entry), entry.level)
-end
-
-function Notice:Preview()
-	self.previewing = true
-
-	if not self.ticker then
-		self.ticker = C_Timer.NewTicker(PREVIEW_EVERY, function()
-			Notice:ShowSample()
-		end)
-	end
-
-	self:ShowSample()
-end
-
-function Notice:ClearPreview()
-	if not self.previewing then
-		return
-	end
-
-	self.previewing = false
-
-	if self.ticker then
-		self.ticker:Cancel()
-		self.ticker = nil
-	end
-
-	self:ReleaseAll()
-end
-
 Callbacks:Register("Settings", Notice, function(_, path)
 	if type(path) == "string" and not path:find("^party") then
 		return
@@ -330,10 +282,3 @@ Callbacks:Register("Settings", Notice, function(_, path)
 	Notice.stack:Layout()
 end)
 
-Callbacks:Register("Editing", Notice, function()
-	if LB.Editing:Demo() ~= "party" then
-		Notice:ClearPreview()
-	elseif not Notice.previewing then
-		Notice:Preview()
-	end
-end)

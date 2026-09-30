@@ -5,8 +5,6 @@ end
 local L = select(2, ...).L
 
 -- Default text on the experience bar (Core/Profile.lua)
--- L["Time this level:"] = "Time this level:"
--- L["Time this session:"] = "Time this session:"
 -- L["Leveling in:"] = "Leveling in:"
 -- L["XP/Hr"] = "XP/Hr"
 -- L["Completed:"] = "Completed:"
@@ -70,7 +68,7 @@ local L = select(2, ...).L
 -- L["Shift-Click to Share"] = "Shift-Click to Share"
 
 -- Sharing to chat (Core/Share.lua, Core/Format.lua); the "[Levelbound]" prefix itself is never translated
--- L["%s to go"] = "%s to go"
+-- L["%s xp to go"] = "%s xp to go"
 -- L["~%s at %s XP/hr"] = "~%s at %s XP/hr"
 -- L["%dh %dm"] = "%dh %dm"
 -- L["%dm"] = "%dm"

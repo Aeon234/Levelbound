@@ -5,9 +5,8 @@ local NoticeStack = LB.NoticeStack
 local L = LB.L
 
 local GAP = 2
-local PREVIEW_AMOUNT = 1234
-local PREVIEW_MERGE = 0.1
-local PREVIEW_EVERY = 1.5
+local PREVIEW_AMOUNT = 1234 -- the sample amount that sizes the detached box and settings samples
+local PREVIEW_EVERY = 1.5 -- a settings preview adds a detached line this often
 local TRAVEL = 20
 
 
@@ -32,15 +31,11 @@ end
 ---@field lines table<string, Frame> the detached line showing each progress type
 ---@field box Frame where the detached indicators sit
 ---@field inCombat boolean
----@field previewing boolean?
----@field ticker any? adds a detached sample every PREVIEW_EVERY seconds while the Gain page is open
----@field sampleIndex integer
 local Gain = {
 	pool = CreateFramePool("Frame", UIParent, nil, Reset),
 	active = {},
 	lines = {},
 	inCombat = false,
-	sampleIndex = 0,
 }
 LB.Gain = Gain
 
@@ -416,105 +411,7 @@ function Gain:OnProgress(bar)
 		return
 	end
 
-	self:ClearPreview()
 	self:Show(bar, source.delta or 0)
-end
-
-function Gain:StopTicker()
-	if self.ticker then
-		self.ticker:Cancel()
-		self.ticker = nil
-	end
-end
-
----@return string[] ids the types this client can track, so a preview never shows one it cannot
-local function SampleTypes()
-	local ids = {}
-
-	for _, id in ipairs(LB.Model:Order()) do
-		if LB.Model:Capable(id) then
-			ids[#ids + 1] = id
-		end
-	end
-
-	return ids
-end
-
-function Gain:ShowSample()
-	local ids = SampleTypes()
-
-	if LB.Editing:Demo() ~= "gain" or not Settings().detached or #ids == 0 then
-		self:ClearPreview()
-
-		return
-	end
-
-	self.sampleIndex = self.sampleIndex % #ids + 1
-	self:ShowDetached(ids[self.sampleIndex], PREVIEW_AMOUNT)
-end
-
-function Gain:Preview()
-	local group = LB.BarGroup
-	local frame = group.frame
-
-	if not frame or not frame:IsShown() or LB.Editing:Demo() ~= "gain" then
-		self:ClearPreview()
-
-		return
-	end
-
-	self.previewing = true
-
-	if Settings().detached then
-		self.pool:ReleaseAll()
-		wipe(self.active)
-
-		if not self.ticker then
-			self.ticker = C_Timer.NewTicker(PREVIEW_EVERY, function()
-				Gain:ShowSample()
-			end)
-
-			self:ShowSample()
-		end
-
-		return
-	end
-
-	self:StopTicker()
-	self:ReleaseAll()
-
-	if group.settling then
-		return
-	end
-
-	for _, bar in pairs(group.bars) do
-		if bar:IsShown() then
-			self:Show(bar, PREVIEW_AMOUNT, true)
-		end
-	end
-end
-
-function Gain:OnLayoutSettled()
-	if not self.previewing then
-		return
-	end
-
-	if LB.Editing:Demo() == "gain" then
-		self:Preview()
-	else
-		self:ClearPreview()
-	end
-end
-
-function Gain:ClearPreview()
-	if not self.previewing then
-		return
-	end
-
-	self.previewing = false
-
-	self:StopTicker()
-	self:ReleaseAll()
 end
 
 ---@return Frame? box the detached stack's box, placed, or nil while the indicators sit on the bars
@@ -607,19 +504,5 @@ Callbacks:Register("Settings", Gain, function(_, path)
 
 		Gain:PlaceBox()
 		Gain.stack:Layout()
-	end
-
-	if LB.Editing:Demo() == "gain" then
-		LB.Events:Merge("gain:preview", PREVIEW_MERGE, function()
-			Gain:Preview()
-		end)
-	end
-end)
-
-Callbacks:Register("Editing", Gain, function()
-	if LB.Editing:Demo() ~= "gain" then
-		Gain:ClearPreview()
-	elseif not Gain.previewing then
-		Gain:Preview()
 	end
 end)
