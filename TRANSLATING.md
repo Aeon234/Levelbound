@@ -34,8 +34,8 @@ Anything left commented shows in English, so a partial translation is welcome.
 ## Rules
 
 - **Keep the placeholders.** `%s`, `%d` and `%q` are filled in by the addon. Keep every one, in the same order. A missing or extra placeholder breaks the message in game.
-- **Keep colour codes.** Text such as `|cff7a63ff…|r` is a colour; keep both ends.
-- **Keep the capitalisation style.** Settings labels are written like titles in English ("Show Party Markers"); use whatever your language's own WoW settings panel uses. Chat messages and tooltips are sentences.
+- **Keep color codes.** Text such as `|cff7a63ff…|r` is a color; keep both ends.
+- **Keep the capitalization style.** Settings labels are written like titles in English ("Show Party Markers"); use whatever your language's own WoW settings panel uses. Chat messages and tooltips are sentences.
 - **Strings starting with `tag.` or `slot.`** describe the text editor's tags and positions; translate the description, not the tag.
 - **One language per pull request**, please.
 
@@ -47,7 +47,7 @@ If you have Python, run this from the repository root before opening the pull re
 python Tools/sync-locales.py --check
 ```
 
-It reports any placeholder, colour code or key mistakes. The same check runs automatically on every pull request.
+It reports any placeholder, color code or key mistakes. The same check runs automatically on every pull request.
 
 In game, switch the client to your language, `/reload`, and look through the settings window (`/lb`).
 

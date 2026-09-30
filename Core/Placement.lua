@@ -91,22 +91,22 @@ end
 ---@param lock LBVerticalLock? forces the vertical anchor, as a connected stack needs
 ---@return LBFramePosition
 function Placement:Anchor(left, bottom, width, height, screenWidth, screenHeight, lock)
-	local centreX = left + width / 2
-	local centreY = bottom + height / 2
+	local centerX = left + width / 2
+	local centerY = bottom + height / 2
 	local horizontal, vertical, x, y
 
-	if centreX < screenWidth / 3 then
+	if centerX < screenWidth / 3 then
 		horizontal, x = "LEFT", left
-	elseif centreX > screenWidth * 2 / 3 then
+	elseif centerX > screenWidth * 2 / 3 then
 		horizontal, x = "RIGHT", left + width - screenWidth
 	else
-		horizontal, x = "", centreX - screenWidth / 2
+		horizontal, x = "", centerX - screenWidth / 2
 	end
 
 	if not lock then
-		if centreY < screenHeight / 3 then
+		if centerY < screenHeight / 3 then
 			lock = "BOTTOM"
-		elseif centreY > screenHeight * 2 / 3 then
+		elseif centerY > screenHeight * 2 / 3 then
 			lock = "TOP"
 		end
 	end
@@ -116,7 +116,7 @@ function Placement:Anchor(left, bottom, width, height, screenWidth, screenHeight
 	elseif lock == "TOP" then
 		vertical, y = "TOP", bottom + height - screenHeight
 	else
-		vertical, y = "", centreY - screenHeight / 2
+		vertical, y = "", centerY - screenHeight / 2
 	end
 
 	return { point = Join(horizontal, vertical), x = Trim(x), y = Trim(y) }
@@ -130,7 +130,7 @@ end
 ---@param screenHeight number
 ---@return number x offset of the rectangle's center from the screen's center
 ---@return number y
-function Placement:Centre(left, bottom, width, height, screenWidth, screenHeight)
+function Placement:Center(left, bottom, width, height, screenWidth, screenHeight)
 	return self:Round(left + width / 2 - screenWidth / 2), self:Round(bottom + height / 2 - screenHeight / 2)
 end
 
@@ -142,7 +142,7 @@ end
 ---@param screenHeight number
 ---@return number left
 ---@return number bottom
-function Placement:FromCentre(x, y, width, height, screenWidth, screenHeight)
+function Placement:FromCenter(x, y, width, height, screenWidth, screenHeight)
 	return screenWidth / 2 + x - width / 2, screenHeight / 2 + y - height / 2
 end
 

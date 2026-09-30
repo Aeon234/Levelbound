@@ -167,12 +167,12 @@ function EditPanel:Build()
 	frame.pinned = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
 	frame.pinned:SetPoint("CENTER")
 
-	local centre = WIDTH - PAD - ARROW * 1.5
+	local center = WIDTH - PAD - ARROW * 1.5
 	local places = {
-		{ centre, -PAD },
-		{ centre - ARROW, -PAD - ARROW },
-		{ centre + ARROW, -PAD - ARROW },
-		{ centre, -PAD - ARROW * 2 },
+		{ center, -PAD },
+		{ center - ARROW, -PAD - ARROW },
+		{ center + ARROW, -PAD - ARROW },
+		{ center, -PAD - ARROW * 2 },
 	}
 
 	frame.arrows = {}

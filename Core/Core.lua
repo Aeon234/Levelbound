@@ -236,7 +236,7 @@ function LB:PrintDiagnostics()
 
 	if not layout then
 		self:Warn(
-			"no active profile: saved data did not initialise. LevelboundDB=%s active=%s",
+			"no active profile: saved data did not initialize. LevelboundDB=%s active=%s",
 			tostring(LevelboundDB ~= nil),
 			tostring(self.Profile.active ~= nil)
 		)

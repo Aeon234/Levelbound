@@ -225,7 +225,7 @@ end
 local function Fit(host, row, shown)
 	local inside = INSIDE[row[1]] == true
 	local width = host.frame:GetWidth() - (inside and PADDING * 2 or 0)
-	local left, centre, right = row[1], row[2], row[3]
+	local left, center, right = row[1], row[2], row[3]
 
 	---@param key string
 	---@return number
@@ -241,13 +241,13 @@ local function Fit(host, row, shown)
 		return entry.fontString:GetUnboundedStringWidth()
 	end
 
-	local l, c, r = Measure(left), Measure(centre), Measure(right)
+	local l, c, r = Measure(left), Measure(center), Measure(right)
 
-	if shown[centre] then
+	if shown[center] then
 		local half = (width - c) / 2
 
 		if l + SPACING > half or r + SPACING > half then
-			shown[centre] = false
+			shown[center] = false
 			c = 0
 		end
 	end
@@ -257,7 +257,7 @@ local function Fit(host, row, shown)
 		r = 0
 	end
 
-	for key, measured in pairs({ [left] = l, [centre] = c, [right] = r }) do
+	for key, measured in pairs({ [left] = l, [center] = c, [right] = r }) do
 		local entry = host.entries[key]
 
 		if entry and shown[key] and measured > width then

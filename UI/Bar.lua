@@ -599,11 +599,11 @@ end
 ---@param animate boolean?
 ---@param gained boolean? real progress arrived, rather than a redraw or a swap to or from sample data
 function BarMixin:SetSnapshot(snapshot, animate, gained)
-	local recolour = self.snapshot == nil or self.snapshot.color ~= snapshot.color
+	local recolor = self.snapshot == nil or self.snapshot.color ~= snapshot.color
 
 	self.snapshot = snapshot
 
-	if recolour then
+	if recolor then
 		self:ApplyAppearance()
 	end
 
@@ -614,7 +614,7 @@ function BarMixin:SetSnapshot(snapshot, animate, gained)
 
 	fill, quest, rested = fill or 0, quest or 0, rested or 0
 	local level = snapshot.level or 0
-	local levelled = gained == true and self.level > 0 and level > self.level
+	local leveled = gained == true and self.level > 0 and level > self.level
 
 	self.level = level
 
@@ -628,7 +628,7 @@ function BarMixin:SetSnapshot(snapshot, animate, gained)
 		return
 	end
 
-	if levelled then
+	if leveled then
 		self:Glint(true)
 		self:LevelUp(fill, quest, rested)
 

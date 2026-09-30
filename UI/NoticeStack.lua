@@ -10,7 +10,7 @@ local DURATION = HOLD + FADE
 local EVICT = 0.3
 local SLIDE_RATE = 12
 local SETTLE = 0.05
-local CENTRE_GAP = 40
+local CENTER_GAP = 40
 
 ---@class LBNoticeAnchor
 ---@field point string the line's own point
@@ -38,7 +38,7 @@ local NoticeStack = {
 LB.NoticeStack = NoticeStack
 
 ---@param elapsed number seconds since the line appeared
----@return number rise distance travelled away from the anchor
+---@return number rise distance traveled away from the anchor
 ---@return number alpha
 function NoticeStack:Keyframe(elapsed)
 	local progress = math.min(elapsed / DURATION, 1)
@@ -95,17 +95,17 @@ function NoticeStack:Place(anchor, direction)
 	return "TOP" .. side, -1
 end
 
----@param centre number the box's horizontal center
+---@param center number the box's horizontal center
 ---@param screenWidth number
 ---@return string align "LEFT", "RIGHT" or ""
-function NoticeStack:Align(centre, screenWidth)
-	if centre < screenWidth / 3 then
+function NoticeStack:Align(center, screenWidth)
+	if center < screenWidth / 3 then
 		return "LEFT"
-	elseif centre > screenWidth * 2 / 3 then
+	elseif center > screenWidth * 2 / 3 then
 		return "RIGHT"
-	elseif centre < screenWidth / 2 then
+	elseif center < screenWidth / 2 then
 		return "RIGHT"
-	elseif centre > screenWidth / 2 then
+	elseif center > screenWidth / 2 then
 		return "LEFT"
 	end
 
@@ -130,7 +130,7 @@ end
 ---@param height number
 ---@param side integer -1 to default left of the center, 1 to default right of it
 function NoticeStack:PlaceBox(box, position, width, height, side)
-	position = position or { point = "CENTER", x = side * (CENTRE_GAP + width / 2), y = 0 }
+	position = position or { point = "CENTER", x = side * (CENTER_GAP + width / 2), y = 0 }
 
 	LB:SetPixelSize(box, width, height)
 	box:ClearAllPoints()

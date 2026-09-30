@@ -1,12 +1,12 @@
 # Levelbound
 
-**Levelbound** replaces Blizzard's experience and reputation bars with its own. It shows how far you are through the level, how much rested and turn-in XP you have waiting, how fast you're levelling this session, and where the rest of your party is.
+**Levelbound** replaces Blizzard's experience and reputation bars with its own. It shows how far you are through the level, how much rested and turn-in XP you have waiting, how fast you're leveling this session, and where the rest of your party is.
 
 Download on [CurseForge](https://www.curseforge.com/projects/1715108). Works on Retail and WoW: Forever.
 
 ## Experience bar
 
-- Rested XP and XP from completed quests you haven't turned in are drawn on the bar in their own colours.
+- Rested XP and XP from completed quests you haven't turned in are drawn on the bar in their own colors.
 - The bar tracks your XP per hour for the current session and estimates your time to the next level, pausing while you AFK.
 - Time played, time at this level and session time are all available as text or in the tooltip.
 - Custom notice for gaining exp.
@@ -36,7 +36,7 @@ Markers work in 5-player groups, including dungeon finder groups, and hide autom
 - `/lb share party` (or `instance`, `raid`, `guild`, `say`) sends the line directly.
 - Optionally announce your own level-ups to party or guild, and post an XP summary at the end of a dungeon or delve.
 
-## Customisation
+## Customization
 
 In-depth customization options so you can tailor the visuals to your liking.
 

@@ -95,12 +95,12 @@ end
 
 ---@param id string
 ---@param amount number
----@param labelled boolean detached lines name their type, in its color
+---@param labeled boolean detached lines name their type, in its color
 ---@return string
-local function Text(id, amount, labelled)
+local function Text(id, amount, labeled)
 	local text = ("+%s"):format(LB.Format:Number(amount))
 
-	if not labelled then
+	if not labeled then
 		return text
 	end
 
@@ -110,8 +110,8 @@ local function Text(id, amount, labelled)
 end
 
 ---@param frame Frame
----@param labelled boolean
-local function Style(frame, labelled)
+---@param labeled boolean
+local function Style(frame, labeled)
 	local style = Settings().text
 	local size = style.size * 2
 	local color = TypeColor(frame.id)
@@ -122,7 +122,7 @@ local function Style(frame, labelled)
 
 	LB.Media:SetFont(frame.text, Settings().text)
 	frame.text:SetTextColor(style.color[1], style.color[2], style.color[3], style.color[4] or 1)
-	frame.text:SetText(Text(frame.id, frame.amount, labelled))
+	frame.text:SetText(Text(frame.id, frame.amount, labeled))
 
 	local textWidth = frame.text:GetStringWidth()
 	local onLeft = style.side == "LEFT"

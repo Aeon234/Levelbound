@@ -132,7 +132,7 @@ def problems(code, items, done, duplicates):
                 code, key, " ".join(wanted) or "(none)", " ".join(given) or "(none)"))
 
         if value.count("|c") != english[key].count("|c") or value.count("|r") != english[key].count("|r"):
-            found.append("{}: {} must keep its colour codes (|c...|r)".format(code, key))
+            found.append("{}: {} must keep its color codes (|c...|r)".format(code, key))
 
     return found
 

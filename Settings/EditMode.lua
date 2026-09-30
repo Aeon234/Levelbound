@@ -23,8 +23,8 @@ local GUIDE = { 1, 0.82, 0, 0.9 }
 local ACCENT = LB.Mover.accent
 
 local GRID_SPACING = 32
-local GRID_DIMMED, GRID_CENTRE_DIMMED = 0.5, 1
-local GRID_BRIGHT, GRID_CENTRE_BRIGHT = 0.75, 1
+local GRID_DIMMED, GRID_CENTER_DIMMED = 0.5, 1
+local GRID_BRIGHT, GRID_CENTER_BRIGHT = 0.75, 1
 local GRID_NEXT = { DIMMED = "BRIGHT", BRIGHT = "OFF", OFF = "DIMMED" }
 
 local HOVER_FADE = 0.5
@@ -104,10 +104,10 @@ end
 ---@return number center
 local function GridAlpha(mode)
 	if mode == "BRIGHT" then
-		return GRID_BRIGHT, GRID_CENTRE_BRIGHT
+		return GRID_BRIGHT, GRID_CENTER_BRIGHT
 	end
 
-	return GRID_DIMMED, GRID_CENTRE_DIMMED
+	return GRID_DIMMED, GRID_CENTER_DIMMED
 end
 
 ---@return string label
@@ -710,7 +710,7 @@ function EditMode:Position(key)
 	local left, bottom, width, height = mover:Rect()
 	local screenWidth, screenHeight = Screen()
 
-	return LB.Placement:Centre(left, bottom, width, height, screenWidth, screenHeight)
+	return LB.Placement:Center(left, bottom, width, height, screenWidth, screenHeight)
 end
 
 ---@param mover LBMover
@@ -843,7 +843,7 @@ function EditMode:SetPosition(key, x, y)
 
 	local _, _, width, height = mover:Rect()
 	local screenWidth, screenHeight = Screen()
-	local left, bottom = LB.Placement:FromCentre(x, y, width, height, screenWidth, screenHeight)
+	local left, bottom = LB.Placement:FromCenter(x, y, width, height, screenWidth, screenHeight)
 
 	self:Commit(key, left, bottom)
 end
@@ -1272,9 +1272,9 @@ function EditMode:RefreshGrid()
 	local pixel = Pixel()
 	local spacing = GRID_SPACING * pixel
 	local width, height = Screen()
-	local centreX = LB.Placement:ToPixel(width / 2, pixel)
-	local centreY = LB.Placement:ToPixel(height / 2, pixel)
-	local alpha, centreAlpha = GridAlpha(mode)
+	local centerX = LB.Placement:ToPixel(width / 2, pixel)
+	local centerY = LB.Placement:ToPixel(height / 2, pixel)
+	local alpha, centerAlpha = GridAlpha(mode)
 	local count = 0
 
 	---@param vertical boolean
@@ -1300,25 +1300,25 @@ function EditMode:RefreshGrid()
 	end
 
 	for offset = spacing, math.max(width, height), spacing do
-		if centreX - offset > 0 then
-			Line(true, LB.Placement:ToPixel(centreX - offset, pixel), alpha)
+		if centerX - offset > 0 then
+			Line(true, LB.Placement:ToPixel(centerX - offset, pixel), alpha)
 		end
 
-		if centreX + offset < width then
-			Line(true, LB.Placement:ToPixel(centreX + offset, pixel), alpha)
+		if centerX + offset < width then
+			Line(true, LB.Placement:ToPixel(centerX + offset, pixel), alpha)
 		end
 
-		if centreY - offset > 0 then
-			Line(false, LB.Placement:ToPixel(centreY - offset, pixel), alpha)
+		if centerY - offset > 0 then
+			Line(false, LB.Placement:ToPixel(centerY - offset, pixel), alpha)
 		end
 
-		if centreY + offset < height then
-			Line(false, LB.Placement:ToPixel(centreY + offset, pixel), alpha)
+		if centerY + offset < height then
+			Line(false, LB.Placement:ToPixel(centerY + offset, pixel), alpha)
 		end
 	end
 
-	Line(true, centreX, centreAlpha)
-	Line(false, centreY, centreAlpha)
+	Line(true, centerX, centerAlpha)
+	Line(false, centerY, centerAlpha)
 
 	for index = count + 1, #grid.lines do
 		grid.lines[index]:Hide()
