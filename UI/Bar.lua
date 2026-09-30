@@ -261,10 +261,6 @@ function BarMixin:FillColors()
 		return appearance.xpGradient[1] or WHITE, appearance.xpGradient[2]
 	end
 
-	if self.id == "petxp" then
-		return appearance.xpGradient[1] or WHITE, appearance.xpGradient[2]
-	end
-
 	local snapshot = self.snapshot
 
 	if snapshot and snapshot.color then

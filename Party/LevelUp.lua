@@ -124,14 +124,17 @@ function LevelUp:Deliver(member, settings)
 		LB:Print(LB.L["%s reached level %d"], name, member.level)
 	end
 
-	if settings.sound and self:ClaimSound(GetTime()) then
-		self:PlaySound()
+	if settings.sound ~= "None" and self:ClaimSound(GetTime()) then
+		self:PlaySound(settings.sound)
 	end
 end
 
-function LevelUp:PlaySound()
-	if PlaySoundFile then
-		PlaySoundFile(LB.Media.sounds.levelUp, "SFX")
+---@param name string? a LibSharedMedia sound name; Levelbound's own level-up sound when nil or unknown
+function LevelUp:PlaySound(name)
+	local file = name and LB.Media:Fetch("sound", name) or LB.Media.sounds.levelUp
+
+	if PlaySoundFile and file then
+		PlaySoundFile(file, "SFX")
 	end
 end
 

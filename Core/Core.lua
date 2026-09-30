@@ -42,8 +42,9 @@ local addonName = ...
 ---@field TimePlayed LBTimePlayed
 ---@field failed boolean?
 ---@field Settings LBSettings
----@field Widgets LBWidgets
----@field Panels LBPanels
+---@field SettingsPages LBSettingsPages
+---@field SettingsText LBSettingsText
+---@field SettingsProfiles LBSettingsProfiles
 local LB = select(2, ...)
 
 LB.name = addonName
@@ -57,6 +58,9 @@ end
 LB.MESSAGE_PREFIX = "Levelbound"
 
 LB.TYPE_ORDER = { "xp", "petxp", "reputation", "house", "endeavor", "travelers", "honor" }
+
+-- The LibSharedMedia name of Levelbound's own level-up sound, the level-up notices' default.
+LB.SOUND_LEVEL_UP = "LevelBound LvlUp"
 
 LB.DEFAULT_FONT = "Gilroy Bold"
 
@@ -335,5 +339,5 @@ SlashCmdList.LEVELBOUND = function(message)
 		return
 	end
 
-	LB:OpenSettings()
+	LB:OpenSettings(command ~= "" and command or nil)
 end

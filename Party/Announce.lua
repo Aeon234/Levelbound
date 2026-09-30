@@ -112,24 +112,50 @@ function Announce:TrackRun()
 	self.run = { instance = instance, xp = LB.Session.xp or 0, started = GetTime() }
 end
 
+local CHAT_TYPES = { PARTY = "PARTY", INSTANCE = "INSTANCE_CHAT", GUILD = "GUILD" }
+
+---@param channel string a run summary channel setting
+---@return boolean available the player can post to it now
+local function Available(channel)
+	if channel == "PARTY" then
+		return IsInGroup(LE_PARTY_CATEGORY_HOME) and not IsInRaid()
+	elseif channel == "INSTANCE" then
+		return IsInGroup(LE_PARTY_CATEGORY_INSTANCE)
+	elseif channel == "GUILD" then
+		return IsInGuild()
+	end
+
+	return false
+end
+
+---Posts the finished run's summary to the chosen chat, or prints it for the player alone when that chat is
+---Self Only or not available.
 function Announce:OnRunComplete()
 	local run = self.run
 
 	self.run = nil
 
-	if not run or not Settings().announce.runParty or not LB.Session then
+	local announce = Settings().announce
+
+	if not run or not announce.runSummary or not LB.Session then
 		return
 	end
 
 	local gained = (LB.Session.xp or 0) - run.xp
 	local snapshot = LB.Model:Get("xp")
-	local channel = LB.Comms:Channel()
 
-	if gained <= 0 or not snapshot or not channel then
+	if gained <= 0 or not snapshot then
 		return
 	end
 
-	self:Send(self:RunText(gained, GetTime() - run.started, snapshot), channel)
+	local text = self:RunText(gained, GetTime() - run.started, snapshot)
+	local channel = announce.runChannel
+
+	if Available(channel) then
+		self:Send(text, CHAT_TYPES[channel])
+	else
+		print(text)
+	end
 end
 
 LB.Events:Register("PLAYER_ENTERING_WORLD", Announce, function(owner)

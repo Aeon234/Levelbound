@@ -103,9 +103,16 @@ function BarGroup:ComputeLayout(ids, screenWidth)
 		return rects, width, layout.height
 	end
 
+	-- Stacked bars each carry a border; the gap is measured between the borders' outer edges.
+	local spacing = layout.gap
+
+	if not LB.Layout.Fullscreen(layout) then
+		spacing = spacing + 2 * LB.Border:Outset(LB.Profile:Get("appearance.border.style"), layout.height)
+	end
+
 	if layout.mode == "CONNECTED" then
-		local step = layout.height + layout.gap
-		local total = layout.height * count + layout.gap * (count - 1)
+		local step = layout.height + spacing
+		local total = layout.height * count + spacing * (count - 1)
 
 		local growth = LB.Layout.Growth(layout)
 
@@ -130,7 +137,7 @@ function BarGroup:ComputeLayout(ids, screenWidth)
 			point = position.point,
 			x = position.x,
 			y = (stored and stored.position) and position.y
-				or (position.y - (index - 1) * (layout.height + layout.gap)),
+				or (position.y - (index - 1) * (layout.height + spacing)),
 		}
 	end
 

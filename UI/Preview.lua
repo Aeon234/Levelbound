@@ -18,10 +18,21 @@ local Preview = {
 }
 LB.Preview = Preview
 
+local FRIENDLY = 5
+local FRIENDLY_FALLBACK = { 0, 0.6, 0.1, 1 }
+
+---@return LBColor the Friendly standing's color, which a sample reputation bar shows
+local function ReputationColor()
+	local color = FACTION_BAR_COLORS and FACTION_BAR_COLORS[FRIENDLY]
+
+	return color and { color.r, color.g, color.b, 1 } or FRIENDLY_FALLBACK
+end
+
 ---@param id string
 ---@return LBSnapshot
 local function Sample(id)
 	return {
+		color = id == "reputation" and ReputationColor() or nil,
 		cur = SAMPLE_CUR,
 		max = SAMPLE_MAX,
 		overlays = {

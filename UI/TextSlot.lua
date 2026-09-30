@@ -352,6 +352,40 @@ function TextSlot:ApplyBar(bar)
 	self:UpdateTicker()
 end
 
+---Draws all nine of a bar's slots around it, whatever the layout mode, for a settings preview.
+---@param bar LBBar a bar outside the bar group
+---@param hovered boolean
+---@return table<string, FontString> strings the shown slots' font strings, by slot key
+function TextSlot:ApplySample(bar, hovered)
+	local host = HostFor(bar)
+	local keys = {}
+	local shown = {}
+
+	for _, key in ipairs(LB.TextSlotKeys) do
+		keys[key] = true
+	end
+
+	bar.hovered = hovered
+	host.bar = bar
+	Configure(host, keys, bar.id)
+	Draw(host)
+	Show(host, hovered)
+
+	for key, entry in pairs(host.entries) do
+		if entry.fontString:IsShown() then
+			shown[key] = entry.fontString
+		end
+	end
+
+	return shown
+end
+
+---@param key string a slot key
+---@return LBSlotAnchor
+function TextSlot:Anchor(key)
+	return ANCHORS[key]
+end
+
 -- In segmented and connected modes the six outer slots span the whole group and draw the lead type's layout.
 ---@param frame Frame
 ---@param lead LBBar? the bar whose layout and data the outer slots use; nil when the bars stand alone

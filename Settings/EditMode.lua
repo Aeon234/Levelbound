@@ -4,7 +4,6 @@ local L = LB.L
 
 local FLAT = [[Interface\Buttons\WHITE8X8]]
 local SNAP_DISTANCE = 8
-local FADE_IN = 0.2
 local SETTLE = 0.3
 local TOOLBAR_HEIGHT = 42
 local BUTTON_TEMPLATE = "MainMenuFrameButtonTemplate"
@@ -24,8 +23,8 @@ local GUIDE = { 1, 0.82, 0, 0.9 }
 local ACCENT = LB.Mover.accent
 
 local GRID_SPACING = 32
-local GRID_DIMMED, GRID_CENTRE_DIMMED = 0.15, 0.25
-local GRID_BRIGHT, GRID_CENTRE_BRIGHT = 0.3, 0.5
+local GRID_DIMMED, GRID_CENTRE_DIMMED = 0.5, 1
+local GRID_BRIGHT, GRID_CENTRE_BRIGHT = 0.75, 1
 local GRID_NEXT = { DIMMED = "BRIGHT", BRIGHT = "OFF", OFF = "DIMMED" }
 
 local HOVER_FADE = 0.5
@@ -151,7 +150,6 @@ end
 ---@field paused boolean combat interrupted the session
 ---@field inCombat boolean
 ---@field hidden boolean the settings window is in front of the layout
----@field closing boolean? the layout is fading out after Save or Exit
 ---@field dragging boolean? a mover is being dragged; the toolbar is faded out
 ---@field toolbarSlot number? the toolbar's offset from the top of the screen, away from the movers
 ---@field fromSettings boolean? the session began from the settings window, so it ends there too
@@ -184,7 +182,7 @@ end
 
 ---@return boolean showing movers are on screen and can be worked
 function EditMode:Showing()
-	return self.active and not self.paused and not self.hidden and not self.closing
+	return self.active and not self.paused and not self.hidden
 end
 
 function EditMode:Toggle()
@@ -217,7 +215,6 @@ function EditMode:Enter(fromSettings)
 	self.hidden = false
 	self.snapshot = LB.Profile:Snapshot()
 	self.selected = nil
-	self.closing = false
 	self.fromSettings = fromSettings == true
 	self.dragging = false
 
@@ -296,9 +293,9 @@ function EditMode:Discard()
 	self:Exit()
 end
 
----Fades the layout out the way it came in, then ends the session; one begun from settings returns there.
+---Ends the session; one begun from settings returns there.
 function EditMode:Exit()
-	if not self.active or self.closing then
+	if not self.active then
 		return
 	end
 
@@ -308,39 +305,17 @@ function EditMode:Exit()
 	LB.Events:UnregisterAll(self)
 	StaticPopup_Hide(EXIT_POPUP)
 
-	if self.hidden or not toolbar or not driver then
-		self:Finish(reopen)
+	if toolbar and driver and not self.hidden then
+		LB.EditPanel:Hide()
+		self:HideGuides()
+		self:StopHover()
 
-		return
+		if self.keyboard then
+			self.keyboard:Hide()
+		end
 	end
 
-	self.closing = true
-
-	LB.EditPanel:Hide()
-	self:HideGuides()
-	self:StopHover()
-
-	if self.keyboard then
-		self.keyboard:Hide()
-	end
-
-	local toolbarFrom = toolbar:IsShown() and toolbar:GetAlpha() or 0
-
-	LB:Tween(driver, FADE_IN, function(eased)
-		local alpha = 1 - eased
-
-		toolbar:SetAlpha(toolbarFrom * alpha)
-
-		if self.grid then
-			self.grid:SetAlpha(alpha)
-		end
-
-		for _, mover in pairs(self.movers) do
-			mover:SetAlpha(alpha)
-		end
-	end, function()
-		self:Finish(reopen)
-	end)
+	self:Finish(reopen)
 end
 
 ---@param reopen boolean
@@ -348,7 +323,6 @@ function EditMode:Finish(reopen)
 	self.active = false
 	self.paused = false
 	self.hidden = false
-	self.closing = false
 	self.snapshot = nil
 	self.fromSettings = nil
 
@@ -358,13 +332,12 @@ function EditMode:Finish(reopen)
 
 	self:HideLayout(false)
 
-	LB.Editing:Set({ editMode = false, settings = LB.Settings:IsOpen() or reopen == true })
-
-	LB.Settings:PaintSession()
-	LB.Settings:Refresh()
+	LB.Editing:Set({ editMode = false })
 
 	if reopen then
-		LB.Settings:Reveal(FADE_IN)
+		LB.Settings:Open()
+	else
+		LB.Settings:Refresh()
 	end
 end
 
@@ -471,29 +444,25 @@ function EditMode:HideLayout(keepToolbar)
 	end
 end
 
+---Shows the toolbar, grid and movers at full opacity at once.
 function EditMode:FadeIn()
 	local toolbar = self.toolbar
-	local driver = self.driver
 
-	if not toolbar or not driver then
+	if not toolbar then
 		return
 	end
 
-	local fadeToolbar = not LB.Profile:Global().editMode.hoverBar
+	if not LB.Profile:Global().editMode.hoverBar then
+		toolbar:SetAlpha(1)
+	end
 
-	LB:Tween(driver, FADE_IN, function(eased)
-		if fadeToolbar then
-			toolbar:SetAlpha(eased)
-		end
+	if self.grid then
+		self.grid:SetAlpha(1)
+	end
 
-		if self.grid then
-			self.grid:SetAlpha(eased)
-		end
-
-		for _, mover in pairs(self.movers) do
-			mover:SetAlpha(eased)
-		end
-	end)
+	for _, mover in pairs(self.movers) do
+		mover:SetAlpha(1)
+	end
 end
 
 local OWNERS = { LB.BarGroup, LB.LevelUpNotice, LB.Gain }

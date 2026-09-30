@@ -180,13 +180,14 @@ end
 ---@param frame Frame
 ---@param bar LBBar
 ---@param height number the indicator's own height
-local function Anchor(frame, bar, x, height)
+---@param above boolean? always above the bar, never flipped below it near the screen's top
+local function Anchor(frame, bar, x, height, above)
 	local top = bar:GetTop()
 	local screen = UIParent:GetTop()
 
 	frame:ClearAllPoints()
 
-	if top and screen and top + height + TRAVEL > screen then
+	if not above and top and screen and top + height + TRAVEL > screen then
 		frame:SetPoint("BOTTOM", bar, "BOTTOMLEFT", x, -(height + GAP))
 
 		return
@@ -202,20 +203,90 @@ local function Blocked()
 	return not settings.enabled or (settings.hideInCombat and (Gain.inCombat or InCombatLockdown()))
 end
 
-function Gain:PlaceBox()
+---@return number width the detached stack's widest line
+---@return number height a full stack's height
+function Gain:DetachedSize()
 	local settings = Settings()
 	local size = settings.text.size * 2
 	local measure = self.box.measure
 	local width = 1
 
-	LB.Media:SetFont(measure, Settings().text)
+	LB.Media:SetFont(measure, settings.text)
 
 	for _, id in ipairs(LB.Model:Order()) do
 		measure:SetText(Text(id, PREVIEW_AMOUNT, true))
 		width = math.max(width, measure:GetStringWidth())
 	end
 
-	NoticeStack:PlaceBox(self.box, settings.screen, size + GAP + width, NoticeStack:BoxHeight(size), 1)
+	return size + GAP + width, NoticeStack:BoxHeight(size)
+end
+
+function Gain:PlaceBox()
+	local width, height = self:DetachedSize()
+
+	NoticeStack:PlaceBox(self.box, Settings().screen, width, height, 1)
+end
+
+-- A settings preview's own detached stack, growing from an edge of its target the saved way.
+local sampleTarget
+
+---@return LBNoticeAnchor?
+local function SampleAnchor()
+	if not sampleTarget then
+		return nil
+	end
+
+	local up = Settings().direction == "UP"
+	local point = up and "BOTTOMLEFT" or "TOPLEFT"
+
+	return { point = point, relativeTo = sampleTarget, relativePoint = point, x = 0, y = 0, sign = up and 1 or -1 }
+end
+
+Gain.sampleStack = NoticeStack:Create(SampleAnchor, function(frame)
+	frame.id = nil
+	frame.amount = 0
+end)
+
+---Plays detached lines in a settings preview: a new line every 1.5 s, cycling through `ids`, until
+---`StopDetachedSample`.
+---@param target Frame
+---@param ids string[]
+function Gain:PlayDetachedSample(target, ids)
+	self:StopDetachedSample()
+	sampleTarget = target
+
+	local index = 0
+
+	local function Push()
+		if #ids == 0 then
+			return
+		end
+
+		index = index % #ids + 1
+
+		local frame = self.sampleStack:Acquire()
+
+		frame.id = ids[index]
+		frame.amount = PREVIEW_AMOUNT * index
+		Build(frame)
+		frame:SetParent(target)
+		frame:SetFrameLevel(target:GetFrameLevel() + 20)
+		Style(frame, true)
+		self.sampleStack:Push(frame)
+	end
+
+	Push()
+	self.sampleTicker = C_Timer.NewTicker(PREVIEW_EVERY, Push)
+end
+
+function Gain:StopDetachedSample()
+	if self.sampleTicker then
+		self.sampleTicker:Cancel()
+		self.sampleTicker = nil
+	end
+
+	self.sampleStack:ReleaseAll()
+	sampleTarget = nil
 end
 
 ---@param id string
@@ -290,6 +361,51 @@ function Gain:Show(bar, amount, held)
 	frame:Show()
 
 	Paint(frame, frame.elapsed)
+end
+
+---Draws an indicator of `amount` on a bar outside the bar group, for a settings preview, whatever the saved
+---placement: held at full strength, or with `animate` playing its rise and fade once. Draws nothing while the
+---indicator is off.
+---@param bar LBBar
+---@param amount number
+---@param animate boolean?
+---@return Frame? frame
+function Gain:Hold(bar, amount, animate)
+	if not Settings().enabled then
+		self:Release(bar)
+
+		return nil
+	end
+
+	local frame = self.active[bar]
+
+	if not frame then
+		frame = self.pool:Acquire()
+		self.active[bar] = frame
+	end
+
+	Build(frame)
+
+	frame.bar = bar
+	frame.id = bar.id
+	frame.amount = amount
+	frame.elapsed = animate and 0 or NoticeStack.HELD
+	frame.held = not animate
+
+	frame:SetParent(bar)
+	frame:SetFrameLevel(bar:GetFrameLevel() + 20)
+	Style(frame, false)
+
+	local fraction = bar.snapshot and LB.Progress.Fraction(bar.snapshot) or 0
+	local width, height = frame:GetSize()
+
+	Anchor(frame, bar, self:Offset(fraction, bar:GetWidth(), width, Settings().position), height, true)
+
+	frame:SetScript("OnUpdate", animate and OnUpdate or nil)
+	frame:Show()
+	Paint(frame, frame.elapsed)
+
+	return frame
 end
 
 ---@param bar LBBar

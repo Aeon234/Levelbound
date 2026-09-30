@@ -1,8 +1,5 @@
 local LB = select(2, ...)
 
-local ALLIANCE = { 0.0, 0.26, 0.68 }
-local HORDE = { 0.77, 0.12, 0.23 }
-
 LB.Source:New("honor", {
 	label = HONOR,
 	shortLabel = HONOR,
@@ -43,7 +40,6 @@ LB.Source:New("honor", {
 		snapshot.cur = cur
 		snapshot.max = max
 		snapshot.level = level
-		snapshot.color = UnitFactionGroup("player") == "Horde" and HORDE or ALLIANCE
 
 		return changed
 	end,

@@ -137,6 +137,80 @@ function Notice:ReleaseAll()
 	self.stack:ReleaseAll()
 end
 
+-- A settings preview's own stack, placed around its sample bar the way the real stack is placed around the bars.
+local sampleTarget
+
+---@return LBNoticeAnchor?
+local function SampleAnchor()
+	if not sampleTarget then
+		return nil
+	end
+
+	local placement = Settings()
+	local anchor = placement.detached and "TOP" or placement.anchor
+	local point, sign = NoticeStack:Place(anchor, placement.direction)
+
+	-- Detached, the lines grow from the target's own edge, inside it.
+	return {
+		point = point,
+		relativeTo = sampleTarget,
+		relativePoint = placement.detached and point or anchor,
+		x = placement.detached and 0 or placement.x,
+		y = (placement.detached and 0 or placement.y) + sign * GAP,
+		sign = sign,
+	}
+end
+
+Notice.sampleStack = NoticeStack:Create(SampleAnchor)
+
+---Shows sample notices around a preview's bar: three held lines, or with `playing` a new line every 1.5 s until
+---`StopPreviewSample`. No chat and no sound.
+---@param target Frame
+---@param playing boolean
+---@return Frame[] lines the stack's current lines
+function Notice:ShowPreviewSample(target, playing)
+	self:StopPreviewSample()
+	sampleTarget = target
+
+	local function Push(held)
+		self.sampleIndex = self.sampleIndex % #SAMPLE + 1
+
+		local entry = SAMPLE[self.sampleIndex]
+		local frame = self.sampleStack:Acquire()
+
+		Build(frame)
+		frame:SetParent(target)
+		frame:SetFrameLevel(target:GetFrameLevel() + 20)
+		frame.text:SetTextColor(1, 1, 1, 1)
+		frame.text:SetFormattedText(LB.L["%s reached level %d"], SampleName(entry), entry.level)
+		Style(frame)
+		self.sampleStack:Push(frame, held)
+	end
+
+	if playing then
+		Push(false)
+		self.sampleTicker = C_Timer.NewTicker(PREVIEW_EVERY, function()
+			Push(false)
+		end)
+	else
+		for _ = 1, 3 do
+			Push(true)
+		end
+	end
+
+	return self.sampleStack.active
+end
+
+function Notice:StopPreviewSample()
+	if self.sampleTicker then
+		self.sampleTicker:Cancel()
+		self.sampleTicker = nil
+	end
+
+	self.sampleStack:ReleaseAll()
+	sampleTarget = nil
+end
+
 ---@return boolean
 local function Shown()
 	local settings = Settings()

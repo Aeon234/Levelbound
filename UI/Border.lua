@@ -102,6 +102,26 @@ function Border:EdgeMetrics(height, style)
 	return edge, edge * (OUTSETS[style] or OUTSET)
 end
 
+---How far a style's border reaches outside the frame it surrounds, in UI units.
+---@param style string
+---@param height number the framed height
+---@return number
+function Border:Outset(style, height)
+	local pixels = PIXELS[style]
+
+	if pixels then
+		return pixels * LB:Pixel()
+	end
+
+	if EDGES[style] then
+		local _, outset = self:EdgeMetrics(height, style)
+
+		return outset
+	end
+
+	return 0
+end
+
 ---@param pixels number
 ---@param r number
 ---@param g number

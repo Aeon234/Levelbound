@@ -78,6 +78,8 @@ function Media:Register()
 		LSM:Register(LSM.MediaType.BORDER, name, path)
 	end
 
+	LSM:Register(LSM.MediaType.SOUND, LB.SOUND_LEVEL_UP, self.sounds.levelUp)
+
 	self.registered = true
 end
 

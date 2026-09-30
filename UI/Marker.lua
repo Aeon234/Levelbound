@@ -338,7 +338,8 @@ local function FadeAndRelease(bar, frame)
 end
 
 ---@param bar LBBar
-function Marker:Apply(bar)
+---@param members LBRosterMember[]? the members to mark; the party, or the sample party while previewing, when nil
+function Marker:Apply(bar, members)
 	if bar.id ~= "xp" then
 		return
 	end
@@ -354,7 +355,12 @@ function Marker:Apply(bar)
 		return
 	end
 
-	local members = self.previewing and self.sample or LB.Roster:Visible()
+	-- A preview's members stay with its bar, so a redraw after a resize keeps them.
+	if members then
+		bar.markerMembers = members
+	end
+
+	members = members or bar.markerMembers or (self.previewing and self.sample or LB.Roster:Visible())
 	local placements = self:Positions(members, bar:GetWidth(), party.size)
 	local wanted = {}
 
@@ -453,6 +459,13 @@ function Marker:Refresh()
 	end
 end
 
+---@return LBRosterMember[] the sample party
+function Marker:SampleParty()
+	self.sample = self.sample or SampleMembers()
+
+	return self.sample
+end
+
 function Marker:Preview()
 	self.previewing = true
 	self.sample = self.sample or SampleMembers()
@@ -480,6 +493,7 @@ function Marker:Release(bar)
 
 	bar.markerPool:ReleaseAll()
 	wipe(bar.markerShown)
+	bar.markerMembers = nil
 end
 
 LB.Callbacks:Register("Editing", Marker, function()
