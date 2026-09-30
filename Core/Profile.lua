@@ -81,7 +81,7 @@ local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 ---@field typeColors table<string, LBColor>
 ---@field standingColors table<string, LBColor> overrides on Blizzard's FACTION_BAR_COLORS
 ---@field border { style: string, color: LBColor, customColor: boolean }
----@field spark { enabled: boolean, color: LBColor }
+---@field spark { enabled: boolean, customColor: boolean, color: LBColor } the bar's own color unless customColor
 ---@field dividers { enabled: boolean, customColor: boolean, color: LBColor } tenths on the XP and pet XP bars
 ---@field shimmer boolean sweep a highlight across the fill on each gain
 
@@ -164,12 +164,12 @@ local defaults = {
 		height = 24,
 		positions = {
 			SEGMENTED = { point = "TOP", x = 0, y = -40 },
-			CONNECTED = { point = "TOP", x = 0, y = -200 },
+			CONNECTED = { point = "TOP", x = 0, y = -40 },
 			INDEPENDENT = { point = "CENTER", x = 0, y = 0 },
 		},
 		growth = "DOWN",
 		gap = 2,
-		strata = "LOW",
+		strata = "HIGH",
 		independent = {},
 	},
 	types = {
@@ -197,7 +197,7 @@ local defaults = {
 		},
 		standingColors = {},
 		border = { style = "NONE", color = { 1, 1, 1, 1 }, customColor = false },
-		spark = { enabled = true, color = { 1, 1, 1, 1 } },
+		spark = { enabled = true, customColor = false, color = { 1, 1, 1, 1 } },
 		dividers = { enabled = false, customColor = false, color = { 1, 1, 1, 1 } },
 		shimmer = true,
 	},
@@ -255,8 +255,8 @@ local defaults = {
 			fullInCombat = false,
 			fullWithTarget = false,
 		},
-		style = "DOT",
-		size = 8,
+		style = "DIAMOND",
+		size = 14,
 		levelUp = {
 			enabled = true,
 			onScreen = true,

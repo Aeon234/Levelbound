@@ -432,9 +432,16 @@ local function Appearance(ctx)
 		Section("spark", L["Spark and Shimmer"]),
 		Row(
 			Check(ctx, "spark", L["Progress Spark"], "appearance.spark.enabled"),
-			Color(ctx, "sparkColor", L["Spark Color"], "appearance.spark.color", false)
+			Check(ctx, "shimmer", L["Gain Shimmer"], "appearance.shimmer")
 		),
-		Row(Check(ctx, "shimmer", L["Gain Shimmer"], "appearance.shimmer")),
+		Row(
+			Check(ctx, "sparkCustom", L["Custom Spark Color"], "appearance.spark.customColor", {
+				depends = "spark",
+			}),
+			Color(ctx, "sparkColor", L["Spark Color"], "appearance.spark.color", false, {
+				depends = "sparkCustom",
+			})
+		),
 	}
 end
 

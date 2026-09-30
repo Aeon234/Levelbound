@@ -63,7 +63,8 @@ LB.SettingsDescriptions = {
 		dividerCustom = L["Gives the dividers their own color instead of the border's."],
 		dividerColor = L["The dividers' own color."],
 		spark = L["A bright line at the end of each bar's fill."],
-		sparkColor = L["The spark's color."],
+		sparkCustom = L["Gives the spark its own color instead of its bar's."],
+		sparkColor = L["The spark's own color."],
 		shimmer = L["A shine that sweeps across the fill when a bar gains progress."],
 	},
 	text = {

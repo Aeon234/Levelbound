@@ -307,7 +307,7 @@ function BarMixin:ApplyAppearance()
 		CreateColor(light[1], light[2], light[3], 0)
 	)
 
-	self:ApplySpark(appearance.spark)
+	self:ApplySpark(appearance.spark, tip)
 	self:ApplyDividers()
 	LB.TextSlot:ApplyBar(self)
 end
@@ -396,9 +396,11 @@ function BarMixin:PlaceDividers()
 	end
 end
 
----@param spark { enabled: boolean, color: LBColor }
-function BarMixin:ApplySpark(spark)
-	local r, g, b, a = Unpack(spark.color)
+---@param spark { enabled: boolean, customColor: boolean, color: LBColor }
+---@param tip LBColor the fill's color at its end, used unless the spark has its own
+function BarMixin:ApplySpark(spark, tip)
+	local r, g, b = Unpack(spark.customColor and spark.color or tip)
+	local a = spark.color[4] or 1
 
 	self.sparkEnabled = spark.enabled
 

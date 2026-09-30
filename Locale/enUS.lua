@@ -197,6 +197,7 @@ L["Divider Custom Color"] = "Divider Custom Color"
 L["Divider Color"] = "Divider Color"
 L["Spark and Shimmer"] = "Spark and Shimmer"
 L["Progress Spark"] = "Progress Spark"
+L["Custom Spark Color"] = "Custom Spark Color"
 L["Spark Color"] = "Spark Color"
 L["Gain Shimmer"] = "Gain Shimmer"
 
@@ -353,7 +354,8 @@ L["Gives the dividers their own color instead of the border's."] =
 	"Gives the dividers their own color instead of the border's."
 L["The dividers' own color."] = "The dividers' own color."
 L["A bright line at the end of each bar's fill."] = "A bright line at the end of each bar's fill."
-L["The spark's color."] = "The spark's color."
+L["Gives the spark its own color instead of its bar's."] = "Gives the spark its own color instead of its bar's."
+L["The spark's own color."] = "The spark's own color."
 L["A shine that sweeps across the fill when a bar gains progress."] =
 	"A shine that sweeps across the fill when a bar gains progress."
 L["The font of every bar's text, unless a text slot sets its own."] =
