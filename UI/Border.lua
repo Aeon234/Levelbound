@@ -10,25 +10,22 @@ local PIXELS = {
 }
 
 local EDGES = {
-	THICK = "Levelbound Thick",
 	ROUNDED = "Levelbound Ring Medium",
 	ROUNDED_THICK = "Levelbound Ring Thick",
-	FOREVER = "Levelbound Forever",
+	BRONZE = "Levelbound Bronze",
 	METALLIC = "Levelbound Metallic",
 }
 
 local RING = { 102 / 255, 98 / 255, 92 / 255 }
 local NATIVE = {
-	THICK = { 165 / 255, 165 / 255, 165 / 255 },
 	ROUNDED = RING,
 	ROUNDED_THICK = RING,
-	FOREVER = { 186 / 255, 152 / 255, 108 / 255 },
+	BRONZE = { 165 / 255, 130 / 255, 83 / 255 },
 	METALLIC = { 195 / 255, 133 / 255, 84 / 255 },
 }
 
 local OUTSET = 1 / 4
 local OUTSETS = {
-	FOREVER = 8.5 / 32,
 	METALLIC = 27.5 / 64,
 }
 

@@ -238,10 +238,9 @@ Pages.Outlines = Outlines
 ---@return { value: string, label: string }[]
 local function BorderStyles()
 	local textured = {
-		{ value = "THICK", label = L["Stone"] },
 		{ value = "ROUNDED", label = L["Simple"] },
 		{ value = "ROUNDED_THICK", label = L["Simple Thick"] },
-		{ value = "FOREVER", label = L["Forever"] },
+		{ value = "BRONZE", label = L["Bronze"] },
 		{ value = "METALLIC", label = L["Metallic"] },
 	}
 
