@@ -223,7 +223,7 @@ function EditMode:Enter(fromSettings)
 	end)
 	LB.Events:Register("PLAYER_REGEN_ENABLED", self, function()
 		self.inCombat = false
-		self:PaintToolbar()
+		self:ShowPausedToolbar()
 	end)
 	LB.Events:Register("PLAYER_LOGOUT", self, function()
 		self:Discard()
@@ -352,11 +352,23 @@ function EditMode:Pause()
 
 	self.paused = true
 
-	self:HideLayout(true)
-	self:ApplyHover()
+	-- Combat hides everything, the toolbar too; it returns with Resume once combat ends.
+	self:HideLayout(false)
 	self:PaintToolbar()
 
 	LB:Print(L["layout editing is paused for combat."])
+end
+
+---After combat, brings back a paused session's toolbar, which offers Resume.
+function EditMode:ShowPausedToolbar()
+	local toolbar = self.toolbar
+
+	if toolbar and self.active and self.paused and not self.hidden then
+		toolbar:SetAlpha(1)
+		toolbar:Show()
+	end
+
+	self:PaintToolbar()
 end
 
 function EditMode:Resume()
@@ -400,6 +412,13 @@ function EditMode:ShowLayout()
 	local toolbar = self.toolbar
 
 	if not toolbar then
+		return
+	end
+
+	-- A session paused for combat keeps its toolbar hidden until combat ends.
+	if self.paused and self.inCombat then
+		self:PaintToolbar()
+
 		return
 	end
 
@@ -1403,7 +1422,8 @@ function EditMode:StopHover()
 	end
 end
 
----Hover Top Bar applies only while the layout is being worked; a paused session keeps its toolbar in view.
+---Hover Top Bar applies only while the layout is being worked; a session paused after combat keeps its toolbar
+---in view.
 function EditMode:ApplyHover()
 	local toolbar, zone = self.toolbar, self.hoverZone
 
@@ -1414,7 +1434,7 @@ function EditMode:ApplyHover()
 	if not (self:Showing() and LB.Profile:Global().editMode.hoverBar) then
 		self:StopHover()
 
-		if self.active and not self.hidden then
+		if self.active and not self.hidden and not (self.paused and self.inCombat) then
 			toolbar:SetAlpha(1)
 			toolbar:Show()
 		end
