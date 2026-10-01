@@ -1,8 +1,8 @@
 # Levelbound
 
-## v1.0.0
+## 1.0.0
 
-First release, for WoW: Forever. Retail support follows once it has been tested there.
+First release, for Retail and WoW: Forever.
 
 - Experience bar with rested and quest turn-in overlays, XP per hour, time to level and session totals.
 - Pet experience, reputation, honor, House Favor, Neighborhood Endeavors and Trading Post bars.
@@ -18,6 +18,7 @@ First release, for WoW: Forever. Retail support follows once it has been tested 
 - Borders (1 Pixel, 2 Pixel, Simple, Simple Thick, Bronze, Metallic), bar textures, fonts, spark, gain shimmer
   and XP dividers, with LibSharedMedia support.
 - Fading, focus dimming and combat visibility options.
-- A new settings window with a live preview on every page; click part of the preview to find its setting.
+- A settings window with a live preview on every page; click part of the preview to find its setting.
 - Profiles: per-character or shared, with copy, rename, reset, export and import.
-- Translated into German, Spanish, French, Italian, Korean, Portuguese, Russian and Chinese.
+- Translated into German, Spanish (Spain and Mexico), French, Italian, Korean, Brazilian Portuguese, Russian and
+  Chinese (Simplified and Traditional).
