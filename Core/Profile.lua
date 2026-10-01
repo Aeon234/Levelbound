@@ -297,6 +297,9 @@ for _, id in ipairs(LB.TYPE_ORDER) do
 	end
 end
 
+defaults.text.slots.house.INSIDE_LEFT = Slot("[standing]")
+defaults.text.slots.travelers.INSIDE_RIGHT = Slot("[cur] / [max]")
+
 ---@type LBDatabase
 local globalDefaults = {
 	version = SCHEMA_VERSION,

@@ -26,6 +26,7 @@ local addonName = ...
 ---@field Broker LBBroker
 ---@field BarGroup LBBarGroup
 ---@field BlizzardBar LBBlizzardBar
+---@field BlizzardWatch LBBlizzardWatch
 ---@field Bar LBBarFactory
 ---@field TextSlot LBTextSlotRenderer
 ---@field Tags LBTags

@@ -1,4 +1,4 @@
-## Interface: 16001
+## Interface: 16001, 120100 
 ## Title: Level|cffe8b64abound|r
 ## IconTexture: Interface\AddOns\Levelbound\Media\Levelbound
 ## Notes: Experience and progress bars with party XP markers.

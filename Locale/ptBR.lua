@@ -68,6 +68,10 @@ L["Click to Open Journeys."] = "Clique para abrir Jornadas."
 L["Click to Open the Reputation Panel"] = "Clique para abrir o painel de Reputação"
 L["Shift-Click to Share"] = "Shift-clique para compartilhar"
 
+-- Honor level display hint in the PvP window (UI/BlizzardWatch.lua)
+L["Shift-Click to Show as Experience Bar"] = "Shift-clique para mostrar como barra de experiência"
+L["Shift-Click to Stop Showing as Experience Bar"] = "Shift-clique para deixar de mostrar como barra de experiência"
+
 -- Sharing to chat (Core/Share.lua, Core/Format.lua); the "[Levelbound]" prefix itself is never translated
 L["%s xp to go"] = "faltam %s de XP"
 L["~%s at %s XP/hr"] = "~%s a %s XP/h"

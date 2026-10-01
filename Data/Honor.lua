@@ -22,7 +22,18 @@ LB.Source:New("honor", {
 			"ZONE_CHANGED",
 			"ZONE_CHANGED_NEW_AREA",
 			"PLAYER_ENTERING_WORLD",
+			"CVAR_UPDATE",
 		}
+	end,
+
+	-- SetWatchingHonorAsXP only sets the showHonorAsExperience CVar, so CVAR_UPDATE is its sole signal.
+	---@param event string
+	OnEvent = function(self, event, ...)
+		if event == "CVAR_UPDATE" and ... ~= "showHonorAsExperience" then
+			return false
+		end
+
+		return self:Refresh()
 	end,
 
 	---@param snapshot LBSnapshot

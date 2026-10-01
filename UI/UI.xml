@@ -11,4 +11,5 @@
 	<Script file="Preview.lua" />
 	<Script file="BarGroup.lua" />
 	<Script file="BlizzardBar.lua" />
+	<Script file="BlizzardWatch.lua" />
 </Ui>

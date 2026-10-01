@@ -248,6 +248,16 @@ local OTHER_TAGS = {
 	Info("percent", "PROGRESS"),
 }
 
+local HOUSE_TAGS = {
+	Info("name", "PROGRESS"),
+	Info("level", "PROGRESS"),
+	Info("standing", "PROGRESS"),
+	Info("cur", "PROGRESS"),
+	Info("max", "PROGRESS"),
+	Info("remaining", "PROGRESS"),
+	Info("percent", "PROGRESS"),
+}
+
 ---@param typeId string
 ---@return LBTagInfo[]
 function Tags:For(typeId)
@@ -257,6 +267,10 @@ function Tags:For(typeId)
 
 	if typeId == "petxp" then
 		return PET_TAGS
+	end
+
+	if typeId == "house" then
+		return HOUSE_TAGS
 	end
 
 	return OTHER_TAGS
