@@ -32,6 +32,7 @@ L["the %s bar hit an error and is off for this session."] = "the %s bar hit an e
 L["the layout cannot be edited in combat."] = "the layout cannot be edited in combat."
 L["layout editing is paused for combat."] = "layout editing is paused for combat."
 L["there is no progress to share."] = "there is no progress to share."
+-- party, instance, raid, guild and say are the /lb share command's words; keep them in English
 L["share to party, instance, raid, guild or say."] = "share to party, instance, raid, guild or say."
 L["you are not in a group or guild to share with."] = "you are not in a group or guild to share with."
 
