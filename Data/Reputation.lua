@@ -25,13 +25,21 @@ local function MaxLevel(factionID)
 	return MAX_REPUTATION_REACTION
 end
 
+-- Blizzard draws renown with a blue bar atlas and defines no matching color constant.
+local RENOWN_COLOR = { 0, 191 / 255, 243 / 255, 1 }
+
 ---@param reaction number
+---@param renown boolean
 ---@return LBColor
-local function StandingColor(reaction)
-	local override = LB.Profile:Get("appearance.standingColors")[tostring(reaction)]
+local function StandingColor(reaction, renown)
+	local override = LB.Profile:Get("appearance.standingColors")[renown and "renown" or tostring(reaction)]
 
 	if override then
 		return override
+	end
+
+	if renown then
+		return RENOWN_COLOR
 	end
 
 	local color = FACTION_BAR_COLORS and FACTION_BAR_COLORS[reaction]
@@ -57,7 +65,7 @@ local function StandingText(factionID, reaction)
 		local data = C_MajorFactions.GetMajorFactionData(factionID)
 
 		if data then
-			return RENOWN_LEVEL_LABEL and (RENOWN_LEVEL_LABEL .. data.renownLevel) or tostring(data.renownLevel)
+			return RENOWN_LEVEL_LABEL and RENOWN_LEVEL_LABEL:format(data.renownLevel) or tostring(data.renownLevel)
 		end
 	end
 
@@ -156,11 +164,7 @@ LB.Source:New("reputation", {
 		end
 
 		local name = data.name
-
-		if C_Reputation.IsAccountWideReputation(factionID) and REPUTATION_STATUS_BAR_LABEL_ACCOUNT_WIDE then
-			name = name .. " " .. REPUTATION_STATUS_BAR_LABEL_ACCOUNT_WIDE
-		end
-
+		local major = C_Reputation.IsMajorFaction(factionID)
 		local nothingToShow = capped and not paragonPending and maximum <= 1
 
 		local changed = snapshot.cur ~= value
@@ -174,10 +178,10 @@ LB.Source:New("reputation", {
 		snapshot.level = level
 		snapshot.label = name
 		snapshot.standing = StandingText(factionID, reaction)
-		snapshot.color = StandingColor(reaction)
+		snapshot.color = StandingColor(reaction, major)
 		snapshot.atCap = capped
 		snapshot.flags.paragonPending = paragonPending
-		snapshot.flags.major = C_Reputation.IsMajorFaction(factionID)
+		snapshot.flags.major = major
 
 		self.factionID = factionID
 

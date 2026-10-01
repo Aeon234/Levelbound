@@ -1,8 +1,9 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/">
-	<Script file="Widgets.lua" />
-	<Script file="TextEditor.lua" />
-	<Include file="Templates.xml" />
-	<Script file="Panels.lua" />
+	<Script file="Descriptions.lua" />
+	<Script file="Previews.lua" />
+	<Script file="Pages.lua" />
+	<Script file="TextSlots.lua" />
+	<Script file="Profiles.lua" />
 	<Script file="Settings.lua" />
 	<Script file="Mover.lua" />
 	<Script file="EditMode.lua" />

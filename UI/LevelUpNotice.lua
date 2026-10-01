@@ -16,8 +16,7 @@ local SAMPLE = {
 ---@class LBLevelUpNotice
 ---@field stack LBNoticeStack
 ---@field box Frame where the notices sit when detached from the bars
----@field previewing boolean?
----@field ticker any?
+---@field sampleTicker any? adds a notice to a settings preview's sample
 ---@field sampleIndex integer
 local Notice = {
 	sampleIndex = 0,
@@ -137,6 +136,80 @@ function Notice:ReleaseAll()
 	self.stack:ReleaseAll()
 end
 
+-- A settings preview's own stack, placed around its sample bar the way the real stack is placed around the bars.
+local sampleTarget
+
+---@return LBNoticeAnchor?
+local function SampleAnchor()
+	if not sampleTarget then
+		return nil
+	end
+
+	local placement = Settings()
+	local anchor = placement.detached and "TOP" or placement.anchor
+	local point, sign = NoticeStack:Place(anchor, placement.direction)
+
+	-- Detached, the lines grow from the target's own edge, inside it.
+	return {
+		point = point,
+		relativeTo = sampleTarget,
+		relativePoint = placement.detached and point or anchor,
+		x = placement.detached and 0 or placement.x,
+		y = (placement.detached and 0 or placement.y) + sign * GAP,
+		sign = sign,
+	}
+end
+
+Notice.sampleStack = NoticeStack:Create(SampleAnchor)
+
+---Shows sample notices around a preview's bar: three held lines, or with `playing` a new line every 1.5 s until
+---`StopPreviewSample`. No chat and no sound.
+---@param target Frame
+---@param playing boolean
+---@return Frame[] lines the stack's current lines
+function Notice:ShowPreviewSample(target, playing)
+	self:StopPreviewSample()
+	sampleTarget = target
+
+	local function Push(held)
+		self.sampleIndex = self.sampleIndex % #SAMPLE + 1
+
+		local entry = SAMPLE[self.sampleIndex]
+		local frame = self.sampleStack:Acquire()
+
+		Build(frame)
+		frame:SetParent(target)
+		frame:SetFrameLevel(target:GetFrameLevel() + 20)
+		frame.text:SetTextColor(1, 1, 1, 1)
+		frame.text:SetFormattedText(LB.L["%s reached level %d"], SampleName(entry), entry.level)
+		Style(frame)
+		self.sampleStack:Push(frame, held)
+	end
+
+	if playing then
+		Push(false)
+		self.sampleTicker = C_Timer.NewTicker(PREVIEW_EVERY, function()
+			Push(false)
+		end)
+	else
+		for _ = 1, 3 do
+			Push(true)
+		end
+	end
+
+	return self.sampleStack.active
+end
+
+function Notice:StopPreviewSample()
+	if self.sampleTicker then
+		self.sampleTicker:Cancel()
+		self.sampleTicker = nil
+	end
+
+	self.sampleStack:ReleaseAll()
+	sampleTarget = nil
+end
+
 ---@return boolean
 local function Shown()
 	local settings = Settings()
@@ -181,53 +254,6 @@ function Notice:EditTargets()
 	}
 end
 
-function Notice:ShowSample()
-	if LB.Editing:Demo() ~= "party" then
-		self:ClearPreview()
-
-		return
-	end
-
-	if not Shown() then
-		self:ReleaseAll()
-
-		return
-	end
-
-	self.sampleIndex = self.sampleIndex % #SAMPLE + 1
-
-	local entry = SAMPLE[self.sampleIndex]
-
-	self:Show(SampleName(entry), entry.level)
-end
-
-function Notice:Preview()
-	self.previewing = true
-
-	if not self.ticker then
-		self.ticker = C_Timer.NewTicker(PREVIEW_EVERY, function()
-			Notice:ShowSample()
-		end)
-	end
-
-	self:ShowSample()
-end
-
-function Notice:ClearPreview()
-	if not self.previewing then
-		return
-	end
-
-	self.previewing = false
-
-	if self.ticker then
-		self.ticker:Cancel()
-		self.ticker = nil
-	end
-
-	self:ReleaseAll()
-end
-
 Callbacks:Register("Settings", Notice, function(_, path)
 	if type(path) == "string" and not path:find("^party") then
 		return
@@ -256,10 +282,3 @@ Callbacks:Register("Settings", Notice, function(_, path)
 	Notice.stack:Layout()
 end)
 
-Callbacks:Register("Editing", Notice, function()
-	if LB.Editing:Demo() ~= "party" then
-		Notice:ClearPreview()
-	elseif not Notice.previewing then
-		Notice:Preview()
-	end
-end)

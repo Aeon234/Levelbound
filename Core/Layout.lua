@@ -4,7 +4,7 @@ local L = LB.L
 
 ---@class LBLayout
 local Layout = {
-	---@type LBSettingOption[]
+	---@type { value: string, label: string }[]
 	MODES = {
 		{ value = "SEGMENTED", label = L["Segmented"] },
 		{ value = "CONNECTED", label = L["Connected"] },

@@ -38,7 +38,7 @@ local TIME_TAGS = {
 	ttl = true,
 }
 
-local COLOURS = {
+local COLORS = {
 	rested = "restedColor",
 	restedpercent = "restedColor",
 	quest = "questColor",
@@ -175,10 +175,10 @@ function Tags:Render(parts, snapshot, source)
 				out[index] = part.raw or ""
 			else
 				local value = resolver(snapshot, source)
-				local colourKey = part.color and part.tag and COLOURS[part.tag]
+				local colorKey = part.color and part.tag and COLORS[part.tag]
 
-				if colourKey then
-					value = Tint(LB.Profile:Get("appearance." .. colourKey), value)
+				if colorKey then
+					value = Tint(LB.Profile:Get("appearance." .. colorKey), value)
 				end
 
 				out[index] = value
@@ -248,6 +248,16 @@ local OTHER_TAGS = {
 	Info("percent", "PROGRESS"),
 }
 
+local HOUSE_TAGS = {
+	Info("name", "PROGRESS"),
+	Info("level", "PROGRESS"),
+	Info("standing", "PROGRESS"),
+	Info("cur", "PROGRESS"),
+	Info("max", "PROGRESS"),
+	Info("remaining", "PROGRESS"),
+	Info("percent", "PROGRESS"),
+}
+
 ---@param typeId string
 ---@return LBTagInfo[]
 function Tags:For(typeId)
@@ -257,6 +267,10 @@ function Tags:For(typeId)
 
 	if typeId == "petxp" then
 		return PET_TAGS
+	end
+
+	if typeId == "house" then
+		return HOUSE_TAGS
 	end
 
 	return OTHER_TAGS

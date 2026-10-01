@@ -9,6 +9,8 @@ local RETRY = 1
 local RETRIES = 3
 
 local FLAG_MAX_LEVEL = 1
+-- Largest number a field may carry; anything above it comes from a broken or hostile sender.
+local VALUE_MAX = 2 ^ 31 - 1
 
 ---@class LBPartyState
 ---@field sequence integer
@@ -82,13 +84,24 @@ function Comms.Parse(text)
 		return nil
 	end
 
-	if xpMax <= 0 or xp < 0 or xp > xpMax then
+	if xpMax <= 0 or xpMax > VALUE_MAX or xp < 0 or xp > xpMax or flags > VALUE_MAX then
 		return nil
 	end
 
 	local rested, quest, rate = text:match("^%d+:%d+:%d+:%d+:%d+:%d+:(%d+):(%d+):(%d+)")
 
 	rested, quest, rate = tonumber(rested), tonumber(quest), tonumber(rate)
+
+	-- The trailing fields are optional; an out-of-range one is dropped rather than failing the message.
+	if rested and rested > VALUE_MAX then
+		rested = nil
+	end
+	if quest and quest > VALUE_MAX then
+		quest = nil
+	end
+	if rate and rate > VALUE_MAX then
+		rate = nil
+	end
 
 	return {
 		sequence = sequence,

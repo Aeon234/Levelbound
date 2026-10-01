@@ -10,25 +10,22 @@ local PIXELS = {
 }
 
 local EDGES = {
-	THICK = "Levelbound Thick",
 	ROUNDED = "Levelbound Ring Medium",
 	ROUNDED_THICK = "Levelbound Ring Thick",
-	FOREVER = "Levelbound Forever",
+	BRONZE = "Levelbound Bronze",
 	METALLIC = "Levelbound Metallic",
 }
 
 local RING = { 102 / 255, 98 / 255, 92 / 255 }
 local NATIVE = {
-	THICK = { 165 / 255, 165 / 255, 165 / 255 },
 	ROUNDED = RING,
 	ROUNDED_THICK = RING,
-	FOREVER = { 186 / 255, 152 / 255, 108 / 255 },
+	BRONZE = { 165 / 255, 130 / 255, 83 / 255 },
 	METALLIC = { 195 / 255, 133 / 255, 84 / 255 },
 }
 
 local OUTSET = 1 / 4
 local OUTSETS = {
-	FOREVER = 8.5 / 32,
 	METALLIC = 27.5 / 64,
 }
 
@@ -100,6 +97,26 @@ function Border:EdgeMetrics(height, style)
 	local edge = math.max(math.min(EDGE_SIZE, math.floor(height * 2 / 3)), 2)
 
 	return edge, edge * (OUTSETS[style] or OUTSET)
+end
+
+---How far a style's border reaches outside the frame it surrounds, in UI units.
+---@param style string
+---@param height number the framed height
+---@return number
+function Border:Outset(style, height)
+	local pixels = PIXELS[style]
+
+	if pixels then
+		return pixels * LB:Pixel()
+	end
+
+	if EDGES[style] then
+		local _, outset = self:EdgeMetrics(height, style)
+
+		return outset
+	end
+
+	return 0
 end
 
 ---@param pixels number

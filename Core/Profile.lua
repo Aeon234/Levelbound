@@ -4,7 +4,7 @@ local L = LB.L
 
 local DEFAULT_PROFILE = "Default"
 local FONT = LB.DEFAULT_FONT
-local SCHEMA_VERSION = 2
+local SCHEMA_VERSION = 1
 local EXPORT_FORMAT = 1
 local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 
@@ -81,7 +81,7 @@ local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 ---@field typeColors table<string, LBColor>
 ---@field standingColors table<string, LBColor> overrides on Blizzard's FACTION_BAR_COLORS
 ---@field border { style: string, color: LBColor, customColor: boolean }
----@field spark { enabled: boolean, color: LBColor }
+---@field spark { enabled: boolean, customColor: boolean, color: LBColor } the bar's own color unless customColor
 ---@field dividers { enabled: boolean, customColor: boolean, color: LBColor } tenths on the XP and pet XP bars
 ---@field shimmer boolean sweep a highlight across the fill on each gain
 
@@ -113,7 +113,7 @@ local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 ---@field enabled boolean
 ---@field onScreen boolean
 ---@field chat boolean
----@field sound boolean
+---@field sound string a LibSharedMedia sound name, or "None"
 ---@field hideInCombat boolean
 ---@field anchor "TOPLEFT" | "TOP" | "TOPRIGHT" | "BOTTOMLEFT" | "BOTTOM" | "BOTTOMRIGHT" the point on the bar
 ---@field direction "UP" | "DOWN" the way the stack grows
@@ -137,7 +137,7 @@ local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 ---@field style "DOT" | "TICK" | "NOTCH" | "DIAMOND"
 ---@field size number
 ---@field levelUp LBLevelUpSettings
----@field announce { levelUpParty: boolean, levelUpGuild: boolean, runParty: boolean } messages sent for the player
+---@field announce { levelUpParty: boolean, levelUpGuild: boolean, runSummary: boolean, runChannel: "SELF"|"PARTY"|"INSTANCE"|"GUILD" } messages sent for the player
 
 ---@class LBDatabase
 ---@field version integer
@@ -152,6 +152,7 @@ local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 
 ---@class LBCharacterDatabase
 ---@field useCharacterProfile boolean
+---@field key string? this character's key in profileKeys, worked out once and kept
 
 local GAIN_GREEN = { 0.226, 1.0, 0.006 }
 
@@ -164,12 +165,12 @@ local defaults = {
 		height = 24,
 		positions = {
 			SEGMENTED = { point = "TOP", x = 0, y = -40 },
-			CONNECTED = { point = "TOP", x = 0, y = -200 },
+			CONNECTED = { point = "TOP", x = 0, y = -40 },
 			INDEPENDENT = { point = "CENTER", x = 0, y = 0 },
 		},
 		growth = "DOWN",
 		gap = 2,
-		strata = "LOW",
+		strata = "HIGH",
 		independent = {},
 	},
 	types = {
@@ -189,13 +190,15 @@ local defaults = {
 		restedColor = { 0.309, 0.562, 1.0, 0.5 },
 		background = { 0, 0, 0, 0.5 },
 		typeColors = {
+			petxp = { 1, 128 / 255, 64 / 255 },
+			honor = { 0.77, 0.12, 0.23 },
 			house = { 0.851, 0.710, 0.435 },
 			travelers = { 0.035, 0.647, 0.733 },
 			endeavor = { 0.294, 0.365, 0.106 },
 		},
 		standingColors = {},
 		border = { style = "NONE", color = { 1, 1, 1, 1 }, customColor = false },
-		spark = { enabled = true, color = { 1, 1, 1, 1 } },
+		spark = { enabled = true, customColor = false, color = { 1, 1, 1, 1 } },
 		dividers = { enabled = false, customColor = false, color = { 1, 1, 1, 1 } },
 		shimmer = true,
 	},
@@ -243,7 +246,7 @@ local defaults = {
 		},
 	},
 	party = {
-		announce = { levelUpParty = true, levelUpGuild = false, runParty = false },
+		announce = { levelUpParty = true, levelUpGuild = false, runSummary = true, runChannel = "SELF" },
 		markers = true,
 		opacity = {
 			matchBar = true,
@@ -253,13 +256,13 @@ local defaults = {
 			fullInCombat = false,
 			fullWithTarget = false,
 		},
-		style = "DOT",
-		size = 8,
+		style = "DIAMOND",
+		size = 14,
 		levelUp = {
 			enabled = true,
 			onScreen = true,
 			chat = true,
-			sound = true,
+			sound = LB.SOUND_LEVEL_UP,
 			hideInCombat = false,
 			anchor = "BOTTOM",
 			direction = "DOWN",
@@ -294,6 +297,9 @@ for _, id in ipairs(LB.TYPE_ORDER) do
 		}
 	end
 end
+
+defaults.text.slots.house.INSIDE_LEFT = Slot("[standing]")
+defaults.text.slots.travelers.INSIDE_RIGHT = Slot("[cur] / [max]")
 
 ---@type LBDatabase
 local globalDefaults = {
@@ -340,21 +346,44 @@ local function RealmKey()
 	return UNKNOWN
 end
 
+---The character's key in `profileKeys`. It is worked out from the name once and kept in the character's own saved
+---variables, because the name a client reports can change between sessions: on Forever `UnitName` returns the
+---surname as its second value, and its first can carry the first name alone or joined to the surname.
 ---@return string
 function Profile:CharacterKey()
 	if characterKey then
 		return characterKey
 	end
 
-	local name = LB:Readable(UnitName("player"), nil)
+	local stored = self.char and self.char.key
 
-	if not name then
+	if type(stored) == "string" and stored ~= "" then
+		characterKey = stored
+
+		return characterKey
+	end
+
+	local name, surname = UnitName("player")
+
+	name = LB:Readable(name, nil)
+
+	if type(name) ~= "string" or name == "" or name == UNKNOWNOBJECT then
 		LB:Warn(L["your character name could not be read, so the account-wide profile is in use."])
 
 		return DEFAULT_PROFILE
 	end
 
+	surname = LB:Readable(surname, nil)
+
+	if type(surname) == "string" and surname ~= "" and not name:find(surname, 1, true) then
+		name = name .. " " .. surname
+	end
+
 	characterKey = name .. "-" .. RealmKey()
+
+	if self.char then
+		self.char.key = characterKey
+	end
 
 	return characterKey
 end
@@ -391,28 +420,7 @@ function Profile:ResolveName()
 end
 
 ---@type table<integer, fun(db: LBDatabase)>
-local migrations = {
-	[2] = function(db)
-		for _, profile in pairs(db.profiles or {}) do
-			local party = profile.party
-
-			if party then
-				if party.visibility == "HOVER" then
-					party.opacity = {
-						matchBar = false,
-						alpha = 1,
-						fadeUntilHovered = true,
-						fadedAlpha = 0,
-						fullInCombat = false,
-						fullWithTarget = false,
-					}
-				end
-
-				party.visibility = nil
-			end
-		end
-	end,
-}
+local migrations = {}
 
 ---@param db LBDatabase
 ---@return integer from
@@ -551,6 +559,18 @@ function Profile:Exists(name)
 end
 
 ---@param name string
+---@return string? existing the saved name that matches `name` ignoring case
+function Profile:Find(name)
+	local lower = name:lower()
+
+	for existing in pairs(self.db.profiles) do
+		if existing:lower() == lower then
+			return existing
+		end
+	end
+end
+
+---@param name string
 ---@return boolean valid
 local function ValidateNewName(name)
 	if not name or name:trim() == "" then
@@ -559,7 +579,7 @@ local function ValidateNewName(name)
 		return false
 	end
 
-	if LB.Profile:Exists(name) then
+	if LB.Profile:Find(name) then
 		LB:Warn(L["a profile named %q already exists."], name)
 
 		return false
@@ -652,21 +672,18 @@ function Profile:Export(name)
 end
 
 ---@param encoded string
----@return LBExportPayload? payload nil after warning why the string was refused
+---@return LBExportPayload? payload
+---@return string? reason why the string was refused, when it was
 function Profile:Decode(encoded)
 	local text = (encoded or ""):trim()
 	local format = text:match("^LB!(%d+)!")
 
 	if not format then
-		LB:Warn(L["that is not a Levelbound profile string, or it was cut short."])
-
-		return nil
+		return nil, L["This is not a Levelbound profile string, or it was cut short."]
 	end
 
 	if tonumber(format) ~= EXPORT_FORMAT then
-		LB:Warn(L["that profile string was made by a newer version of Levelbound."])
-
-		return nil
+		return nil, L["This profile string was made by a newer version of Levelbound."]
 	end
 
 	local ok, decoded = pcall(C_EncodingUtil.DecodeBase64, text:sub(#EXPORT_PREFIX + 1))
@@ -681,21 +698,15 @@ function Profile:Decode(encoded)
 	end
 
 	if not ok or type(payload) ~= "table" or payload.addon ~= LB.name then
-		LB:Warn(L["that is not a Levelbound profile string, or it was cut short."])
-
-		return nil
+		return nil, L["This is not a Levelbound profile string, or it was cut short."]
 	end
 
 	if type(payload.version) ~= "number" or payload.version > SCHEMA_VERSION then
-		LB:Warn(L["that profile string was made by a newer version of Levelbound."])
-
-		return nil
+		return nil, L["This profile string was made by a newer version of Levelbound."]
 	end
 
 	if type(payload.profile) ~= "table" or type(payload.name) ~= "string" then
-		LB:Warn(L["that profile string has no profile in it."])
-
-		return nil
+		return nil, L["This profile string has no profile in it."]
 	end
 
 	return payload
@@ -775,7 +786,13 @@ end
 ---@param to string
 ---@return boolean renamed
 function Profile:Rename(from, to)
-	if not self:Exists(from) or not ValidateNewName(to) then
+	if from == to then
+		return self:Exists(from)
+	end
+
+	local existing = self:Find(to)
+
+	if not self:Exists(from) or (existing ~= from and not ValidateNewName(to)) then
 		return false
 	end
 
@@ -796,8 +813,9 @@ function Profile:Rename(from, to)
 end
 
 ---@param name string
+---@param replacement string? the profile to activate when `name` is active; the first remaining when nil
 ---@return boolean deleted
-function Profile:Delete(name)
+function Profile:Delete(name, replacement)
 	if not self:Exists(name) then
 		return false
 	end
@@ -817,7 +835,7 @@ function Profile:Delete(name)
 	end
 
 	if self.activeName == name then
-		self:Activate(self:List()[1])
+		self:Activate(replacement and self:Exists(replacement) and replacement or self:List()[1])
 	end
 
 	return true

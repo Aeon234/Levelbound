@@ -58,10 +58,9 @@ local fonts = {
 }
 
 local borders = {
-	["Levelbound Thick"] = PATH .. [[Borders\ThickBorderWhite.tga]],
 	["Levelbound Ring Medium"] = PATH .. [[Borders\RingBorderMediumWhite.tga]],
 	["Levelbound Ring Thick"] = PATH .. [[Borders\RingBorderThickWhite.tga]],
-	["Levelbound Forever"] = PATH .. [[Borders\ForeverBorderWhite.tga]],
+	["Levelbound Bronze"] = PATH .. [[Borders\BronzeBorderWhite.tga]],
 	["Levelbound Metallic"] = PATH .. [[Borders\MetallicBorderWhite.tga]],
 }
 
@@ -77,6 +76,8 @@ function Media:Register()
 	for name, path in pairs(borders) do
 		LSM:Register(LSM.MediaType.BORDER, name, path)
 	end
+
+	LSM:Register(LSM.MediaType.SOUND, LB.SOUND_LEVEL_UP, self.sounds.levelUp)
 
 	self.registered = true
 end

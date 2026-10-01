@@ -55,12 +55,10 @@ local INSIDE = { INSIDE_LEFT = true, INSIDE_CENTER = true, INSIDE_RIGHT = true }
 ---@class LBTextSlotRenderer
 ---@field hosts table<Frame, LBTextHost>
 ---@field group LBTextHost?
----@field editing boolean the Text settings page is open, so On Hover slots show
 ---@field ticker table?
 ---@field warned boolean
 local TextSlot = {
 	hosts = {},
-	editing = false,
 	warned = false,
 }
 LB.TextSlot = TextSlot
@@ -217,7 +215,7 @@ local function Showing(host, key, hovered)
 
 	local visibility = entry.slot.visibility
 
-	return visibility == "ALWAYS" or (visibility == "HOVER" and (hovered or TextSlot.editing))
+	return visibility == "ALWAYS" or (visibility == "HOVER" and hovered)
 end
 
 -- Center goes first, then right; the left is kept and cut off with an ellipsis if it is too wide on its own.
@@ -227,7 +225,7 @@ end
 local function Fit(host, row, shown)
 	local inside = INSIDE[row[1]] == true
 	local width = host.frame:GetWidth() - (inside and PADDING * 2 or 0)
-	local left, centre, right = row[1], row[2], row[3]
+	local left, center, right = row[1], row[2], row[3]
 
 	---@param key string
 	---@return number
@@ -243,13 +241,13 @@ local function Fit(host, row, shown)
 		return entry.fontString:GetUnboundedStringWidth()
 	end
 
-	local l, c, r = Measure(left), Measure(centre), Measure(right)
+	local l, c, r = Measure(left), Measure(center), Measure(right)
 
-	if shown[centre] then
+	if shown[center] then
 		local half = (width - c) / 2
 
 		if l + SPACING > half or r + SPACING > half then
-			shown[centre] = false
+			shown[center] = false
 			c = 0
 		end
 	end
@@ -259,7 +257,7 @@ local function Fit(host, row, shown)
 		r = 0
 	end
 
-	for key, measured in pairs({ [left] = l, [centre] = c, [right] = r }) do
+	for key, measured in pairs({ [left] = l, [center] = c, [right] = r }) do
 		local entry = host.entries[key]
 
 		if entry and shown[key] and measured > width then
@@ -350,6 +348,40 @@ function TextSlot:ApplyBar(bar)
 	Draw(host)
 	Show(host, bar.hovered == true)
 	self:UpdateTicker()
+end
+
+---Draws all nine of a bar's slots around it, whatever the layout mode, for a settings preview.
+---@param bar LBBar a bar outside the bar group
+---@param hovered boolean
+---@return table<string, FontString> strings the shown slots' font strings, by slot key
+function TextSlot:ApplySample(bar, hovered)
+	local host = HostFor(bar)
+	local keys = {}
+	local shown = {}
+
+	for _, key in ipairs(LB.TextSlotKeys) do
+		keys[key] = true
+	end
+
+	bar.hovered = hovered
+	host.bar = bar
+	Configure(host, keys, bar.id)
+	Draw(host)
+	Show(host, hovered)
+
+	for key, entry in pairs(host.entries) do
+		if entry.fontString:IsShown() then
+			shown[key] = entry.fontString
+		end
+	end
+
+	return shown
+end
+
+---@param key string a slot key
+---@return LBSlotAnchor
+function TextSlot:Anchor(key)
+	return ANCHORS[key]
 end
 
 -- In segmented and connected modes the six outer slots span the whole group and draw the lead type's layout.
@@ -455,14 +487,3 @@ function TextSlot:Refit()
 	self:UpdateTicker()
 end
 
-LB.Callbacks:Register("Editing", TextSlot, function()
-	local editing = LB.Editing:Demo() == "text"
-
-	if TextSlot.editing == editing then
-		return
-	end
-
-	TextSlot.editing = editing
-
-	TextSlot:Refit()
-end)

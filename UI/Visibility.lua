@@ -87,7 +87,7 @@ end
 ---@param settings LBVisibilitySettings
 ---@param state LBVisibilityState
 ---@param id string the bar the markers sit on
----@param previewing boolean?
+---@param previewing boolean? a settings preview's sample, which edit mode's hold on fading does not reach
 ---@return number alpha
 function Visibility:ResolveMarkers(opacity, settings, state, id, previewing)
 	local editing = state.editing and not previewing

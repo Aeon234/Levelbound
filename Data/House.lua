@@ -96,6 +96,7 @@ LB.Source:New("house", {
 		snapshot.max = max
 		snapshot.level = level
 		snapshot.label = LB.L["Housing Exp"]
+		snapshot.standing = UNIT_LEVEL_TEMPLATE:format(level)
 		snapshot.flags.readyToUpgrade = ready
 		snapshot.atCap = ready
 

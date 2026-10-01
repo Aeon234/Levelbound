@@ -20,7 +20,6 @@ local SAMPLE = {
 ---@field x number center of the marker, in bar coordinates
 
 ---@class LBMarker
----@field previewing boolean?
 ---@field sample LBRosterMember[]?
 local Marker = {}
 LB.Marker = Marker
@@ -338,7 +337,8 @@ local function FadeAndRelease(bar, frame)
 end
 
 ---@param bar LBBar
-function Marker:Apply(bar)
+---@param members LBRosterMember[]? the members to mark; the party when nil
+function Marker:Apply(bar, members)
 	if bar.id ~= "xp" then
 		return
 	end
@@ -354,7 +354,12 @@ function Marker:Apply(bar)
 		return
 	end
 
-	local members = self.previewing and self.sample or LB.Roster:Visible()
+	-- A preview's members stay with its bar, so a redraw after a resize keeps them.
+	if members then
+		bar.markerMembers = members
+	end
+
+	members = members or bar.markerMembers or LB.Roster:Visible()
 	local placements = self:Positions(members, bar:GetWidth(), party.size)
 	local wanted = {}
 
@@ -410,7 +415,7 @@ function Marker:ApplyOpacity(animated)
 		local visibility = LB.Visibility
 
 		alpha =
-			visibility:ResolveMarkers(opacity, LB.Profile:Get("visibility"), visibility.state, bar.id, self.previewing)
+			visibility:ResolveMarkers(opacity, LB.Profile:Get("visibility"), visibility.state, bar.id)
 		fade = bar.markerFade or 1
 	end
 
@@ -453,23 +458,11 @@ function Marker:Refresh()
 	end
 end
 
-function Marker:Preview()
-	self.previewing = true
+---@return LBRosterMember[] the sample party
+function Marker:SampleParty()
 	self.sample = self.sample or SampleMembers()
 
-	self:Refresh()
-	self:ApplyOpacity(true)
-end
-
-function Marker:ClearPreview()
-	if not self.previewing then
-		return
-	end
-
-	self.previewing = false
-
-	self:Refresh()
-	self:ApplyOpacity(true)
+	return self.sample
 end
 
 ---@param bar LBBar
@@ -480,12 +473,6 @@ function Marker:Release(bar)
 
 	bar.markerPool:ReleaseAll()
 	wipe(bar.markerShown)
+	bar.markerMembers = nil
 end
 
-LB.Callbacks:Register("Editing", Marker, function()
-	if LB.Editing:Demo() ~= "party" then
-		Marker:ClearPreview()
-	elseif not Marker.previewing then
-		Marker:Preview()
-	end
-end)

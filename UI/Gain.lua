@@ -5,9 +5,8 @@ local NoticeStack = LB.NoticeStack
 local L = LB.L
 
 local GAP = 2
-local PREVIEW_AMOUNT = 1234
-local PREVIEW_MERGE = 0.1
-local PREVIEW_EVERY = 1.5
+local PREVIEW_AMOUNT = 1234 -- the sample amount that sizes the detached box and settings samples
+local PREVIEW_EVERY = 1.5 -- a settings preview adds a detached line this often
 local TRAVEL = 20
 
 
@@ -32,15 +31,11 @@ end
 ---@field lines table<string, Frame> the detached line showing each progress type
 ---@field box Frame where the detached indicators sit
 ---@field inCombat boolean
----@field previewing boolean?
----@field ticker any? adds a detached sample every PREVIEW_EVERY seconds while the Gain page is open
----@field sampleIndex integer
 local Gain = {
 	pool = CreateFramePool("Frame", UIParent, nil, Reset),
 	active = {},
 	lines = {},
 	inCombat = false,
-	sampleIndex = 0,
 }
 LB.Gain = Gain
 
@@ -100,12 +95,12 @@ end
 
 ---@param id string
 ---@param amount number
----@param labelled boolean detached lines name their type, in its color
+---@param labeled boolean detached lines name their type, in its color
 ---@return string
-local function Text(id, amount, labelled)
+local function Text(id, amount, labeled)
 	local text = ("+%s"):format(LB.Format:Number(amount))
 
-	if not labelled then
+	if not labeled then
 		return text
 	end
 
@@ -115,8 +110,8 @@ local function Text(id, amount, labelled)
 end
 
 ---@param frame Frame
----@param labelled boolean
-local function Style(frame, labelled)
+---@param labeled boolean
+local function Style(frame, labeled)
 	local style = Settings().text
 	local size = style.size * 2
 	local color = TypeColor(frame.id)
@@ -127,7 +122,7 @@ local function Style(frame, labelled)
 
 	LB.Media:SetFont(frame.text, Settings().text)
 	frame.text:SetTextColor(style.color[1], style.color[2], style.color[3], style.color[4] or 1)
-	frame.text:SetText(Text(frame.id, frame.amount, labelled))
+	frame.text:SetText(Text(frame.id, frame.amount, labeled))
 
 	local textWidth = frame.text:GetStringWidth()
 	local onLeft = style.side == "LEFT"
@@ -180,13 +175,14 @@ end
 ---@param frame Frame
 ---@param bar LBBar
 ---@param height number the indicator's own height
-local function Anchor(frame, bar, x, height)
+---@param above boolean? always above the bar, never flipped below it near the screen's top
+local function Anchor(frame, bar, x, height, above)
 	local top = bar:GetTop()
 	local screen = UIParent:GetTop()
 
 	frame:ClearAllPoints()
 
-	if top and screen and top + height + TRAVEL > screen then
+	if not above and top and screen and top + height + TRAVEL > screen then
 		frame:SetPoint("BOTTOM", bar, "BOTTOMLEFT", x, -(height + GAP))
 
 		return
@@ -202,20 +198,90 @@ local function Blocked()
 	return not settings.enabled or (settings.hideInCombat and (Gain.inCombat or InCombatLockdown()))
 end
 
-function Gain:PlaceBox()
+---@return number width the detached stack's widest line
+---@return number height a full stack's height
+function Gain:DetachedSize()
 	local settings = Settings()
 	local size = settings.text.size * 2
 	local measure = self.box.measure
 	local width = 1
 
-	LB.Media:SetFont(measure, Settings().text)
+	LB.Media:SetFont(measure, settings.text)
 
 	for _, id in ipairs(LB.Model:Order()) do
 		measure:SetText(Text(id, PREVIEW_AMOUNT, true))
 		width = math.max(width, measure:GetStringWidth())
 	end
 
-	NoticeStack:PlaceBox(self.box, settings.screen, size + GAP + width, NoticeStack:BoxHeight(size), 1)
+	return size + GAP + width, NoticeStack:BoxHeight(size)
+end
+
+function Gain:PlaceBox()
+	local width, height = self:DetachedSize()
+
+	NoticeStack:PlaceBox(self.box, Settings().screen, width, height, 1)
+end
+
+-- A settings preview's own detached stack, growing from an edge of its target the saved way.
+local sampleTarget
+
+---@return LBNoticeAnchor?
+local function SampleAnchor()
+	if not sampleTarget then
+		return nil
+	end
+
+	local up = Settings().direction == "UP"
+	local point = up and "BOTTOMLEFT" or "TOPLEFT"
+
+	return { point = point, relativeTo = sampleTarget, relativePoint = point, x = 0, y = 0, sign = up and 1 or -1 }
+end
+
+Gain.sampleStack = NoticeStack:Create(SampleAnchor, function(frame)
+	frame.id = nil
+	frame.amount = 0
+end)
+
+---Plays detached lines in a settings preview: a new line every 1.5 s, cycling through `ids`, until
+---`StopDetachedSample`.
+---@param target Frame
+---@param ids string[]
+function Gain:PlayDetachedSample(target, ids)
+	self:StopDetachedSample()
+	sampleTarget = target
+
+	local index = 0
+
+	local function Push()
+		if #ids == 0 then
+			return
+		end
+
+		index = index % #ids + 1
+
+		local frame = self.sampleStack:Acquire()
+
+		frame.id = ids[index]
+		frame.amount = PREVIEW_AMOUNT * index
+		Build(frame)
+		frame:SetParent(target)
+		frame:SetFrameLevel(target:GetFrameLevel() + 20)
+		Style(frame, true)
+		self.sampleStack:Push(frame)
+	end
+
+	Push()
+	self.sampleTicker = C_Timer.NewTicker(PREVIEW_EVERY, Push)
+end
+
+function Gain:StopDetachedSample()
+	if self.sampleTicker then
+		self.sampleTicker:Cancel()
+		self.sampleTicker = nil
+	end
+
+	self.sampleStack:ReleaseAll()
+	sampleTarget = nil
 end
 
 ---@param id string
@@ -292,6 +358,51 @@ function Gain:Show(bar, amount, held)
 	Paint(frame, frame.elapsed)
 end
 
+---Draws an indicator of `amount` on a bar outside the bar group, for a settings preview, whatever the saved
+---placement: held at full strength, or with `animate` playing its rise and fade once. Draws nothing while the
+---indicator is off.
+---@param bar LBBar
+---@param amount number
+---@param animate boolean?
+---@return Frame? frame
+function Gain:Hold(bar, amount, animate)
+	if not Settings().enabled then
+		self:Release(bar)
+
+		return nil
+	end
+
+	local frame = self.active[bar]
+
+	if not frame then
+		frame = self.pool:Acquire()
+		self.active[bar] = frame
+	end
+
+	Build(frame)
+
+	frame.bar = bar
+	frame.id = bar.id
+	frame.amount = amount
+	frame.elapsed = animate and 0 or NoticeStack.HELD
+	frame.held = not animate
+
+	frame:SetParent(bar)
+	frame:SetFrameLevel(bar:GetFrameLevel() + 20)
+	Style(frame, false)
+
+	local fraction = bar.snapshot and LB.Progress.Fraction(bar.snapshot) or 0
+	local width, height = frame:GetSize()
+
+	Anchor(frame, bar, self:Offset(fraction, bar:GetWidth(), width, Settings().position), height, true)
+
+	frame:SetScript("OnUpdate", animate and OnUpdate or nil)
+	frame:Show()
+	Paint(frame, frame.elapsed)
+
+	return frame
+end
+
 ---@param bar LBBar
 function Gain:OnProgress(bar)
 	local source = LB.Model:Source(bar.id)
@@ -300,105 +411,7 @@ function Gain:OnProgress(bar)
 		return
 	end
 
-	self:ClearPreview()
 	self:Show(bar, source.delta or 0)
-end
-
-function Gain:StopTicker()
-	if self.ticker then
-		self.ticker:Cancel()
-		self.ticker = nil
-	end
-end
-
----@return string[] ids the types this client can track, so a preview never shows one it cannot
-local function SampleTypes()
-	local ids = {}
-
-	for _, id in ipairs(LB.Model:Order()) do
-		if LB.Model:Capable(id) then
-			ids[#ids + 1] = id
-		end
-	end
-
-	return ids
-end
-
-function Gain:ShowSample()
-	local ids = SampleTypes()
-
-	if LB.Editing:Demo() ~= "gain" or not Settings().detached or #ids == 0 then
-		self:ClearPreview()
-
-		return
-	end
-
-	self.sampleIndex = self.sampleIndex % #ids + 1
-	self:ShowDetached(ids[self.sampleIndex], PREVIEW_AMOUNT)
-end
-
-function Gain:Preview()
-	local group = LB.BarGroup
-	local frame = group.frame
-
-	if not frame or not frame:IsShown() or LB.Editing:Demo() ~= "gain" then
-		self:ClearPreview()
-
-		return
-	end
-
-	self.previewing = true
-
-	if Settings().detached then
-		self.pool:ReleaseAll()
-		wipe(self.active)
-
-		if not self.ticker then
-			self.ticker = C_Timer.NewTicker(PREVIEW_EVERY, function()
-				Gain:ShowSample()
-			end)
-
-			self:ShowSample()
-		end
-
-		return
-	end
-
-	self:StopTicker()
-	self:ReleaseAll()
-
-	if group.settling then
-		return
-	end
-
-	for _, bar in pairs(group.bars) do
-		if bar:IsShown() then
-			self:Show(bar, PREVIEW_AMOUNT, true)
-		end
-	end
-end
-
-function Gain:OnLayoutSettled()
-	if not self.previewing then
-		return
-	end
-
-	if LB.Editing:Demo() == "gain" then
-		self:Preview()
-	else
-		self:ClearPreview()
-	end
-end
-
-function Gain:ClearPreview()
-	if not self.previewing then
-		return
-	end
-
-	self.previewing = false
-
-	self:StopTicker()
-	self:ReleaseAll()
 end
 
 ---@return Frame? box the detached stack's box, placed, or nil while the indicators sit on the bars
@@ -491,19 +504,5 @@ Callbacks:Register("Settings", Gain, function(_, path)
 
 		Gain:PlaceBox()
 		Gain.stack:Layout()
-	end
-
-	if LB.Editing:Demo() == "gain" then
-		LB.Events:Merge("gain:preview", PREVIEW_MERGE, function()
-			Gain:Preview()
-		end)
-	end
-end)
-
-Callbacks:Register("Editing", Gain, function()
-	if LB.Editing:Demo() ~= "gain" then
-		Gain:ClearPreview()
-	elseif not Gain.previewing then
-		Gain:Preview()
 	end
 end)

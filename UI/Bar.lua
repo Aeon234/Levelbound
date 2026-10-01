@@ -261,10 +261,6 @@ function BarMixin:FillColors()
 		return appearance.xpGradient[1] or WHITE, appearance.xpGradient[2]
 	end
 
-	if self.id == "petxp" then
-		return appearance.xpGradient[1] or WHITE, appearance.xpGradient[2]
-	end
-
 	local snapshot = self.snapshot
 
 	if snapshot and snapshot.color then
@@ -311,7 +307,7 @@ function BarMixin:ApplyAppearance()
 		CreateColor(light[1], light[2], light[3], 0)
 	)
 
-	self:ApplySpark(appearance.spark)
+	self:ApplySpark(appearance.spark, tip)
 	self:ApplyDividers()
 	LB.TextSlot:ApplyBar(self)
 end
@@ -400,9 +396,11 @@ function BarMixin:PlaceDividers()
 	end
 end
 
----@param spark { enabled: boolean, color: LBColor }
-function BarMixin:ApplySpark(spark)
-	local r, g, b, a = Unpack(spark.color)
+---@param spark { enabled: boolean, customColor: boolean, color: LBColor }
+---@param tip LBColor the fill's color at its end, used unless the spark has its own
+function BarMixin:ApplySpark(spark, tip)
+	local r, g, b = Unpack(spark.customColor and spark.color or tip)
+	local a = spark.color[4] or 1
 
 	self.sparkEnabled = spark.enabled
 
@@ -603,11 +601,11 @@ end
 ---@param animate boolean?
 ---@param gained boolean? real progress arrived, rather than a redraw or a swap to or from sample data
 function BarMixin:SetSnapshot(snapshot, animate, gained)
-	local recolour = self.snapshot == nil or self.snapshot.color ~= snapshot.color
+	local recolor = self.snapshot == nil or self.snapshot.color ~= snapshot.color
 
 	self.snapshot = snapshot
 
-	if recolour then
+	if recolor then
 		self:ApplyAppearance()
 	end
 
@@ -618,7 +616,7 @@ function BarMixin:SetSnapshot(snapshot, animate, gained)
 
 	fill, quest, rested = fill or 0, quest or 0, rested or 0
 	local level = snapshot.level or 0
-	local levelled = gained == true and self.level > 0 and level > self.level
+	local leveled = gained == true and self.level > 0 and level > self.level
 
 	self.level = level
 
@@ -632,7 +630,7 @@ function BarMixin:SetSnapshot(snapshot, animate, gained)
 		return
 	end
 
-	if levelled then
+	if leveled then
 		self:Glint(true)
 		self:LevelUp(fill, quest, rested)
 

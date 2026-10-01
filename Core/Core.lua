@@ -26,6 +26,7 @@ local addonName = ...
 ---@field Broker LBBroker
 ---@field BarGroup LBBarGroup
 ---@field BlizzardBar LBBlizzardBar
+---@field BlizzardWatch LBBlizzardWatch
 ---@field Bar LBBarFactory
 ---@field TextSlot LBTextSlotRenderer
 ---@field Tags LBTags
@@ -42,8 +43,9 @@ local addonName = ...
 ---@field TimePlayed LBTimePlayed
 ---@field failed boolean?
 ---@field Settings LBSettings
----@field Widgets LBWidgets
----@field Panels LBPanels
+---@field SettingsPages LBSettingsPages
+---@field SettingsText LBSettingsText
+---@field SettingsProfiles LBSettingsProfiles
 local LB = select(2, ...)
 
 LB.name = addonName
@@ -57,6 +59,9 @@ end
 LB.MESSAGE_PREFIX = "Levelbound"
 
 LB.TYPE_ORDER = { "xp", "petxp", "reputation", "house", "endeavor", "travelers", "honor" }
+
+-- The LibSharedMedia name of Levelbound's own level-up sound, the level-up notices' default.
+LB.SOUND_LEVEL_UP = "LevelBound LvlUp"
 
 LB.DEFAULT_FONT = "Gilroy Bold"
 
@@ -232,7 +237,7 @@ function LB:PrintDiagnostics()
 
 	if not layout then
 		self:Warn(
-			"no active profile: saved data did not initialise. LevelboundDB=%s active=%s",
+			"no active profile: saved data did not initialize. LevelboundDB=%s active=%s",
 			tostring(LevelboundDB ~= nil),
 			tostring(self.Profile.active ~= nil)
 		)
@@ -285,15 +290,10 @@ function LB:PrintDiagnostics()
 	local inputs = self.Editing.inputs
 
 	self:Print(
-		"editing %s, demo %s, xp sample %s, preview all %s (settings %s, page %s, edit mode %s, preview all %s, independent %s, empty %s)",
+		"editing %s, preview all %s (edit mode %s, independent %s, empty %s)",
 		tostring(self.Editing:IsEditing()),
-		tostring(self.Editing:Demo()),
-		tostring(self.Editing:XPSample()),
 		tostring(self.Editing:PreviewAll()),
-		tostring(inputs.settings),
-		tostring(inputs.demo),
 		tostring(inputs.editMode),
-		tostring(inputs.previewAll),
 		tostring(inputs.independent),
 		tostring(inputs.empty)
 	)
@@ -329,11 +329,5 @@ SlashCmdList.LEVELBOUND = function(message)
 		return
 	end
 
-	if command == "preview" then
-		LB.Editing:Set({ previewAll = not LB.Editing:PreviewAll() })
-
-		return
-	end
-
-	LB:OpenSettings()
+	LB:OpenSettings(command ~= "" and command or nil)
 end

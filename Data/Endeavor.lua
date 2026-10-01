@@ -48,6 +48,23 @@ local function Request()
 	C_NeighborhoodInitiative.RequestNeighborhoodInitiativeInfo()
 end
 
+-- `progressRequired` is normalized; Blizzard's dashboard measures `currentProgress` against the final milestone.
+---@param info table `NeighborhoodInitiativeInfo`
+---@return number
+local function Goal(info)
+	local goal = 0
+
+	for _, milestone in ipairs(info.milestones or {}) do
+		goal = math.max(goal, milestone.requiredContributionAmount or 0)
+	end
+
+	if goal > 0 then
+		return goal
+	end
+
+	return info.progressRequired or 0
+end
+
 LB.Source:New("endeavor", {
 	label = LB.L["Neighborhood Endeavor"],
 	shortLabel = LB.L["Endeavor"],
@@ -62,7 +79,7 @@ LB.Source:New("endeavor", {
 
 		local info = Endeavor.info
 
-		return info ~= nil and info.progressRequired > 0
+		return info ~= nil and Goal(info) > 0
 	end,
 
 	Events = function()
@@ -90,12 +107,17 @@ LB.Source:New("endeavor", {
 	Read = function(_, snapshot)
 		local info = Endeavor.info
 
+		-- The source subscribes during PLAYER_ENTERING_WORLD and may miss it, so the first read asks itself.
 		if not info then
+			if not Endeavor.emptyAt then
+				LB.Events:Merge("endeavor:request", SETTLE, Request)
+			end
+
 			return false
 		end
 
-		local cur = info.currentProgress or 0
-		local max = info.progressRequired or 0
+		local max = Goal(info)
+		local cur = math.min(info.currentProgress or 0, max)
 		local complete = max > 0 and cur >= max
 
 		-- A completed endeavor is removed and the remaining bars reflow.

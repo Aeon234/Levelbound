@@ -1,8 +1,5 @@
 local LB = select(2, ...)
 
-local ALLIANCE = { 0.0, 0.26, 0.68 }
-local HORDE = { 0.77, 0.12, 0.23 }
-
 LB.Source:New("honor", {
 	label = HONOR,
 	shortLabel = HONOR,
@@ -25,7 +22,18 @@ LB.Source:New("honor", {
 			"ZONE_CHANGED",
 			"ZONE_CHANGED_NEW_AREA",
 			"PLAYER_ENTERING_WORLD",
+			"CVAR_UPDATE",
 		}
+	end,
+
+	-- SetWatchingHonorAsXP only sets the showHonorAsExperience CVar, so CVAR_UPDATE is its sole signal.
+	---@param event string
+	OnEvent = function(self, event, ...)
+		if event == "CVAR_UPDATE" and ... ~= "showHonorAsExperience" then
+			return false
+		end
+
+		return self:Refresh()
 	end,
 
 	---@param snapshot LBSnapshot
@@ -43,7 +51,6 @@ LB.Source:New("honor", {
 		snapshot.cur = cur
 		snapshot.max = max
 		snapshot.level = level
-		snapshot.color = UnitFactionGroup("player") == "Horde" and HORDE or ALLIANCE
 
 		return changed
 	end,
