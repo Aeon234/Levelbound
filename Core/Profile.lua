@@ -152,6 +152,7 @@ local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 
 ---@class LBCharacterDatabase
 ---@field useCharacterProfile boolean
+---@field key string? this character's key in profileKeys, worked out once and kept
 
 local GAIN_GREEN = { 0.226, 1.0, 0.006 }
 
@@ -345,21 +346,44 @@ local function RealmKey()
 	return UNKNOWN
 end
 
+---The character's key in `profileKeys`. It is worked out from the name once and kept in the character's own saved
+---variables, because the name a client reports can change between sessions: on Forever `UnitName` returns the
+---surname as its second value, and its first can carry the first name alone or joined to the surname.
 ---@return string
 function Profile:CharacterKey()
 	if characterKey then
 		return characterKey
 	end
 
-	local name = LB:Readable(UnitName("player"), nil)
+	local stored = self.char and self.char.key
 
-	if not name then
+	if type(stored) == "string" and stored ~= "" then
+		characterKey = stored
+
+		return characterKey
+	end
+
+	local name, surname = UnitName("player")
+
+	name = LB:Readable(name, nil)
+
+	if type(name) ~= "string" or name == "" or name == UNKNOWNOBJECT then
 		LB:Warn(L["your character name could not be read, so the account-wide profile is in use."])
 
 		return DEFAULT_PROFILE
 	end
 
+	surname = LB:Readable(surname, nil)
+
+	if type(surname) == "string" and surname ~= "" and not name:find(surname, 1, true) then
+		name = name .. " " .. surname
+	end
+
 	characterKey = name .. "-" .. RealmKey()
+
+	if self.char then
+		self.char.key = characterKey
+	end
 
 	return characterKey
 end
