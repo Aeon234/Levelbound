@@ -1,6 +1,6 @@
 # Translating Levelbound
 
-Translations are contributed by pull request. Every language has one file in `Locale/`:
+Every language starts with a machine translation, so corrections from native speakers are very welcome, by pull request. Every language has one file in `Locale/`:
 
 | Client language | File |
 |---|---|
