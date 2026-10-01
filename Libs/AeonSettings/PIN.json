@@ -1,9 +1,9 @@
 {
   "library": "AeonSettings",
   "version": "0.1.0",
-  "ref": "worktree",
-  "commit": null,
-  "dev": true,
+  "ref": "v0.1.0",
+  "commit": "60ad6a6f4982f23b0083a3e9f8959263888213ab",
+  "dev": false,
   "token": "AeonSettings_",
   "prefix": "LevelboundSettings_",
   "files": [

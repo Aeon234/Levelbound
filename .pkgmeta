@@ -20,3 +20,4 @@ ignore:
   - .github
   - Tools
   - "*.md"
+  - Libs/AeonSettings/PIN.json
