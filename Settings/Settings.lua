@@ -30,6 +30,7 @@ function Settings:Create()
 		onEditMode = function()
 			self:OnEditMode()
 		end,
+		contentWidth = 900,
 	})
 
 	window:SetCategories(LB.SettingsPages:Categories())
