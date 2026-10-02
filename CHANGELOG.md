@@ -1,5 +1,9 @@
 # Levelbound
 
+## 1.0.1
+
+- The settings window is narrower, so it fits better on smaller screens.
+
 ## 1.0.0
 
 First release, for Retail and WoW: Forever.
