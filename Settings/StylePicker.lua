@@ -107,7 +107,8 @@ local function Sample(parent, profile)
 		above, below = LB.Marker.Reach(party.style, metrics.anchor, metrics.y, metrics.height, height)
 
 		for key, fontString in pairs(shown) do
-			local extent = fontString:GetStringHeight() + TEXT_GAP + reach
+			local _, size = fontString:GetFont()
+			local extent = math.max(fontString:GetStringHeight(), size or 0) + TEXT_GAP + reach
 
 			if key:find("^ABOVE") then
 				above = math.max(above, extent)
