@@ -20,6 +20,9 @@ More control:
   Notch and points into the bar from either edge.
 - Bar width moves in 1-pixel steps and can go up to your screen's width.
 - Text shown on hover now fades in and out.
+- Your level-ups are announced as an emote to players nearby while you are not in a group, so others see
+  Levelbound in action. It is on by default and can be turned off on the Level-Ups page's Announcements tab.
+- Level-up messages in emote, party and guild chat now start with a star icon.
 
 A tidier settings window:
 
@@ -31,6 +34,14 @@ A tidier settings window:
 - Previews keep the same size as you change settings, and draw bars at a steady width.
 - The Appearance preview replays the gain effect while Gain Shimmer is on; hovering the Markers preview fades the
   markers in as on the real bar.
+- More of each preview can be clicked to find its setting: the ring around a bar finds Border Style even with no
+  border, the end of the fill finds the spark, the space above a bar on the Gain Indicator page finds that bar's
+  arrow tint, and a text slot finds its Text row.
+- The Markers and Level-Ups previews show the bar without its text.
+- Progress types with a single Bar Color show it beside the bar's on/off switch.
+- The Post-Dungeon Summary has its own section, Dungeon Summary, beside Level-Ups.
+- On the Profiles page, Active Profile and Use a Character Specific Profile share a row.
+- The settings window's content areas are lighter.
 
 Fixes:
 
