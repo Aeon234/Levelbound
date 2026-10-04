@@ -152,6 +152,7 @@ local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 ---@field minimapButton { hide: boolean }
 ---@field requestTimePlayed boolean
 ---@field editMode { snap: boolean, grid: "DIMMED" | "BRIGHT" | "OFF", hoverBar: boolean }
+---@field styleChosen boolean the starting look was chosen; true from the start for data saved before it was offered
 
 ---@class LBCharacterDatabase
 ---@field useCharacterProfile boolean
@@ -476,6 +477,7 @@ function Profile:Migrate(db)
 end
 
 function Profile:Initialize()
+	local fresh = LevelboundDB == nil
 	local db = LevelboundDB or {}
 	local char = LevelboundDBChar or {}
 	---@cast db LBDatabase
@@ -488,6 +490,11 @@ function Profile:Initialize()
 
 	LB:MergeDefaults(db, globalDefaults)
 	LB:MergeDefaults(char, characterDefaults)
+
+	-- Only an account with no saved data is offered the starting look.
+	if db.global.styleChosen == nil then
+		db.global.styleChosen = not fresh
+	end
 
 	self.db = db
 	self.char = char
@@ -878,6 +885,24 @@ end
 ---@return LBGlobalSettings
 function Profile:Global()
 	return self.db.global
+end
+
+---Runs `fn` with `profile` read as the active profile, to draw a sample of settings not chosen yet. The real
+---profile is active again afterwards, even when `fn` raises an error.
+---@param profile LBProfileData
+---@param fn fun()
+function Profile:Read(profile, fn)
+	local active = self.active
+
+	self.active = profile
+
+	local ok, err = pcall(fn)
+
+	self.active = active
+
+	if not ok then
+		error(err, 0)
+	end
 end
 
 ---@return LBProfileData copy of the active profile, for an editing session to fall back to

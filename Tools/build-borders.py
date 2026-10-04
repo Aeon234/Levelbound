@@ -2,6 +2,7 @@
 
 Usage:
     python Tools/build-borders.py blizzard <source-dir>
+    python Tools/build-borders.py card <style-card.png>
 
 <source-dir> holds wow.export's 2x PNG exports of interface/hud/uiexperiencebar2xc60:
     ui-hud-experiencebar-frame-c60-2x.png                        frame, 2040 x 26
@@ -25,6 +26,7 @@ pixel at white, so a class color shades it. Requires Python 3 and Pillow.
 """
 
 import sys
+from collections import deque
 from pathlib import Path
 
 import numpy as np
@@ -162,11 +164,48 @@ def blizzard(directory):
     print(f"pip: {pip.shape[1]} x {pip.shape[0]} px; highlight {highlight.shape[1]} x {highlight.shape[0]} px")
 
 
-def main():
-    if len(sys.argv) != 3 or sys.argv[1] != "blizzard":
-        sys.exit(__doc__)
+CARD_FILL_ALPHA = 0.5  # the card interior's opacity against the art's own
 
-    blizzard(sys.argv[2])
+
+def card(path):
+    """Splits the starting-look card art into its frame and its interior, both at the art's own size for 9-slicing.
+
+    Writes Media/Textures/StyleCardFrame.tga, the bronze band made white against its reference color with the black
+    outline kept, and Media/Textures/StyleCardFill.tga, the black interior and its inner shadow at half their
+    opacity. The interior is the black pixels reachable from the center without crossing the band.
+    """
+    art = np.asarray(Image.open(path).convert("RGBA")).astype(np.float64)
+    height, width = art.shape[:2]
+    black = (art[:, :, :3].max(axis=2) < 8) & (art[:, :, 3] > 0)
+    inside = np.zeros((height, width), dtype=bool)
+    queue = deque([(height // 2, width // 2)])
+
+    while queue:
+        y, x = queue.popleft()
+        if not (0 <= y < height and 0 <= x < width) or inside[y, x] or not black[y, x]:
+            continue
+        inside[y, x] = True
+        queue.extend(((y + 1, x), (y - 1, x), (y, x + 1), (y, x - 1)))
+
+    fill = np.where(inside[:, :, np.newaxis], art, 0.0)
+    fill[:, :, 3] *= CARD_FILL_ALPHA
+
+    frame = np.where(inside[:, :, np.newaxis], 0.0, art)
+    tint = reference(frame[frame[:, :, :3].max(axis=2) >= 8][np.newaxis, :, :])
+    frame = whiten(frame, tint)
+
+    save(frame, "Media/Textures/StyleCardFrame.tga")
+    save(fill, "Media/Textures/StyleCardFill.tga")
+    print(f"card: {width} x {height} px; frame default tint {hex_color(tint)}")
+
+
+def main():
+    if len(sys.argv) == 3 and sys.argv[1] == "blizzard":
+        blizzard(sys.argv[2])
+    elif len(sys.argv) == 3 and sys.argv[1] == "card":
+        card(sys.argv[2])
+    else:
+        sys.exit(__doc__)
 
 
 if __name__ == "__main__":

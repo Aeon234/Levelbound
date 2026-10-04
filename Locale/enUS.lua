@@ -349,6 +349,14 @@ L["Party level-up notices, and messages about your own level-ups and runs."] =
 L["Per-character or shared settings, with copy, export and import."] =
 	"Per-character or shared settings, with copy, export and import."
 
+-- Starting look, offered once on a fresh install (Settings/StylePicker.lua); "Blizzard" is the border style's
+L["Choose Your Style"] = "Choose Your Style"
+L["Modern"] = "Modern"
+L["The classic experience bar: Blizzard's frame and fill, no text."] =
+	"The classic experience bar: Blizzard's frame and fill, no text."
+L["Levelbound's clean look, with text on hover."] = "Levelbound's clean look, with text on hover."
+L["You can change everything later with /lb."] = "You can change everything later with /lb."
+
 -- Settings window: setting descriptions, shown in their tooltips (Settings/Descriptions.lua)
 L["Shows Levelbound's button on the minimap."] = "Shows Levelbound's button on the minimap."
 L["Shows a bar's details when you hover over it."] = "Shows a bar's details when you hover over it."
