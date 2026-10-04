@@ -88,6 +88,15 @@ end
 -- Blizzard's rested tick on its experience bar: 10 x 14, centered on the bar with Forever's offset of 0. The pip
 -- marker takes these settings when it and the Blizzard border are first combined.
 Marker.BLIZZARD_PIP = { size = 14, anchor = "CENTER", y = 0 }
+local BLIZZARD_PIP_KEYS = { "size", "anchor", "y" }
+
+---Calls `write` once for each party setting that puts the pip at Blizzard's rested tick, in a fixed order.
+---@param write fun(key: string, value: any) `key` is relative to the party settings
+function Marker.WriteBlizzardPip(write)
+	for _, key in ipairs(BLIZZARD_PIP_KEYS) do
+		write(key, Marker.BLIZZARD_PIP[key])
+	end
+end
 
 ---Returns the markers' size and placement from their settings; the pip keeps its 10:14 shape, its height the size.
 ---@param party LBPartySettings

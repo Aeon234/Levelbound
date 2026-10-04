@@ -36,7 +36,6 @@ LB.StylePicker = StylePicker
 ---@param maxWidth number the widest a bar can be on this screen
 function StylePicker.ApplyBlizzard(profile, maxWidth)
 	local appearance = profile.appearance
-	local pip = LB.Marker.BLIZZARD_PIP
 
 	appearance.border.style = "BLIZZARD"
 	appearance.texture = "Levelbound Blizzard"
@@ -46,9 +45,9 @@ function StylePicker.ApplyBlizzard(profile, maxWidth)
 	profile.layout.width = math.min(BLIZZARD_WIDTH, math.floor(maxWidth))
 
 	profile.party.style = "PIP"
-	profile.party.size = pip.size
-	profile.party.anchor = pip.anchor
-	profile.party.y = pip.y
+	LB.Marker.WriteBlizzardPip(function(key, value)
+		profile.party[key] = value
+	end)
 
 	-- Slots keep their place with an empty template, which loading never refills from the defaults.
 	for _, slots in pairs(profile.text.slots) do

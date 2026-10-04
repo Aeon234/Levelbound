@@ -277,11 +277,9 @@ local function SetStyle(path)
 		LB.Profile:Set(path, value)
 
 		if not wasPaired and Paired() then
-			local pip = LB.Marker.BLIZZARD_PIP
-
-			LB.Profile:Set("party.size", pip.size)
-			LB.Profile:Set("party.anchor", pip.anchor)
-			LB.Profile:Set("party.y", pip.y)
+			LB.Marker.WriteBlizzardPip(function(key, value)
+				LB.Profile:Set("party." .. key, value)
+			end)
 		end
 	end
 end
