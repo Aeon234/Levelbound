@@ -459,7 +459,8 @@ local function Appearance(ctx)
 			}),
 			Color(ctx, "borderColor", L["Border Color"], "appearance.border.color", true, {
 				blocked = function()
-					if NoBorder() then
+					-- Segmented layout's separators take Border Color even with no border.
+					if NoBorder() and LB.Profile:Get("layout.mode") ~= "SEGMENTED" then
 						return NoBorder()
 					elseif Textured() and LB.Profile:Get("appearance.border.customColor") ~= true then
 						return L["Requires Custom Color to be enabled."]
