@@ -5,7 +5,7 @@ local EDGE_SIZE = 16
 local LEVEL = 8
 
 local PIXEL = "PIXEL"
-local PIXEL_MIN, PIXEL_MAX = 1, 10
+local PIXEL_MIN, PIXEL_MAX = LB.LIMITS.borderWidth.min, LB.LIMITS.borderWidth.max
 
 ---@param style string
 ---@return integer? pixels the flat style's line width in physical pixels, or nil for any other style

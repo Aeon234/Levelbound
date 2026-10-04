@@ -1,6 +1,7 @@
 local LB = select(2, ...)
 
 local L = LB.L
+local LIMITS = LB.LIMITS
 
 ---@class LBSettingsPages
 local Pages = {}
@@ -410,7 +411,8 @@ local function Layout(ctx)
 		Section("size", L["Size"], { tab = "layout" }),
 		Row(
 			Slider(ctx, "width", L["Width"], "layout.width", 100, MaxWidth(), 1),
-			Slider(ctx, "height", L["Height"], "layout.height", 4, 64, 1, { blocked = HeightFixed })
+			Slider(ctx, "height", L["Height"], "layout.height", LIMITS.barHeight.min, LIMITS.barHeight.max, 1,
+				{ blocked = HeightFixed })
 		),
 		Section("stacking", L["Stacking"], { tab = "layout" }),
 		Row(
@@ -444,7 +446,8 @@ local function Appearance(ctx)
 		rebuild = true,
 	})
 	-- Built either way, so Defaults resets it; shown only beside the Pixel style.
-	local width = Slider(ctx, "borderWidth", L["Border Width"], "appearance.border.width", 1, 10, 1)
+	local width = Slider(ctx, "borderWidth", L["Border Width"], "appearance.border.width", LIMITS.borderWidth.min,
+		LIMITS.borderWidth.max, 1)
 	local pixel = LB.Profile:Get("appearance.border.style") == "PIXEL"
 
 	return {
@@ -514,7 +517,7 @@ local function Text(ctx)
 		Section("style", L["Text Style"], { tab = "text" }),
 		Row(
 			Font(ctx, "font", L["Font"], "text.style.font"),
-			Slider(ctx, "size", L["Size"], "text.style.size", 6, 32, 1)
+			Slider(ctx, "size", L["Size"], "text.style.size", LIMITS.textSize.min, LIMITS.textSize.max, 1)
 		),
 		Row(
 			Choice(ctx, "outline", L["Outline"], "text.style.outline", Outlines),
@@ -609,7 +612,10 @@ local function Gain(ctx)
 			})
 		),
 		Section("amount", L["Amount Text"], { tab = "amount" }),
-		Row(Font(ctx, "font", L["Font"], "gain.text.font"), Slider(ctx, "size", L["Size"], "gain.text.size", 6, 32, 1)),
+		Row(
+			Font(ctx, "font", L["Font"], "gain.text.font"),
+			Slider(ctx, "size", L["Size"], "gain.text.size", LIMITS.textSize.min, LIMITS.textSize.max, 1)
+		),
 		Row(
 			Choice(ctx, "outline", L["Outline"], "gain.text.outline", Outlines),
 			Color(ctx, "color", COLOR, "gain.text.color", false)
@@ -678,7 +684,7 @@ local function Markers(ctx)
 				{ value = "DIAMOND", label = L["Diamond"] },
 				{ value = "PIP", label = L["Pip"] },
 			}, { set = SetStyle("party.style"), rebuild = true }),
-			Slider(ctx, "size", L["Marker Size"], "party.size", 4, 24, 1)
+			Slider(ctx, "size", L["Marker Size"], "party.size", LIMITS.markerSize.min, LIMITS.markerSize.max, 1)
 		),
 		Row(
 			Choice(ctx, "anchor", L["Anchor"], "party.anchor", {
@@ -686,7 +692,8 @@ local function Markers(ctx)
 				{ value = "TOP", label = L["Top"] },
 				{ value = "BOTTOM", label = L["Bottom"] },
 			}, { blocked = Tick }),
-			Slider(ctx, "y", L["Vertical Offset"], "party.y", -32, 32, 1, { blocked = Tick })
+			Slider(ctx, "y", L["Vertical Offset"], "party.y", LIMITS.markerOffset.min, LIMITS.markerOffset.max, 1,
+				{ blocked = Tick })
 		),
 		Section("fading", L["Marker Fading"], { tab = "fading" }),
 		Row(
@@ -770,7 +777,8 @@ local function LevelUps(ctx)
 		Section("text", L["Notice Text"], { tab = "notices" }),
 		Row(
 			Font(ctx, "font", L["Font"], "party.levelUp.text.font", { depends = "onScreen" }),
-			Slider(ctx, "size", L["Size"], "party.levelUp.text.size", 6, 32, 1, { depends = "onScreen" })
+			Slider(ctx, "size", L["Size"], "party.levelUp.text.size", LIMITS.textSize.min, LIMITS.textSize.max, 1,
+				{ depends = "onScreen" })
 		),
 		Row(Choice(ctx, "outline", L["Outline"], "party.levelUp.text.outline", Outlines, { depends = "onScreen" })),
 		Section("announce", L["Level-Ups"], { tab = "announce" }),
@@ -862,7 +870,7 @@ local function TypePage(ctx, id)
 	Add(
 		Row(
 			Pages:BarSize(ctx, id, "width", L["Width"], 100, MaxWidth(), 1),
-			Pages:BarSize(ctx, id, "height", L["Height"], 4, 64, 1)
+			Pages:BarSize(ctx, id, "height", L["Height"], LIMITS.barHeight.min, LIMITS.barHeight.max, 1)
 		)
 	)
 

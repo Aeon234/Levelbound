@@ -60,6 +60,21 @@ LB.MESSAGE_PREFIX = "Levelbound"
 
 LB.TYPE_ORDER = { "xp", "petxp", "reputation", "house", "endeavor", "travelers", "honor" }
 
+---@class LBLimit
+---@field min number
+---@field max number
+
+-- The ranges the settings offer, shared by their sliders, the code that clamps them and the previews sized to fit
+-- their largest values.
+---@type table<string, LBLimit>
+LB.LIMITS = {
+	barHeight = { min = 4, max = 64 },
+	borderWidth = { min = 1, max = 10 },
+	markerSize = { min = 4, max = 24 },
+	markerOffset = { min = -32, max = 32 },
+	textSize = { min = 6, max = 32 },
+}
+
 -- The LibSharedMedia name of Levelbound's own level-up sound, the level-up notices' default.
 LB.SOUND_LEVEL_UP = "LevelBound LvlUp"
 

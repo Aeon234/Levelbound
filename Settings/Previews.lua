@@ -2,7 +2,6 @@ local LB = select(2, ...)
 
 local PAD = 8 -- room around the bars for borders and hit outlines
 local APPEARANCE_GAP = 12
-local MARKER_ROOM = 24 -- the largest marker size
 local GAIN_AMOUNT = 1234
 local SLOT_ROOM = 4 -- room above and below the bar beyond the text size, for outer slots
 local GLINT_EVERY = 2
@@ -17,11 +16,11 @@ local GAIN_COLUMNS = 4
 local GAIN_COLUMN_GAP = 16
 
 -- The largest values the settings allow, from which each page's preview takes a fixed height.
-local BAR_MAX = 64
-local TEXT_MAX = 32
-local BORDER_PIXELS_MAX = 10
-local MARKER_SIZE_MAX = 24
-local MARKER_OFFSET_MAX = 32
+local BAR_MAX = LB.LIMITS.barHeight.max
+local TEXT_MAX = LB.LIMITS.textSize.max
+local BORDER_PIXELS_MAX = LB.LIMITS.borderWidth.max
+local MARKER_SIZE_MAX = LB.LIMITS.markerSize.max
+local MARKER_OFFSET_MAX = LB.LIMITS.markerOffset.max
 local NOTICE_LINES = 3
 
 local BORDER_HIT = 4 -- the least ring around a bar that finds its border setting, with or without a border
@@ -664,7 +663,7 @@ local function MarkersPreview()
 			local metrics = LB.Marker:Current()
 			local above, below = LB.Marker.Reach(party.style, metrics.anchor, metrics.y, metrics.height, height)
 			-- At least the largest marker's room, so changing the markers' size alone never rescales the bar.
-			above, below = math.max(above, MARKER_ROOM), math.max(below, MARKER_ROOM)
+			above, below = math.max(above, MARKER_SIZE_MAX), math.max(below, MARKER_SIZE_MAX)
 			local bar = Previews:Bar("xp", width, height)
 
 			Previews:Bare(bar)
@@ -797,7 +796,7 @@ local FIXED = {
 	markers = function()
 		local above = LB.Marker.Reach("DIAMOND", "TOP", MARKER_OFFSET_MAX, MARKER_SIZE_MAX, BAR_MAX)
 
-		return PAD * 2 + BAR_MAX + math.max(above, MARKER_ROOM) * 2
+		return PAD * 2 + BAR_MAX + math.max(above, MARKER_SIZE_MAX) * 2
 	end,
 	levelups = function()
 		return PAD * 2 + BAR_MAX + NOTICE_LINES * (TEXT_MAX + 4)

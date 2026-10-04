@@ -4,7 +4,7 @@ local L = LB.L
 local AS = LB.AeonSettings
 
 local NUDGE_LIMIT = 50
-local SIZE_MIN, SIZE_MAX = 6, 32
+local SIZE_MIN, SIZE_MAX = LB.LIMITS.textSize.min, LB.LIMITS.textSize.max
 local DEFAULT_SLOT = "INSIDE_LEFT"
 local COPY_WIDTH = 170
 
