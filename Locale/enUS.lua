@@ -325,11 +325,6 @@ L["This profile string was made by a newer version of Levelbound."] =
 	"This profile string was made by a newer version of Levelbound."
 L["This profile string has no profile in it."] = "This profile string has no profile in it."
 
--- Settings window: preview sample states (Settings/Previews.lua)
-L["Normal"] = "Normal"
-L["Hovered"] = "Hovered"
-L["Gaining"] = "Gaining"
-
 -- Settings window: setting descriptions, shown in their tooltips (Settings/Descriptions.lua)
 L["Shows Levelbound's button on the minimap."] = "Shows Levelbound's button on the minimap."
 L["Shows a bar's details when you hover over it."] = "Shows a bar's details when you hover over it."

@@ -1,7 +1,5 @@
 local LB = select(2, ...)
 
-local L = LB.L
-
 local PAD = 8 -- room around the bars for borders and hit outlines
 local APPEARANCE_GAP = 12
 local COLUMN_GAP = 24
@@ -10,10 +8,6 @@ local STACK_MAX = 3 -- bars a stacked sample shows, so a fixed-height panel has 
 local GAIN_AMOUNT = 1234
 local SLOT_ROOM = 4 -- room above and below the bar beyond the text size, for outer slots
 local GLINT_EVERY = 2
-
--- Each page's preview is a fixed number of rows, title band included, so the page never shifts; a sample that
--- does not fit is scaled down.
-local ROWS = { TYPE = 4, LAYOUT = 5, APPEARANCE = 4, GAIN = 5, MARKERS = 4, LEVELUPS = 5 }
 local GAIN_PAUSE = 0.5 -- between one looped gain's fade and the next
 local ZONE_ALPHA = 0.3
 
@@ -23,10 +17,6 @@ for _, key in ipairs(LB.TextSlotKeys) do
 	SLOT_KEYS[key] = true
 end
 
-local STATE_NORMAL = L["Normal"]
-local STATE_HOVERED = L["Hovered"]
-local STATE_GAINING = L["Gaining"]
-
 ---Draws each settings page's preview: sample bars made with Levelbound's own bar code and fixed sample values,
 ---never the bars on screen.
 ---@class LBSettingsPreviews
@@ -35,6 +25,8 @@ local STATE_GAINING = L["Gaining"]
 ---@field zones table<string, Frame> text slot boxes by slot key
 ---@field glint any? the ticker replaying the gain effect
 ---@field group Frame? the frame a segmented sample's border goes around
+---@field hover Frame? the mouse area over the markers sample's bar
+---@field hovered boolean? the cursor is over the markers sample's bar
 local Previews = {
 	bars = {},
 	used = {},
@@ -58,6 +50,10 @@ function Previews:Begin(sample)
 
 	if self.box then
 		self.box:Hide()
+	end
+
+	if self.hover then
+		self.hover:Hide()
 	end
 
 	self.sample = sample
@@ -215,8 +211,6 @@ end
 ---@return table preview
 local function TypePreview(id)
 	return {
-		minRows = ROWS.TYPE,
-		maxRows = ROWS.TYPE,
 		Pick = function(key)
 			if SLOT_KEYS[key] and LB.Settings.window then
 				LB.SettingsText:Choose(id, key)
@@ -343,8 +337,6 @@ end
 ---@return table preview
 local function LayoutPreview()
 	return {
-		minRows = ROWS.LAYOUT,
-		maxRows = ROWS.LAYOUT,
 		Draw = function(sample, _, addPart)
 			Previews:Begin(sample)
 
@@ -418,7 +410,8 @@ function Previews:GroupBorder(width, height)
 	group.border:Apply(border.style, LB.Border:Color(border.style, border), height)
 end
 
----Experience and one other bar, with the border, spark and background; Gaining plays the gain effect.
+---Experience and one other bar, with the border, spark and background; the gain effect replays on a loop while
+---the gain shimmer is on.
 ---@return table preview
 local function AppearancePreview()
 	local function StopGlint()
@@ -429,11 +422,8 @@ local function AppearancePreview()
 	end
 
 	return {
-		minRows = ROWS.APPEARANCE,
-		maxRows = ROWS.APPEARANCE,
-		states = { STATE_NORMAL, STATE_GAINING },
 		Stop = StopGlint,
-		Draw = function(sample, state, addPart)
+		Draw = function(sample, _, addPart)
 			StopGlint()
 			Previews:Begin(sample)
 
@@ -453,7 +443,7 @@ local function AppearancePreview()
 			local gap = APPEARANCE_GAP + 2 * LB.Border:Outset(style, height)
 			local columnWidth, bottom = Column(bars, PAD, gap)
 
-			if state == STATE_GAINING then
+			if LB.Profile:Get("appearance.shimmer") then
 				local function Glint()
 					for _, bar in ipairs(bars) do
 						bar:Glint(true)
@@ -510,8 +500,6 @@ end
 ---@return table preview
 local function GainPreview()
 	return {
-		minRows = ROWS.GAIN,
-		maxRows = ROWS.GAIN,
 		Stop = StopGains,
 		Draw = function(sample, _, addPart)
 			StopGains()
@@ -564,14 +552,90 @@ local function GainPreview()
 	}
 end
 
----The experience bar with a sample party's markers, at the markers' opacity.
+---Sets the sample markers' and bar's opacity as the experience bar on screen has them, hovered or not.
+---@param bar LBBar
+---@param animated boolean?
+function Previews:ApplyMarkerOpacity(bar, animated)
+	local layer = bar.markerLayer
+
+	if not layer then
+		return
+	end
+
+	local opacity = LB.Profile:Get("party.opacity")
+	local settings = LB.Profile:Get("visibility")
+	local visibility = {
+		inCombat = false,
+		hasTarget = false,
+		blocked = false,
+		hovered = self.hovered and "xp" or nil,
+		editing = false,
+	}
+	local alpha = LB.Visibility:ResolveMarkers(opacity, settings, visibility, "xp", true)
+	local barAlpha = opacity.matchBar and LB.Visibility:Resolve(settings, visibility, "xp") or 1
+
+	layer:SetIgnoreParentAlpha(false)
+	LB.Visibility:SetAlpha(layer, layer, opacity.matchBar and 1 or alpha, animated)
+	LB.Visibility:SetAlpha(bar, self.hover, barAlpha, animated)
+end
+
+---Stops the markers sample's fades and forgets its hover.
+local function StopMarkers()
+	Previews.hovered = false
+
+	if Previews.hover then
+		LB:StopTween(Previews.hover)
+	end
+
+	local bar = Previews.bars.xp
+
+	if bar and bar.markerLayer then
+		LB:StopTween(bar.markerLayer)
+	end
+end
+
+---Covers the sample bar with a mouse area that fades the markers as hovering the bar on screen does.
+---@param bar LBBar
+function Previews:Hover(bar)
+	local hover = self.hover
+
+	if not hover then
+		hover = CreateFrame("Frame", nil, self.sample)
+		hover:SetScript("OnEnter", function()
+			Previews.hovered = true
+			Previews:ApplyMarkerOpacity(hover.bar, true)
+		end)
+		hover:SetScript("OnLeave", function()
+			-- A marker's hit area, drawn above this frame, takes the cursor while it is still over the bar.
+			if hover:IsMouseOver() then
+				return
+			end
+
+			Previews.hovered = false
+			Previews:ApplyMarkerOpacity(hover.bar, true)
+		end)
+		self.hover = hover
+	end
+
+	if hover:GetParent() ~= self.sample then
+		hover:SetParent(self.sample)
+	end
+
+	hover.bar = bar
+	hover:ClearAllPoints()
+	hover:SetAllPoints(bar)
+	hover:SetFrameLevel(bar:GetFrameLevel() + 20)
+	hover:EnableMouse(true)
+	hover:Show()
+end
+
+---The experience bar with a sample party's markers, at the markers' opacity; hovering the bar fades them as on
+---screen.
 ---@return table preview
 local function MarkersPreview()
 	return {
-		minRows = ROWS.MARKERS,
-		maxRows = ROWS.MARKERS,
-		states = { STATE_NORMAL, STATE_HOVERED },
-		Draw = function(sample, state, addPart)
+		Stop = StopMarkers,
+		Draw = function(sample, _, addPart)
 			Previews:Begin(sample)
 
 			local width, height = SharedSize()
@@ -581,24 +645,10 @@ local function MarkersPreview()
 
 			bar:SetPoint("TOPLEFT", sample, "TOPLEFT", PAD, -(PAD + size))
 			LB.Marker:Apply(bar, LB.Marker:SampleParty())
-
-			local layer = bar.markerLayer
-
-			if layer then
-				local opacity = LB.Profile:Get("party.opacity")
-				local visibility = {
-					inCombat = false,
-					hasTarget = false,
-					blocked = false,
-					hovered = state == STATE_HOVERED and "xp" or nil,
-					editing = false,
-				}
-				local alpha = LB.Visibility:ResolveMarkers(opacity, LB.Profile:Get("visibility"), visibility, "xp", true)
-
-				layer:SetIgnoreParentAlpha(false)
-				layer:SetAlpha(opacity.matchBar and 1 or alpha)
-				bar:SetAlpha(opacity.matchBar and LB.Visibility:Resolve(LB.Profile:Get("visibility"), visibility, "xp") or 1)
-			end
+			Previews:Hover(bar)
+			StopMarkers()
+			Previews.hovered = Previews.hover:IsMouseOver()
+			Previews:ApplyMarkerOpacity(bar, false)
 
 			for _, marker in pairs(bar.markerShown or {}) do
 				addPart(marker, "style")
@@ -638,8 +688,6 @@ end
 ---@return table preview
 local function LevelUpsPreview()
 	return {
-		minRows = ROWS.LEVELUPS,
-		maxRows = ROWS.LEVELUPS,
 		Stop = function()
 			LB.LevelUpNotice:StopPreviewSample()
 		end,

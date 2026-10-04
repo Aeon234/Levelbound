@@ -313,11 +313,6 @@ L["This is not a Levelbound profile string, or it was cut short."] = "Levelbound
 L["This profile string was made by a newer version of Levelbound."] = "더 최신 버전의 Levelbound로 만든 프로필 문자열입니다."
 L["This profile string has no profile in it."] = "이 프로필 문자열에는 프로필이 없습니다."
 
--- Settings window: preview sample states (Settings/Previews.lua)
-L["Normal"] = "일반"
-L["Hovered"] = "마우스 오버"
-L["Gaining"] = "획득 중"
-
 -- Settings window: setting descriptions, shown in their tooltips (Settings/Descriptions.lua)
 L["Shows Levelbound's button on the minimap."] = "미니맵에 Levelbound 버튼을 표시합니다."
 L["Shows a bar's details when you hover over it."] = "바에 마우스를 올리면 세부 정보를 표시합니다."

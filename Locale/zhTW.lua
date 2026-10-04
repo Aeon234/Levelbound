@@ -313,11 +313,6 @@ L["This is not a Levelbound profile string, or it was cut short."] = "這不是 
 L["This profile string was made by a newer version of Levelbound."] = "此設定檔字串由較新版本的 Levelbound 產生。"
 L["This profile string has no profile in it."] = "此設定檔字串中沒有任何設定檔。"
 
--- Settings window: preview sample states (Settings/Previews.lua)
-L["Normal"] = "一般"
-L["Hovered"] = "滑鼠指向"
-L["Gaining"] = "獲得中"
-
 -- Settings window: setting descriptions, shown in their tooltips (Settings/Descriptions.lua)
 L["Shows Levelbound's button on the minimap."] = "在小地圖上顯示 Levelbound 的按鈕。"
 L["Shows a bar's details when you hover over it."] = "滑鼠指向進度條時顯示其詳細資訊。"

@@ -313,11 +313,6 @@ L["This is not a Levelbound profile string, or it was cut short."] = "Ce n'est p
 L["This profile string was made by a newer version of Levelbound."] = "Cette chaîne de profil provient d'une version plus récente de Levelbound."
 L["This profile string has no profile in it."] = "Cette chaîne ne contient aucun profil."
 
--- Settings window: preview sample states (Settings/Previews.lua)
-L["Normal"] = "Normal"
-L["Hovered"] = "Survolé"
-L["Gaining"] = "En gain"
-
 -- Settings window: setting descriptions, shown in their tooltips (Settings/Descriptions.lua)
 L["Shows Levelbound's button on the minimap."] = "Affiche le bouton de Levelbound sur la minicarte."
 L["Shows a bar's details when you hover over it."] = "Affiche les détails d'une barre quand vous la survolez."

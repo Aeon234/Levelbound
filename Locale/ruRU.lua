@@ -313,11 +313,6 @@ L["This is not a Levelbound profile string, or it was cut short."] = "Это н�
 L["This profile string was made by a newer version of Levelbound."] = "Эта строка профиля создана более новой версией Levelbound."
 L["This profile string has no profile in it."] = "В этой строке профиля нет профиля."
 
--- Settings window: preview sample states (Settings/Previews.lua)
-L["Normal"] = "Обычное"
-L["Hovered"] = "При наведении"
-L["Gaining"] = "Прирост"
-
 -- Settings window: setting descriptions, shown in their tooltips (Settings/Descriptions.lua)
 L["Shows Levelbound's button on the minimap."] = "Показывает кнопку Levelbound у миникарты."
 L["Shows a bar's details when you hover over it."] = "Показывает подробности полосы при наведении на нее курсора."
