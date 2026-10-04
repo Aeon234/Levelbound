@@ -94,52 +94,52 @@
     },
     {
       "path": "Locale/deDE.lua",
-      "sha256": "4d5772d0fb9c38a21ff8bad09dbec62d9be39823491c54fac313ee127ec604e9",
+      "sha256": "29dd45944e441009191ca2236f67d906e39ad1cf3b934b0f53fd87fe2669df2a",
       "transformed": false
     },
     {
       "path": "Locale/esES.lua",
-      "sha256": "f5d5cdb203ccaff22e3b21cd82697359cec9858df1af1c05fa8c3d12f66b3d5f",
+      "sha256": "ad6bc837f5172d71481140596b57b6a4771d6ee4ea78da240b28dfa36cac537a",
       "transformed": false
     },
     {
       "path": "Locale/esMX.lua",
-      "sha256": "07ab9b9bfb5b8dcb753f58b3589e730f7eb314f2090d88585e1d5779cf76e545",
+      "sha256": "de50f0d5bfe138f307011bbb36c6f12c701cbd26effa33a714f3b8a361ef6deb",
       "transformed": false
     },
     {
       "path": "Locale/frFR.lua",
-      "sha256": "c92fc77e43e384b1cea69f455696c1974448055bbf47aaddf01acfcfe43d6d03",
+      "sha256": "775673ad5ff6c0da3969c77623a5b8d08008505fe9dfab6ed104c263c0e70869",
       "transformed": false
     },
     {
       "path": "Locale/itIT.lua",
-      "sha256": "eec048c96f42d695d1f057d253a46cc647891d9030624ab7deb52a7ae8dd5199",
+      "sha256": "98be10085abdc8165a97f9005788ba13d06a04411c44789e1d98e07e6c973ba3",
       "transformed": false
     },
     {
       "path": "Locale/koKR.lua",
-      "sha256": "a48f905f4fc37711527d4ba1868b1b21b54434540bcb8eef3e2c601c3d0f0abe",
+      "sha256": "6de3b814b7a160919b299e3d27283123efcbfb055a755ff341267ac1175eca11",
       "transformed": false
     },
     {
       "path": "Locale/ptBR.lua",
-      "sha256": "c0f236e7a09966e04af112c73bbd74a17acc34dcc059e7be2bb2aa110331e346",
+      "sha256": "ba33dd731c8967eb0863e43e5c2583c4a86be02da777b653b3a16de67d96a91d",
       "transformed": false
     },
     {
       "path": "Locale/ruRU.lua",
-      "sha256": "ccca21b679239b76c58dff115b619a5e645ae076ed56a85bf82b8d46b2baf8e0",
+      "sha256": "139f07f1532d2ae5ed55753c1b2c2c0e360c73a9eb18788567d91404ee6c4726",
       "transformed": false
     },
     {
       "path": "Locale/zhCN.lua",
-      "sha256": "61bad482f9477e2bb5f20158c92370a8b94f4e0c67553468aeaff372fa172ff7",
+      "sha256": "17518c55b990e069dd651a84f83891427af35c881a41f9eb068dfa66cd099143",
       "transformed": false
     },
     {
       "path": "Locale/zhTW.lua",
-      "sha256": "7554b5c44dc261302dfb5429914d0134f1b84b278c22026bda57f69c2a7bca0e",
+      "sha256": "87d4b9ea2da947c5c05cf2708f6554f082903187aaa08f19eb4070c14ed47fd1",
       "transformed": false
     },
     {
@@ -224,7 +224,7 @@
     },
     {
       "path": "Profiles.lua",
-      "sha256": "fe65b38934abc2ed9c04346edc2aae757cf0ee94f58e8e52cbb0c470fc133d4d",
+      "sha256": "942cdc02d54dd65bfe0d70065f63dc60ec0a142497973ab49a35843d4feb98ea",
       "transformed": false
     },
     {
@@ -294,7 +294,7 @@
     },
     {
       "path": "Tokens.lua",
-      "sha256": "cf3843ce1cb0c5b28b653cb73df5b482572bca1c289ca86d9c36faa37b1cb4e5",
+      "sha256": "9a55fd342f1b099e864ed1628ea356018349d2b3ab6ec8466c02595fe0dc1adf",
       "transformed": false
     },
     {

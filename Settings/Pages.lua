@@ -382,8 +382,7 @@ local function General(ctx)
 			Check(ctx, "clickActions", L["Click to Open or Share"], "tooltip.clickActions")
 		),
 		Section("time", L["Time Tracking"]),
-		Row(timePlayed),
-		Row(resetSession),
+		Row(timePlayed, resetSession),
 	}
 end
 
@@ -448,8 +447,10 @@ local function Appearance(ctx)
 
 	return {
 		Section("bars", L["Bars"], { tab = "appearance" }),
-		Row(Texture(ctx, "texture", L["Bar Texture"], "appearance.texture")),
-		Row(Color(ctx, "background", BACKGROUND, "appearance.background", true)),
+		Row(
+			Texture(ctx, "texture", L["Bar Texture"], "appearance.texture"),
+			Color(ctx, "background", BACKGROUND, "appearance.background", true)
+		),
 		Section("border", L["Border"], { tab = "appearance" }),
 		Row(style, pixel and width or nil),
 		Row(
@@ -664,7 +665,6 @@ local function Markers(ctx)
 		end
 	end
 
-
 	return {
 		Section("markers", L["Party Markers"], { tab = "markers" }),
 		Row(Toggle(ctx, "markers", L["Show Party Markers"], "party.markers", { pageSwitch = true })),
@@ -849,8 +849,9 @@ local function TypePage(ctx, id)
 			)
 		)
 	elseif id ~= "reputation" then
-		Open(Section("colors", L["Colors"], { tab = "bar" }))
-		Add(Row(Color(ctx, "color", L["Bar Color"], "appearance.typeColors." .. id, false)))
+		Add(Section("colors", L["Colors"], { tab = "bar" }))
+		Add(Row(switch, Color(ctx, "color", L["Bar Color"], "appearance.typeColors." .. id, false)))
+		switched = true
 	end
 
 	Open(Section("size", L["Size"], { tab = "bar" }))

@@ -70,12 +70,12 @@ function AS:CheckProfileName(name, names, builtin, except)
 
 	local lower = name:lower()
 	if except ~= builtin and (lower == builtin:lower() or lower == DEFAULT:lower()) then
-		return L["\"%s\" is the built-in profile's name."]:format(DEFAULT)
+		return L['"%s" is the built-in profile\'s name.']:format(DEFAULT)
 	end
 
 	for _, existing in ipairs(names) do
 		if existing ~= except and existing:lower() == lower then
-			return L["A profile named \"%s\" already exists."]:format(self:ProfileDisplayName(existing, builtin))
+			return L['A profile named "%s" already exists.']:format(self:ProfileDisplayName(existing, builtin))
 		end
 	end
 end
@@ -178,7 +178,7 @@ function AS:CreateProfilesPage(options)
 
 	local character = Setting("character", {
 		control = "checkbox",
-		label = L["Use a Profile for This Character"],
+		label = L["Use a Character Specific Profile"],
 		description = L["Switches to a profile named after this character, made the first time."],
 		rebuild = true,
 		blocked = Locked,
@@ -199,7 +199,7 @@ function AS:CreateProfilesPage(options)
 			validate = Check,
 			accept = function(name)
 				Call(nil, "New", name)
-				Done(window, L["Profile \"%s\" created."]:format(name))
+				Done(window, L['Profile "%s" created.']:format(name))
 			end,
 		})
 	end)
@@ -209,12 +209,12 @@ function AS:CreateProfilesPage(options)
 		Dialog():Open("name", {
 			title = L["Copy Profile"],
 			verb = L["Copy"],
-			message = L["Name the copy of \"%s\"."]:format(source),
+			message = L['Name the copy of "%s".']:format(source),
 			hint = L["Copy of %s"]:format(source),
 			validate = Check,
 			accept = function(name)
 				Call(nil, "Copy", name)
-				Done(window, L["Copied \"%s\" to \"%s\"."]:format(source, name))
+				Done(window, L['Copied "%s" to "%s".']:format(source, name))
 			end,
 		})
 	end)
@@ -225,7 +225,7 @@ function AS:CreateProfilesPage(options)
 		Dialog():Open("name", {
 			title = L["Rename Profile"],
 			verb = L["Rename"],
-			message = L["Rename \"%s\" to:"]:format(shown),
+			message = L['Rename "%s" to:']:format(shown),
 			text = shown,
 			validate = function(name)
 				if name == shown then
@@ -236,7 +236,7 @@ function AS:CreateProfilesPage(options)
 			end,
 			accept = function(name)
 				Call(nil, "Rename", name)
-				Done(window, L["Renamed \"%s\" to \"%s\"."]:format(shown, name))
+				Done(window, L['Renamed "%s" to "%s".']:format(shown, name))
 			end,
 		})
 	end)
@@ -253,7 +253,7 @@ function AS:CreateProfilesPage(options)
 		local name = Call("", "Active")
 		if name ~= builtin and Exists(builtin) then
 			Call(nil, "Delete", name, builtin)
-			Done(window, L["Profile \"%s\" deleted; now using \"%s\"."]:format(Display(name), Display(builtin)))
+			Done(window, L['Profile "%s" deleted; now using "%s".']:format(Display(name), Display(builtin)))
 
 			return
 		end
@@ -267,13 +267,14 @@ function AS:CreateProfilesPage(options)
 		Dialog():Open("replace", {
 			title = L["Delete Profile"],
 			verb = L["Delete"],
-			message = L["Delete the profile \"%s\"? Its settings will be lost. Choose the profile to use instead:"]
-				:format(Display(name)),
+			message = L['Delete the profile "%s"? Its settings will be lost. Choose the profile to use instead:']:format(
+				Display(name)
+			),
 			choices = choices,
 			default = choices[1] and choices[1].value,
 			accept = function(replacement)
 				Call(nil, "Delete", name, replacement)
-				Done(window, L["Profile \"%s\" deleted; now using \"%s\"."]:format(Display(name), Display(replacement)))
+				Done(window, L['Profile "%s" deleted; now using "%s".']:format(Display(name), Display(replacement)))
 			end,
 		})
 	end, {
@@ -283,8 +284,10 @@ function AS:CreateProfilesPage(options)
 		confirm = function()
 			local name = Call("", "Active")
 			if name ~= builtin and Exists(builtin) then
-				return L["Delete the profile \"%s\"? Its settings will be lost, and \"%s\" becomes active."]
-					:format(Display(name), DEFAULT)
+				return L['Delete the profile "%s"? Its settings will be lost, and "%s" becomes active.']:format(
+					Display(name),
+					DEFAULT
+				)
 			end
 		end,
 	})
@@ -292,10 +295,10 @@ function AS:CreateProfilesPage(options)
 	local reset = Action("reset", L["Reset Current Profile"], L["Reset"], function(window)
 		local name = Display(Call("", "Active"))
 		Call(nil, "Reset")
-		Done(window, L["Profile \"%s\" reset."]:format(name))
+		Done(window, L['Profile "%s" reset.']:format(name))
 	end, {
 		confirm = function()
-			return L["Reset the profile \"%s\" to default settings?"]:format(Display(Call("", "Active")))
+			return L['Reset the profile "%s" to default settings?']:format(Display(Call("", "Active")))
 		end,
 	})
 
@@ -316,7 +319,7 @@ function AS:CreateProfilesPage(options)
 			validate = Check,
 			accept = function(info, name)
 				Call(nil, "Import", info, name)
-				Done(window, L["Imported \"%s\" as \"%s\"."]:format(Display(info.name or ""), name))
+				Done(window, L['Imported "%s" as "%s".']:format(Display(info.name or ""), name))
 			end,
 		})
 	end)
@@ -326,10 +329,11 @@ function AS:CreateProfilesPage(options)
 	function page.Build()
 		local elements = {
 			{ kind = "section", id = "active", title = L["Active Profile"] },
-			{ kind = "setting", setting = active },
 		}
 		if adapter.UsesCharacterProfile and adapter.SetUseCharacterProfile then
-			elements[#elements + 1] = { kind = "setting", setting = character }
+			elements[#elements + 1] = { kind = "setting", settings = { active, character } }
+		else
+			elements[#elements + 1] = { kind = "setting", setting = active }
 		end
 		for _, element in ipairs(Call({}, "Sections")) do
 			elements[#elements + 1] = element

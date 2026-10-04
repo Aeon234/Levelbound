@@ -13,7 +13,7 @@ AS.tokens = {
 		sectionTitle = { 1, 0.918, 0.761 },
 		speakerIcon = { 0.85, 0.85, 0.85 },
 		flash = { 1, 0.82, 0 },
-		contentFill = { 0, 0, 0, 0.45 },
+		contentFill = { 0, 0, 0, 0.25 },
 		divider = { 73 / 255, 62 / 255, 61 / 255 },
 	},
 	alpha = {

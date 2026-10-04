@@ -168,8 +168,8 @@ local defaults = {
 		width = 560,
 		height = 24,
 		positions = {
-			SEGMENTED = { point = "TOP", x = 0, y = -40 },
-			CONNECTED = { point = "TOP", x = 0, y = -40 },
+			SEGMENTED = { point = "TOP", x = 0, y = -100 },
+			CONNECTED = { point = "TOP", x = 0, y = -100 },
 			INDEPENDENT = { point = "CENTER", x = 0, y = 0 },
 		},
 		growth = "DOWN",

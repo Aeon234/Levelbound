@@ -24,6 +24,9 @@ local MARKER_SIZE_MAX = 24
 local MARKER_OFFSET_MAX = 32
 local NOTICE_LINES = 3
 
+local BORDER_HIT = 4 -- the least ring around a bar that finds its border setting, with or without a border
+local SPARK_HIT = 12 -- the width at the fill's end that finds the spark setting
+
 local SLOT_KEYS = {}
 
 for _, key in ipairs(LB.TextSlotKeys) do
@@ -40,7 +43,9 @@ end
 ---@field hover Frame? the mouse area over the markers sample's bar
 ---@field hovered boolean? the cursor is over the markers sample's bar
 ---@field inner Frame? the frame each preview draws into, centered in the panel's sample and scaled to fit
+---@field areas table<LBBar, table<string, Frame>> click areas around each sample bar, by kind
 local Previews = {
+	areas = {},
 	bars = {},
 	used = {},
 	zones = {},
@@ -63,6 +68,12 @@ function Previews:Begin(sample)
 
 	if self.hover then
 		self.hover:Hide()
+	end
+
+	for _, areas in pairs(self.areas) do
+		for _, area in pairs(areas) do
+			area:Hide()
+		end
 	end
 
 	self.sample = sample
@@ -127,6 +138,53 @@ end
 ---@return number? height the border style's fixed bar height, or nil
 local function FixedHeight()
 	return LB.Border:FixedHeight(LB.Profile:Get("appearance.border.style"))
+end
+
+---An empty frame placed around part of a sample bar, so a click there finds that part's setting.
+---@param bar LBBar
+---@param kind "border" | "spark" | "gain"
+---@param reach number? the border ring's width, or the gain area's height
+---@return Frame area
+function Previews:Area(bar, kind, reach)
+	local areas = self.areas[bar] or {}
+	local area = areas[kind]
+
+	self.areas[bar] = areas
+
+	if not area then
+		area = CreateFrame("Frame", nil, self.sample)
+		areas[kind] = area
+	end
+
+	if area:GetParent() ~= self.sample then
+		area:SetParent(self.sample)
+	end
+
+	area:ClearAllPoints()
+
+	if kind == "border" then
+		area:SetPoint("TOPLEFT", bar, "TOPLEFT", -reach, reach)
+		area:SetPoint("BOTTOMRIGHT", bar, "BOTTOMRIGHT", reach, -reach)
+	elseif kind == "spark" then
+		area:SetPoint("TOPLEFT", bar.clip, "TOPRIGHT", -SPARK_HIT / 2, 0)
+		area:SetPoint("BOTTOMLEFT", bar.clip, "BOTTOMRIGHT", -SPARK_HIT / 2, 0)
+		area:SetWidth(SPARK_HIT)
+	else
+		area:SetPoint("BOTTOMLEFT", bar, "TOPLEFT")
+		area:SetPoint("BOTTOMRIGHT", bar, "TOPRIGHT")
+		area:SetHeight(reach)
+	end
+
+	area:Show()
+
+	return area
+end
+
+---Hides a sample bar's text, which belongs to the progress type pages.
+---@param bar LBBar
+function Previews:Bare(bar)
+	bar.textSuppressed = true
+	LB.TextSlot:UpdateBar(bar)
 end
 
 ---@return number width the preview's fixed bar width
@@ -253,7 +311,7 @@ local function TypePreview(id)
 			LB.TextSlot:ApplySample(bar, true)
 
 			for _, key in ipairs(keys) do
-				addPart(Previews:Zone(bar, key, zone), "slot", false, key)
+				addPart(Previews:Zone(bar, key, zone), ("slotText.%s.%s"):format(id, key), false, key)
 			end
 
 			if LB.Settings.window then
@@ -370,12 +428,17 @@ local function AppearancePreview()
 			for _, id in ipairs(Pair()) do
 				local bar = Previews:Bar(id, width, height)
 
-				-- The bars alone: their text belongs to the progress type pages.
-				bar.textSuppressed = true
-				LB.TextSlot:UpdateBar(bar)
+				Previews:Bare(bar)
 				bars[#bars + 1] = bar
+
+				-- Later parts win where they overlap: the ring finds the border, the fill the texture and the fill's
+				-- end the spark.
+				local style = Fullscreen() and "NONE" or LB.Profile:Get("appearance.border.style")
+				local ring = math.max(LB.Border:Outset(style, height), BORDER_HIT)
+
+				addPart(Previews:Area(bar, "border", ring), "borderStyle")
 				addPart(bar, "texture")
-				addPart(bar.border, "borderStyle")
+				addPart(Previews:Area(bar, "spark"), "spark")
 			end
 
 			-- Apart by their borders' reach and a clear gap, so each bar reads on its own.
@@ -473,6 +536,7 @@ local function GainPreview()
 					-(PAD + room + row * (height + room)))
 				bars[#bars + 1] = bar
 				addPart(bar, "tint." .. id)
+				addPart(Previews:Area(bar, "gain", room), "tint." .. id)
 			end
 
 			local y = PAD + rows * (height + room)
@@ -586,6 +650,7 @@ local function MarkersPreview()
 			above, below = math.max(above, MARKER_ROOM), math.max(below, MARKER_ROOM)
 			local bar = Previews:Bar("xp", width, height)
 
+			Previews:Bare(bar)
 			bar:SetPoint("TOPLEFT", sample, "TOPLEFT", PAD, -(PAD + above))
 			LB.Marker:Apply(bar, LB.Marker:SampleParty())
 			Previews:Hover(bar)
@@ -661,6 +726,7 @@ local function LevelUpsPreview()
 			local above, below = NoticeRoom(settings, stack, height)
 			local bar = Previews:Bar("xp", width, height)
 
+			Previews:Bare(bar)
 			bar:SetPoint("TOPLEFT", sample, "TOPLEFT", PAD + math.max(0, -settings.x), -(PAD + above))
 			addPart(bar, "anchor")
 
