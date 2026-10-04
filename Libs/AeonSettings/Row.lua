@@ -167,7 +167,8 @@ end
 
 ---Moves the hover band to this half when the cursor enters `frame` or any frame inside it, and takes it away when
 ---the cursor leaves the half. Every frame is hooked, whether or not it takes the mouse yet; a script runs only on
----a frame that does.
+---a frame that does. Hooking OnEnter or OnLeave turns a frame's mouse on, so each frame's own mouse state is put
+---back, or a part such as a toggle's pin would take the cursor and clicks from its control.
 ---@param frame Frame
 function Half:WatchHover(frame)
 	if self.watched[frame] then
@@ -175,12 +176,15 @@ function Half:WatchHover(frame)
 	end
 	self.watched[frame] = true
 
+	local motion, click = frame:IsMouseMotionEnabled(), frame:IsMouseClickEnabled()
 	frame:HookScript("OnEnter", function()
 		EnterHalf(self)
 	end)
 	frame:HookScript("OnLeave", function()
 		LeaveHalf(self)
 	end)
+	frame:SetMouseMotionEnabled(motion)
+	frame:SetMouseClickEnabled(click)
 	for _, child in ipairs({ frame:GetChildren() }) do
 		self:WatchHover(child)
 	end
