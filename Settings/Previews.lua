@@ -556,11 +556,13 @@ local function MarkersPreview()
 			Previews:Begin(sample)
 
 			local width, height = SharedSize()
-			-- Room for the largest marker, so changing the markers' size never rescales the bar.
-			local size = MARKER_ROOM
+			local party = LB.Profile:Get("party")
+			local above, below = LB.Marker.Reach(party.style, party.anchor, party.y, party.size, height)
+			-- At least the largest marker's room, so changing the markers' size alone never rescales the bar.
+			above, below = math.max(above, MARKER_ROOM), math.max(below, MARKER_ROOM)
 			local bar = Previews:Bar("xp", width, height)
 
-			bar:SetPoint("TOPLEFT", sample, "TOPLEFT", PAD, -(PAD + size))
+			bar:SetPoint("TOPLEFT", sample, "TOPLEFT", PAD, -(PAD + above))
 			LB.Marker:Apply(bar, LB.Marker:SampleParty())
 			Previews:Hover(bar)
 			StopMarkers()
@@ -573,7 +575,7 @@ local function MarkersPreview()
 
 			Previews:Finish()
 
-			return width + PAD * 2, height + (PAD + size) * 2
+			return width + PAD * 2, height + above + below + PAD * 2
 		end,
 	}
 end

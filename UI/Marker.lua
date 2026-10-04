@@ -57,6 +57,55 @@ local function SampleMembers()
 	return members
 end
 
+---Returns where a marker attaches: its own point, the bar point it sits on, and whether its shape is drawn upside
+---down. The full-height tick always centers on the bar; the notch points into the bar from the edge it sits on.
+---@param style string
+---@param anchor string "CENTER", "TOP" or "BOTTOM"
+---@return string point
+---@return string relativePoint
+---@return boolean flipped
+function Marker.Point(style, anchor)
+	if style == "TICK" or (anchor ~= "TOP" and anchor ~= "BOTTOM") then
+		return "CENTER", "LEFT", false
+	elseif style == "NOTCH" then
+		return anchor, anchor .. "LEFT", anchor == "BOTTOM"
+	end
+
+	return "CENTER", anchor .. "LEFT", false
+end
+
+---Returns how far a marker reaches past the bar's top and bottom edges, outline included.
+---@param style string
+---@param anchor string
+---@param y number ignored by the full-height tick
+---@param size number
+---@param height number the bar's height
+---@return number above
+---@return number below
+function Marker.Reach(style, anchor, y, size, height)
+	local half = size / 2
+	local center
+
+	if style == "TICK" then
+		half, center = height / 2, height / 2
+	else
+		local point, relative = Marker.Point(style, anchor)
+		local base = relative == "TOPLEFT" and height or relative == "BOTTOMLEFT" and 0 or height / 2
+
+		center = base + y
+
+		if point == "TOP" then
+			center = center - half
+		elseif point == "BOTTOM" then
+			center = center + half
+		end
+	end
+
+	half = half + OUTLINE
+
+	return math.max(0, center + half - height), math.max(0, half - center)
+end
+
 ---@param members LBRosterMember[] in a stable order
 ---@param width number
 ---@param size number
@@ -144,6 +193,9 @@ local function Reset(_, frame)
 	frame.x = nil
 	frame.style = nil
 	frame.barWidth = nil
+	frame.point = nil
+	frame.relativePoint = nil
+	frame.offsetY = nil
 end
 
 ---@param bar LBBar
@@ -225,13 +277,7 @@ end
 ---@param x number
 local function Anchor(frame, bar, x)
 	frame:ClearAllPoints()
-
-	if frame.style == "NOTCH" then
-		frame:SetPoint("TOP", bar, "TOPLEFT", x, 0)
-	else
-		frame:SetPoint("CENTER", bar, "LEFT", x, 0)
-	end
-
+	frame:SetPoint(frame.point, bar, frame.relativePoint, x, frame.offsetY)
 	frame.x = x
 end
 
@@ -288,6 +334,10 @@ local function Draw(frame, bar, placement, placements)
 
 	LB:SetPixelSize(frame, size, markerHeight)
 
+	local point, relativePoint, flipped = Marker.Point(style, party.anchor)
+
+	frame.point, frame.relativePoint = point, relativePoint
+	frame.offsetY = tall and 0 or party.y
 	frame:SetFrameLevel(bar:GetFrameLevel() + 10)
 	Place(frame, bar, placement.x, style)
 
@@ -307,6 +357,10 @@ local function Draw(frame, bar, placement, placements)
 		frame.outline:SetTexture(FLAT)
 	end
 
+	local top, bottom = flipped and 1 or 0, flipped and 0 or 1
+
+	frame.shape:SetTexCoord(0, 1, top, bottom)
+	frame.outline:SetTexCoord(0, 1, top, bottom)
 	frame.shape:SetVertexColor(color[1], color[2], color[3], 1)
 	frame.outline:SetVertexColor(0, 0, 0, 1)
 

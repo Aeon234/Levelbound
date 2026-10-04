@@ -599,6 +599,12 @@ local function Markers(ctx)
 		end
 	end
 
+	local function Tick()
+		if LB.Profile:Get("party.style") == "TICK" then
+			return L["The full-height tick always spans the bar."]
+		end
+	end
+
 	return {
 		Section("markers", L["Party Markers"], { tab = "markers" }),
 		Row(Toggle(ctx, "markers", L["Show Party Markers"], "party.markers", { pageSwitch = true })),
@@ -606,10 +612,18 @@ local function Markers(ctx)
 			Choice(ctx, "style", L["Marker Style"], "party.style", {
 				{ value = "DOT", label = L["Dot"] },
 				{ value = "TICK", label = L["Full-Height Tick"] },
-				{ value = "NOTCH", label = L["Top-Edge Notch"] },
+				{ value = "NOTCH", label = L["Notch"] },
 				{ value = "DIAMOND", label = L["Diamond"] },
 			}),
 			Slider(ctx, "size", L["Marker Size"], "party.size", 4, 24, 1)
+		),
+		Row(
+			Choice(ctx, "anchor", L["Anchor"], "party.anchor", {
+				{ value = "CENTER", label = L["Center"] },
+				{ value = "TOP", label = L["Top"] },
+				{ value = "BOTTOM", label = L["Bottom"] },
+			}, { blocked = Tick }),
+			Slider(ctx, "y", L["Vertical Offset"], "party.y", -32, 32, 1, { blocked = Tick })
 		),
 		Section("fading", L["Marker Fading"], { tab = "fading" }),
 		Row(

@@ -4,7 +4,7 @@ local L = LB.L
 
 local DEFAULT_PROFILE = "Default"
 local FONT = LB.DEFAULT_FONT
-local SCHEMA_VERSION = 1
+local SCHEMA_VERSION = 2
 local EXPORT_FORMAT = 1
 local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 
@@ -136,6 +136,8 @@ local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 ---@field opacity LBMarkerOpacitySettings
 ---@field style "DOT" | "TICK" | "NOTCH" | "DIAMOND"
 ---@field size number
+---@field anchor "CENTER" | "TOP" | "BOTTOM" the bar line the markers sit on; the full-height tick ignores it
+---@field y number the markers' vertical offset from their anchor, up positive; the full-height tick ignores it
 ---@field levelUp LBLevelUpSettings
 ---@field announce { levelUpParty: boolean, levelUpGuild: boolean, runSummary: boolean, runChannel: "SELF"|"PARTY"|"INSTANCE"|"GUILD" } messages sent for the player
 
@@ -258,6 +260,8 @@ local defaults = {
 		},
 		style = "DIAMOND",
 		size = 14,
+		anchor = "CENTER",
+		y = 0,
 		levelUp = {
 			enabled = true,
 			onScreen = true,
@@ -420,7 +424,18 @@ function Profile:ResolveName()
 end
 
 ---@type table<integer, fun(db: LBDatabase)>
-local migrations = {}
+local migrations = {
+	-- The notch hung from the bar's top edge before markers had an anchor.
+	[2] = function(db)
+		for _, profile in pairs(type(db.profiles) == "table" and db.profiles or {}) do
+			local party = type(profile) == "table" and profile.party
+
+			if type(party) == "table" and party.style == "NOTCH" and party.anchor == nil then
+				party.anchor = "TOP"
+			end
+		end
+	end,
+}
 
 ---@param db LBDatabase
 ---@return integer from
