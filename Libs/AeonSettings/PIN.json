@@ -1,15 +1,15 @@
 {
   "library": "AeonSettings",
   "version": "0.1.0",
-  "ref": "v0.1.0",
-  "commit": "60ad6a6f4982f23b0083a3e9f8959263888213ab",
-  "dev": false,
+  "ref": "worktree",
+  "commit": null,
+  "dev": true,
   "token": "AeonSettings_",
   "prefix": "LevelboundSettings_",
   "files": [
     {
       "path": "ActionButton.lua",
-      "sha256": "3d9f7ddd63c1cf5344cea0c0afbc45e0c065578379b4601d1b652cd7d34c868d",
+      "sha256": "149a72c4ccba7ffeb7a5e05477f78e386e5114f8bfca23ab0490a8cf951c2d1a",
       "transformed": true
     },
     {
@@ -19,17 +19,17 @@
     },
     {
       "path": "AeonSettings.xml",
-      "sha256": "3587235a3a94e8d2cc23f829245acd53d1765a653583e7b7b220a9e2a18b9e45",
+      "sha256": "b04a8011ac2d9ff0268c460c83e43ce210e257576e470a3b0bd593647a19852f",
       "transformed": false
     },
     {
       "path": "CategoryList.lua",
-      "sha256": "e4bfe425d905db395be4dd370ea7bde8bb3f20ade8b5ffc958d92183ba4f7efb",
+      "sha256": "9501b6e4a0084022e6f81ac505fd42755624c3e1fe78b0c6fb605cffb53b68cb",
       "transformed": true
     },
     {
       "path": "CategoryList.xml",
-      "sha256": "b198ce227182e549cd1c02478c4041610d661ce00f6190b039660565742c2bed",
+      "sha256": "1d2a384a27f97fc0f8803d42ab9a8ec3b01329d5f33bebf756f176ebe6dd55a2",
       "transformed": true
     },
     {
@@ -44,12 +44,12 @@
     },
     {
       "path": "ColorSwatch.lua",
-      "sha256": "0acac1340b035bc8106a19d044b17c4b7bcb8df4451a2ea16945500730e2e3e5",
+      "sha256": "3bf43e22d386b9a95dfbbb83dd3575434f8387c42e50a9159aa77229500ce958",
       "transformed": true
     },
     {
       "path": "ColorSwatch.xml",
-      "sha256": "6cc7f6de10b94dcc3b9060079f89e90167ec0d363ad6948ac16369fc91ddd3ba",
+      "sha256": "a66a06c45e0d3bf7c2438be8e9fefe02e8cc177ba7803222495dd01f66ed7cfd",
       "transformed": true
     },
     {
@@ -64,17 +64,22 @@
     },
     {
       "path": "Dropdown.lua",
-      "sha256": "2917afed8cc9fdeaf9c508042147275d825156d1e1110cd788f72ca267354508",
+      "sha256": "ee9291fa05e2b939d214e3edb032a362c8bca6e1c1d35f7d5da4fba253860db6",
       "transformed": true
     },
     {
       "path": "Dropdown.xml",
-      "sha256": "717b752ab0302b67db32152104f56adefab36ed93423ab347b2a34478fbaf376",
+      "sha256": "ad907ea55698ab0c9cbd6aa90d5f0c220446ba775ba387abf480a3cb03d5f27a",
       "transformed": true
     },
     {
       "path": "DropdownChoices.lua",
       "sha256": "b65a79fce381f21e6510846141c70fda60af1ccd52e52fe1b969337aa55879b3",
+      "transformed": false
+    },
+    {
+      "path": "Header.lua",
+      "sha256": "6c7a0fa7f70ddf9c7ba2d2c851cba577b28a59a0babf3249261dd5b3a29036ca",
       "transformed": false
     },
     {
@@ -89,52 +94,52 @@
     },
     {
       "path": "Locale/deDE.lua",
-      "sha256": "e1887e02262bb3f250b8e711c4e02a72e9741683b8db014e9f3cbf75904c4d5b",
+      "sha256": "29dd45944e441009191ca2236f67d906e39ad1cf3b934b0f53fd87fe2669df2a",
       "transformed": false
     },
     {
       "path": "Locale/esES.lua",
-      "sha256": "42a969098abc703c0a70f11f4bb636eeb9c099900e5e584657d006ac23ef507a",
+      "sha256": "ad6bc837f5172d71481140596b57b6a4771d6ee4ea78da240b28dfa36cac537a",
       "transformed": false
     },
     {
       "path": "Locale/esMX.lua",
-      "sha256": "2738c14e653ca2854be3507fdd80414789e250fe02c777591fb1ae26944fdce0",
+      "sha256": "de50f0d5bfe138f307011bbb36c6f12c701cbd26effa33a714f3b8a361ef6deb",
       "transformed": false
     },
     {
       "path": "Locale/frFR.lua",
-      "sha256": "a708c32f4d41193b5ea94e507f4d195ac7a5c7f2d0b6ef96c353758e851e098b",
+      "sha256": "775673ad5ff6c0da3969c77623a5b8d08008505fe9dfab6ed104c263c0e70869",
       "transformed": false
     },
     {
       "path": "Locale/itIT.lua",
-      "sha256": "7e943c95934985e1b830e88f532bacd7319c02d0f44864ce6e1d6937be77026d",
+      "sha256": "98be10085abdc8165a97f9005788ba13d06a04411c44789e1d98e07e6c973ba3",
       "transformed": false
     },
     {
       "path": "Locale/koKR.lua",
-      "sha256": "6d08fe5e83ef633a2c36bf8013d14a0b666576095e152893dffa7efa4e9c7e48",
+      "sha256": "6de3b814b7a160919b299e3d27283123efcbfb055a755ff341267ac1175eca11",
       "transformed": false
     },
     {
       "path": "Locale/ptBR.lua",
-      "sha256": "79285e446baa339a60fcac63d92d52dcc74975ee9f347885d3959cc82775cd86",
+      "sha256": "ba33dd731c8967eb0863e43e5c2583c4a86be02da777b653b3a16de67d96a91d",
       "transformed": false
     },
     {
       "path": "Locale/ruRU.lua",
-      "sha256": "ffd2fffcbe3542a926a505ab118699517388eb6c70c74d0c0c4d9ac8a60547e5",
+      "sha256": "139f07f1532d2ae5ed55753c1b2c2c0e360c73a9eb18788567d91404ee6c4726",
       "transformed": false
     },
     {
       "path": "Locale/zhCN.lua",
-      "sha256": "41dc33a4a8e4ea34382d632caa6427b412fc89d8b218c986b6bfab990d263975",
+      "sha256": "17518c55b990e069dd651a84f83891427af35c881a41f9eb068dfa66cd099143",
       "transformed": false
     },
     {
       "path": "Locale/zhTW.lua",
-      "sha256": "66ee040543862a6cb333a023363b9e80b4f3a3b7b437fd1c793e4feda12cf65e",
+      "sha256": "87d4b9ea2da947c5c05cf2708f6554f082903187aaa08f19eb4070c14ed47fd1",
       "transformed": false
     },
     {
@@ -148,8 +153,28 @@
       "transformed": false
     },
     {
-      "path": "Media/SectionHeader/Surface.png",
-      "sha256": "6fa85d537ddef3d957d6cafd987d64b7af88a2b76b7e79a7bbe9d8970b0862c0",
+      "path": "Media/Swatch/Frame.png",
+      "sha256": "2f1ca6b02623a40d33888af26b769e08026b577419e5838b51cdb38ce9c96280",
+      "transformed": false
+    },
+    {
+      "path": "Media/Swatch/Mask.png",
+      "sha256": "ceacb36b81e219218f45cdddcfca623a7a444903e2eae129466765e0561db626",
+      "transformed": false
+    },
+    {
+      "path": "Media/Tab/Base.png",
+      "sha256": "efc8a3999129261471d52d5c6a9503d39fa35d69154c3dc020f21af16e94bf66",
+      "transformed": false
+    },
+    {
+      "path": "Media/Tab/Hover.png",
+      "sha256": "11c17ea6b990bec929d9263938b7c41c74cd9874e6793f3af5f9320f0cfeb6bf",
+      "transformed": false
+    },
+    {
+      "path": "Media/Tab/Selected.png",
+      "sha256": "5b91d3bef0abef0f50fbfd339f22fa34df856ac01c72d8b3e07c83f4a09b43cc",
       "transformed": false
     },
     {
@@ -159,22 +184,32 @@
     },
     {
       "path": "Outline.lua",
-      "sha256": "68dad50299f129fc867b66c3e5fae45ca0a363f74ae780f13ee7bc0f57436ac9",
+      "sha256": "679617c3e7179ad3d0f734391281301f24be38dd255e88577f3d8bd70b869c16",
       "transformed": false
     },
     {
       "path": "PageModel.lua",
-      "sha256": "0dee496b1a78c76a2a837ea93d9bf44013875009e41810a4b61bc252115d22b0",
+      "sha256": "1b469755c16127e0d7652a822dced1548025a3d7583d2b3a2934901b2f5b8b23",
       "transformed": false
     },
     {
+      "path": "Picker.lua",
+      "sha256": "ce762a1183e166c911027292d6eea2173c3d482d7e475ab9bf6b10bcd3c5cdde",
+      "transformed": true
+    },
+    {
+      "path": "Picker.xml",
+      "sha256": "9749e9a167909043edcaa04521ac1081adc4a73d4497a91dab907f4da147e37f",
+      "transformed": true
+    },
+    {
       "path": "Preview.lua",
-      "sha256": "a1ff2b81fd2b298a685b5d19d1cf3b721b865160b07b783adac17ff2e5af9953",
+      "sha256": "b18986b07b7bdad8f6b05c6cb9134fd96aa9b5cec05fe06511982325f5e0c7bb",
       "transformed": true
     },
     {
       "path": "Preview.xml",
-      "sha256": "cd55d58e391fd40fd0b3aa127de25da91d4df22dbea4ab257b0760860de0632c",
+      "sha256": "110a1e8a37534ce8b953356e4c7088023ab6729f9f3d352f2965a0ac6786c412",
       "transformed": true
     },
     {
@@ -189,32 +224,32 @@
     },
     {
       "path": "Profiles.lua",
-      "sha256": "fe65b38934abc2ed9c04346edc2aae757cf0ee94f58e8e52cbb0c470fc133d4d",
+      "sha256": "942cdc02d54dd65bfe0d70065f63dc60ec0a142497973ab49a35843d4feb98ea",
       "transformed": false
     },
     {
       "path": "Row.lua",
-      "sha256": "7dcd5ab932a5a7dd4e4b55d246455d6e68d21e17e914217325cf04192e023a5d",
+      "sha256": "bc278426abcf2af2417e978f7d15ad11c2d86dc9bf0093bee47c8c6d5cbe1788",
       "transformed": true
     },
     {
       "path": "Row.xml",
-      "sha256": "2d1393c5fa0121e027d6b9a9b55c69ea7d1105aa1b3bd0d75e2cf52a98eeb28c",
+      "sha256": "0d22ddbcfa1ffed3ff73497e3d7f555bdeda65b48a13d8ff0d98376103a46dc7",
       "transformed": true
     },
     {
       "path": "Section.lua",
-      "sha256": "531fcb26aa439fe6707a7889d375c6bd690bec793b0df91850bf634f1ba85333",
+      "sha256": "a91191cebf2018d9054457ec8dbad18387f2c6f746e442bb658e8068a7489be7",
       "transformed": true
     },
     {
       "path": "Section.xml",
-      "sha256": "1328297ef4318fa364cc3c7a931ae54d833c310cf4545c220eba0b0c1efb8a26",
+      "sha256": "a6b2ab54b580d42eb9f5013bcb93f5fe379c9c0fc7edd8f52728fbf1e0f4ad3e",
       "transformed": true
     },
     {
       "path": "SettingSlot.lua",
-      "sha256": "f8b68ee4f3b7b2284b5197d9f3c1924be2339901ecd5473beba1a7a40b914c76",
+      "sha256": "f7684a0b31ead8e448d5ace2ee4c4d0f19bc047f17c69fdd4ecafe1c09c0cddb",
       "transformed": false
     },
     {
@@ -224,7 +259,7 @@
     },
     {
       "path": "Slider.xml",
-      "sha256": "c5e3483c5d72ad36d4ec05f7603fd10b357eeb62328d11ef0a6cedfbd76e81bb",
+      "sha256": "4c2443a37314d506974091bbe6a04b3c3db6ffcd1a38c77d988170b5b2a2f92b",
       "transformed": true
     },
     {
@@ -238,18 +273,13 @@
       "transformed": true
     },
     {
-      "path": "Surface.lua",
-      "sha256": "7c83d1e489b28496a98b3e28b24919a86f58549119847737c8154b897d96dae3",
-      "transformed": false
-    },
-    {
       "path": "TextInput.lua",
       "sha256": "f2e925d550ad9e67d59311efecc704b608a67638fd13fced7c73a48c1068e763",
       "transformed": true
     },
     {
       "path": "TextInput.xml",
-      "sha256": "521f62684fa3073bd08b17bd17e7bb1799a56863bf2b5dddb937953ed9702fee",
+      "sha256": "8dbbdc936fd846c8b82400149c398f09def9ca6db4fe1e0e1e3ef897b7297839",
       "transformed": true
     },
     {
@@ -264,7 +294,7 @@
     },
     {
       "path": "Tokens.lua",
-      "sha256": "4eb82069a6bc23a5e55e33180b78fa3d8f009dcfc03e544bd8d49be74d3f6380",
+      "sha256": "9a55fd342f1b099e864ed1628ea356018349d2b3ab6ec8466c02595fe0dc1adf",
       "transformed": false
     },
     {
@@ -274,12 +304,12 @@
     },
     {
       "path": "Window.lua",
-      "sha256": "5ef72b6147618ae885c73dcc5e15a4a9dad848a41e69a340e87ebc1db6000a5a",
+      "sha256": "a8ead1f4fdc03d64266925919cbc62af444952f023ee4e8f061d8950cbed714a",
       "transformed": true
     },
     {
       "path": "Window.xml",
-      "sha256": "1ef9d0299f30185dacc840b5926cc1e3a681ffc8179aabccdb47e71bd0add918",
+      "sha256": "fc03bbb3d63a309e4ce702d60c73554cce43417dcd4ca953fc951a6de0f5294a",
       "transformed": true
     }
   ]

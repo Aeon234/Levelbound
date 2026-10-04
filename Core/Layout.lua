@@ -29,6 +29,27 @@ function Layout.Fullscreen(layout)
 	return layout.fullscreen
 end
 
+---Returns a border style's fixed height while that border is drawn, which it is everywhere but along a screen edge.
+---@param layout LBLayoutSettings
+---@param fixed number? the border style's fixed height
+---@return number? height nil when the bars take their own height
+function Layout.HeldHeight(layout, fixed)
+	if fixed and not Layout.Fullscreen(layout) then
+		return fixed
+	end
+
+	return nil
+end
+
+---Returns the height bars draw at: the border's held height, otherwise the bar's own height, or the shared one.
+---@param layout LBLayoutSettings
+---@param fixed number? the border style's fixed height
+---@param own number? a bar's own height in Independent layout
+---@return number
+function Layout.Height(layout, fixed, own)
+	return Layout.HeldHeight(layout, fixed) or own or layout.height
+end
+
 ---@param layout LBLayoutSettings
 ---@return "UP" | "DOWN" growth away from the screen edge in fullscreen
 function Layout.Growth(layout)

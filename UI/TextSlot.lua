@@ -5,6 +5,7 @@ local GAP = 2
 local SPACING = 6
 local LAYER = 7
 local TICK = 1
+local FADE = 0.15 -- as the bars' own hover fade
 
 ---@class LBSlotAnchor
 ---@field host FramePoint
@@ -48,6 +49,7 @@ local INSIDE = { INSIDE_LEFT = true, INSIDE_CENTER = true, INSIDE_RIGHT = true }
 ---@field frame Frame the frame the slots are placed around
 ---@field layer Frame
 ---@field strings table<string, FontString>
+---@field drivers table<string, Frame> run each slot's hover fade
 ---@field entries table<string, LBSlotEntry> the slots this host currently draws
 ---@field typeId string? whose layout it draws
 ---@field bar LBBar? the bar whose data and hover drive it
@@ -73,7 +75,7 @@ local function HostFor(frame)
 
 		layer:SetAllPoints(frame)
 
-		host = { frame = frame, layer = layer, strings = {}, entries = {} }
+		host = { frame = frame, layer = layer, strings = {}, drivers = {}, entries = {} }
 		TextSlot.hosts[frame] = host
 	end
 
@@ -98,17 +100,45 @@ local function StringFor(host, key)
 	return fontString
 end
 
+---How far the drawn border stands out past a bar's top and bottom edges, which the outer slots keep clear of.
+---@param bar LBBar?
+---@return number reach in UI units; 0 along a screen edge, where no border is drawn
+function TextSlot:BorderReach(bar)
+	local layout = LB.Profile:Get("layout")
+
+	if LB.Layout.Fullscreen(layout) then
+		return 0
+	end
+
+	local border = LB.Profile:Get("appearance.border")
+	local height = bar and bar:GetHeight() or 0
+
+	if height <= 0 then
+		height = LB.Layout.Height(layout, LB.Border:FixedHeight(border.style))
+	end
+
+	return LB.Border:Outset(border.style, height, border.width)
+end
+
 ---@param host LBTextHost
 ---@param keys table<string, true> the slots this host owns
 ---@param typeId string?
 local function Configure(host, keys, typeId)
+	local reach = TextSlot:BorderReach(host.bar)
+
 	local slots = typeId and LB.Profile:Get("text.slots." .. typeId) or {}
 
 	host.typeId = typeId
 
 	for key, fontString in pairs(host.strings) do
 		fontString:Hide()
+		fontString:SetAlpha(1)
 		host.entries[key] = nil
+	end
+
+	for _, driver in pairs(host.drivers) do
+		LB:StopTween(driver)
+		driver.visible = nil
 	end
 
 	for key in pairs(keys) do
@@ -133,7 +163,9 @@ local function Configure(host, keys, typeId)
 			local y = anchor.y + (slot.y or 0)
 
 			if anchor.below then
-				y = y - style.size
+				y = y - style.size - reach
+			elseif not anchor.span then
+				y = y + reach
 			end
 
 			y = LB.Placement:ToPixel(y, pixel)
@@ -266,9 +298,60 @@ local function Fit(host, row, shown)
 	end
 end
 
+---Shows or hides a slot's text. A hover-only slot fades when `fade` is set; otherwise, and whenever its host is not
+---on screen, it snaps, unless a fade toward the same state is already running.
+---@param host LBTextHost
+---@param key string
+---@param entry LBSlotEntry
+---@param visible boolean
+---@param fade boolean?
+local function SetVisible(host, key, entry, visible, fade)
+	local fontString = entry.fontString
+	local driver = host.drivers[key]
+
+	if not driver then
+		driver = CreateFrame("Frame", nil, host.layer)
+		host.drivers[key] = driver
+	end
+
+	local running = driver:GetScript("OnUpdate") ~= nil and host.layer:IsVisible()
+
+	if running and driver.visible == visible then
+		return
+	end
+
+	driver.visible = visible
+	LB:StopTween(driver)
+
+	if not fade or entry.slot.visibility ~= "HOVER" or not host.layer:IsVisible() then
+		fontString:SetAlpha(1)
+		fontString:SetShown(visible)
+
+		return
+	end
+
+	if visible and not fontString:IsShown() then
+		fontString:SetAlpha(0)
+		fontString:Show()
+	end
+
+	local from = fontString:GetAlpha()
+	local to = visible and 1 or 0
+
+	LB:Tween(driver, FADE * math.abs(to - from), function(eased)
+		fontString:SetAlpha(from + (to - from) * eased)
+	end, function()
+		if not visible then
+			fontString:Hide()
+			fontString:SetAlpha(1)
+		end
+	end)
+end
+
 ---@param host LBTextHost
 ---@param hovered boolean
-local function Show(host, hovered)
+---@param fade boolean? hover-only slots fade rather than snap
+local function Show(host, hovered, fade)
 	local suppressed = host.bar and host.bar.textSuppressed and host ~= TextSlot.group
 
 	for _, row in ipairs(ROWS) do
@@ -284,7 +367,7 @@ local function Show(host, hovered)
 			local entry = host.entries[key]
 
 			if entry then
-				entry.fontString:SetShown(shown[key] == true)
+				SetVisible(host, key, entry, shown[key] == true, fade)
 			end
 		end
 	end
@@ -332,13 +415,27 @@ local function Independent()
 	return LB.Layout.Independent(LB.Profile:Get("layout"))
 end
 
+---@return boolean hidden the bars are held too short for text inside them by their border style
+function TextSlot:InsideHidden()
+	return LB.Border:HeldHeight() ~= nil
+end
+
+---@param key string a slot key
+---@return boolean
+function TextSlot:IsInside(key)
+	return INSIDE[key] == true
+end
+
 ---@param bar LBBar
 function TextSlot:ApplyBar(bar)
 	local host = HostFor(bar)
+	local inside = not self:InsideHidden()
 	local keys = {}
 
 	for _, key in ipairs(LB.TextSlotKeys) do
-		if INSIDE[key] or Independent() then
+		if INSIDE[key] then
+			keys[key] = inside or nil
+		elseif Independent() then
 			keys[key] = true
 		end
 	end
@@ -350,17 +447,19 @@ function TextSlot:ApplyBar(bar)
 	self:UpdateTicker()
 end
 
----Draws all nine of a bar's slots around it, whatever the layout mode, for a settings preview.
+---Draws a bar's slots around it, whatever the layout mode, for a settings preview: all nine, or the six outside it
+---while the bars are too short for text inside.
 ---@param bar LBBar a bar outside the bar group
 ---@param hovered boolean
 ---@return table<string, FontString> strings the shown slots' font strings, by slot key
 function TextSlot:ApplySample(bar, hovered)
 	local host = HostFor(bar)
+	local inside = not self:InsideHidden()
 	local keys = {}
 	local shown = {}
 
 	for _, key in ipairs(LB.TextSlotKeys) do
-		keys[key] = true
+		keys[key] = inside or not INSIDE[key] or nil
 	end
 
 	bar.hovered = hovered
@@ -437,11 +536,11 @@ function TextSlot:SetHovered(bar, hovered)
 	local host = self.hosts[bar]
 
 	if host then
-		Show(host, hovered)
+		Show(host, hovered, true)
 	end
 
 	if self.group then
-		Show(self.group, LB.Visibility.state.hovered ~= nil)
+		Show(self.group, LB.Visibility.state.hovered ~= nil, true)
 	end
 
 	self:UpdateTicker()

@@ -54,6 +54,7 @@ frame:SetScript("OnEvent", function(self, event, ...)
 			C_Timer.After(SETTLE, function()
 				LB.TimePlayed:RequestOnce()
 				LB.Comms:SendRequest()
+				LB.StylePicker:Offer()
 			end)
 		end
 	end

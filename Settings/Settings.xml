@@ -5,6 +5,7 @@
 	<Script file="TextSlots.lua" />
 	<Script file="Profiles.lua" />
 	<Script file="Settings.lua" />
+	<Script file="StylePicker.lua" />
 	<Script file="Mover.lua" />
 	<Script file="EditMode.lua" />
 	<Script file="EditPanel.lua" />

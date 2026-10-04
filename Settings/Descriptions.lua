@@ -52,30 +52,32 @@ LB.SettingsDescriptions = {
 		growth = L["Which way a stack grows from its first bar."],
 		gap = L["The space between stacked bars."],
 		strata = L["The interface layer the bars draw on. Raise it if other frames cover them."],
-	},
-	appearance = {
+
+		-- Appearance tab
 		texture = L["The texture of every bar's fill."],
 		background = L["The color behind each bar's fill."],
 		borderStyle = L["The border drawn around the bars."],
+		borderWidth = L["The Pixel border's thickness, in screen pixels."],
 		borderCustom = L["Tints a textured border with Border Color instead of its own colors."],
 		borderColor = L["The border's color. The XP dividers use it too unless they have their own."],
-		dividers = L["Marks every tenth of the experience and pet experience bars."],
+		dividers = L["Marks the experience and pet experience bars at even steps through the level."],
+		dividerSpacing = L["How far apart the dividers are, as a share of the level."],
 		dividerCustom = L["Gives the dividers their own color instead of the border's."],
 		dividerColor = L["The dividers' own color."],
 		spark = L["A bright line at the end of each bar's fill."],
 		sparkCustom = L["Gives the spark its own color instead of its bar's."],
 		sparkColor = L["The spark's own color."],
 		shimmer = L["A shine that sweeps across the fill when a bar gains progress."],
-	},
-	text = {
+
+		-- Text tab
 		font = L["The font of every bar's text, unless a text slot sets its own."],
 		size = L["The size of every bar's text, unless a text slot sets its own."],
 		outline = L["The outline of every bar's text, unless a text slot sets its own."],
 		color = L["The color of every bar's text, unless a text slot sets its own."],
 		compact = L["Shortens large numbers, such as 12.4K for 12,400."],
 		decimals = L["Shows one decimal place on percentages."],
-	},
-	visibility = {
+
+		-- Visibility tab
 		fade = L["Fades the bars until you move the mouse over them."],
 		fadedAlpha = L["How visible the bars are while faded."],
 		fullInCombat = L["Shows faded bars fully while you are in combat."],
@@ -102,6 +104,8 @@ LB.SettingsDescriptions = {
 		markers = L["Shows where each party member is on your experience bar."],
 		style = L["The markers' shape."],
 		size = L["The markers' size."],
+		anchor = L["The line of the bar the markers sit on: its middle, its top edge or its bottom edge."],
+		y = L["Moves the markers up or down from their anchor."],
 		matchBar = L["The markers fade with the experience bar. Turn off to give them their own opacity."],
 		alpha = L["How visible the markers are."],
 		fade = L["Fades the markers until you hover the experience bar."],
@@ -123,6 +127,7 @@ LB.SettingsDescriptions = {
 		font = L["The notices' font."],
 		size = L["The notices' text size."],
 		outline = L["The notices' text outline."],
+		levelUpEmote = L["Emotes your own level-ups to players nearby, only while you are not in a group."],
 		levelUpParty = L["Posts your own level-ups to your party."],
 		levelUpGuild = L["Posts your own level-ups to your guild."],
 		runSummary = L["When a dungeon or scenario ends, sums up the experience it gave and how long it took."],
@@ -138,8 +143,6 @@ LB.SettingsDescriptions = {
 		color = L["The bar's fill color."],
 		barwidth = L["This bar's own width in Independent layout."],
 		barheight = L["This bar's own height in Independent layout."],
-		sharedSize = L["Gives this bar the Layout page's width and height again."],
-		useTextStyle = L["Removes this slot's own font, size, outline and color."],
 		slot = L["Which of the bar's text places to edit. You can also click one in the preview."],
 		visibility = L["When the slot's text shows."],
 		insertTag = L["Adds a tag where you were typing."],

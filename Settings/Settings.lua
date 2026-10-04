@@ -10,6 +10,9 @@ local ALIASES = {
 	types = "type.xp",
 	party = "markers",
 	levelup = "levelups",
+	appearance = "layout",
+	text = "layout",
+	visibility = "layout",
 }
 
 ---The settings window, built on the AeonSettings library.

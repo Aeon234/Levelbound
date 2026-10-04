@@ -4,7 +4,7 @@ local L = LB.L
 local AS = LB.AeonSettings
 
 local NUDGE_LIMIT = 50
-local SIZE_MIN, SIZE_MAX = 6, 32
+local SIZE_MIN, SIZE_MAX = LB.LIMITS.textSize.min, LB.LIMITS.textSize.max
 local DEFAULT_SLOT = "INSIDE_LEFT"
 local COPY_WIDTH = 170
 
@@ -32,18 +32,42 @@ function Text:Keys(typeId)
 	return typeId == "xp" and LB.TextSlotKeys or INSIDE_KEYS
 end
 
+---@param key string
+---@return string? reason the slot cannot be edited now, or nil
+local function Unavailable(key)
+	if LB.TextSlot:IsInside(key) and LB.TextSlot:InsideHidden() then
+		return L["The Blizzard border leaves no room for text inside the bar."]
+	end
+end
+
+---The slots of a type's editor that can be edited now.
+---@param typeId string
+---@return string[]
+function Text:Usable(typeId)
+	local keys = {}
+
+	for _, key in ipairs(self:Keys(typeId)) do
+		if not Unavailable(key) then
+			keys[#keys + 1] = key
+		end
+	end
+
+	return keys
+end
+
 ---@param typeId string
 ---@return string
 function Text:Chosen(typeId)
 	local chosen = self.chosen[typeId]
+	local usable = self:Usable(typeId)
 
-	for _, key in ipairs(self:Keys(typeId)) do
+	for _, key in ipairs(usable) do
 		if key == chosen then
 			return chosen
 		end
 	end
 
-	return DEFAULT_SLOT
+	return usable[1] or DEFAULT_SLOT
 end
 
 ---@param typeId string
@@ -135,7 +159,11 @@ local function SlotChoices(typeId)
 		local slot = Slot(typeId, key)
 		local text = slot and slot.text ~= "" and slot.text or L["(empty)"]
 
-		choices[index] = { value = key, text = ("%s: %s"):format(L["slot." .. key], text) }
+		choices[index] = {
+			value = key,
+			text = ("%s: %s"):format(L["slot." .. key], text),
+			blocked = Unavailable(key),
+		}
 	end
 
 	return choices
@@ -259,8 +287,18 @@ function Text:Elements(ctx, typeId)
 			id = id,
 			control = control,
 			label = label,
-			rebuild = true,
-			description = Overridden(typeId, key, field) and L["Custom for this slot."] or nil,
+			inherit = {
+				custom = function()
+					return Overridden(typeId, key, field)
+				end,
+				clear = function()
+					if Overridden(typeId, key, field) then
+						LB.Profile:Set(Path(typeId, key) .. ".style." .. field, nil)
+					end
+
+					return true
+				end,
+			},
 			get = function()
 				return Effective(typeId, key)[field]
 			end,
@@ -269,26 +307,6 @@ function Text:Elements(ctx, typeId)
 			end,
 		}, fields)
 	end
-
-	local useStyle = {
-		id = "useTextStyle",
-		control = "action",
-		label = L["Use Text Style"],
-		verb = L["Use Text Style"],
-		blocked = function()
-			local slot = Slot(typeId, key)
-
-			if not slot or type(slot.style) ~= "table" or next(slot.style) == nil then
-				return L["This slot uses the text style."]
-			end
-		end,
-		set = function()
-			EnsureSlot(typeId, key)
-			LB.Profile:Set(Path(typeId, key) .. ".style", {})
-
-			return true
-		end,
-	}
 
 	local copyChoices = CopyChoices(typeId)
 
@@ -317,8 +335,8 @@ function Text:Elements(ctx, typeId)
 		end,
 	}
 
-	return {
-		Section("text", L["Text"], { action = useStyle, menu = copyMenu }),
+	local elements = {
+		Section("text", L["Text"], { tab = "text", menu = copyMenu }),
 		Row({
 			id = "slot",
 			control = "dropdown",
@@ -450,4 +468,19 @@ function Text:Elements(ctx, typeId)
 			})
 		),
 	}
+
+	-- With no slot left to edit, every row says why.
+	local reason = Unavailable(key)
+
+	if reason then
+		for _, element in ipairs(elements) do
+			for _, setting in ipairs(element.settings or { element.setting }) do
+				setting.blocked = function()
+					return reason
+				end
+			end
+		end
+	end
+
+	return elements
 end

@@ -1,31 +1,36 @@
 local LB = select(2, ...)
 
-local L = LB.L
-
 local PAD = 8 -- room around the bars for borders and hit outlines
 local APPEARANCE_GAP = 12
-local COLUMN_GAP = 24
-local MARKER_ROOM = 24 -- the largest marker size
-local STACK_MAX = 3 -- bars a stacked sample shows, so a fixed-height panel has room for any gap
 local GAIN_AMOUNT = 1234
 local SLOT_ROOM = 4 -- room above and below the bar beyond the text size, for outer slots
 local GLINT_EVERY = 2
-
--- Each page's preview is a fixed number of rows, title band included, so the page never shifts; a sample that
--- does not fit is scaled down.
-local ROWS = { TYPE = 4, LAYOUT = 5, APPEARANCE = 4, GAIN = 5, MARKERS = 4, LEVELUPS = 5 }
 local GAIN_PAUSE = 0.5 -- between one looped gain's fade and the next
 local ZONE_ALPHA = 0.3
+
+-- Preview bars take a fixed width, so a very wide or narrow setting never crowds the sample; their height is real.
+local PREVIEW_WIDTH = 480
+local GAIN_WIDTH = 190 -- the Gain Indicator page's bars, up to four to a row
+local GAIN_HEIGHT = 12
+local GAIN_COLUMNS = 4
+local GAIN_COLUMN_GAP = 16
+
+-- The largest values the settings allow, from which each page's preview takes a fixed height.
+local BAR_MAX = LB.LIMITS.barHeight.max
+local TEXT_MAX = LB.LIMITS.textSize.max
+local BORDER_PIXELS_MAX = LB.LIMITS.borderWidth.max
+local MARKER_SIZE_MAX = LB.LIMITS.markerSize.max
+local MARKER_OFFSET_MAX = LB.LIMITS.markerOffset.max
+local NOTICE_LINES = 3
+
+local BORDER_HIT = 4 -- the least ring around a bar that finds its border setting, with or without a border
+local SPARK_HIT = 12 -- the width at the fill's end that finds the spark setting
 
 local SLOT_KEYS = {}
 
 for _, key in ipairs(LB.TextSlotKeys) do
 	SLOT_KEYS[key] = true
 end
-
-local STATE_NORMAL = L["Normal"]
-local STATE_HOVERED = L["Hovered"]
-local STATE_GAINING = L["Gaining"]
 
 ---Draws each settings page's preview: sample bars made with Levelbound's own bar code and fixed sample values,
 ---never the bars on screen.
@@ -34,8 +39,12 @@ local STATE_GAINING = L["Gaining"]
 ---@field used table<string, boolean> the bars the current draw placed
 ---@field zones table<string, Frame> text slot boxes by slot key
 ---@field glint any? the ticker replaying the gain effect
----@field group Frame? the frame a segmented sample's border goes around
+---@field hover Frame? the mouse area over the markers sample's bar
+---@field hovered boolean? the cursor is over the markers sample's bar
+---@field inner Frame? the frame each preview draws into, centered in the panel's sample and scaled to fit
+---@field areas table<LBBar, table<string, Frame>> click areas around each sample bar, by kind
 local Previews = {
+	areas = {},
 	bars = {},
 	used = {},
 	zones = {},
@@ -52,12 +61,18 @@ function Previews:Begin(sample)
 		zone:Hide()
 	end
 
-	if self.group then
-		self.group.border:Hide()
-	end
-
 	if self.box then
 		self.box:Hide()
+	end
+
+	if self.hover then
+		self.hover:Hide()
+	end
+
+	for _, areas in pairs(self.areas) do
+		for _, area in pairs(areas) do
+			area:Hide()
+		end
 	end
 
 	self.sample = sample
@@ -113,18 +128,68 @@ function Previews:Bar(id, width, height, borderStyle)
 
 	local border = LB.Profile:Get("appearance.border")
 	local style = borderStyle or (Fullscreen() and "NONE" or border.style)
-
-	bar.border:Apply(style, LB.Border:Color(style, border), height)
+	bar.border:Apply(style, LB.Border:Color(style, border), height, border.width)
+	bar:SetEndMasks(LB.Border:EndMask(style), true, true)
 
 	return bar
 end
 
----@return number width
----@return number height
-local function SharedSize()
-	local layout = LB.Profile:Get("layout")
+---@return number? height the border style's fixed bar height, or nil
+local function FixedHeight()
+	return LB.Border:FixedHeight(LB.Profile:Get("appearance.border.style"))
+end
 
-	return layout.width, layout.height
+---An empty frame placed around part of a sample bar, so a click there finds that part's setting.
+---@param bar LBBar
+---@param kind "border" | "spark" | "gain"
+---@param reach number? the border ring's width, or the gain area's height
+---@return Frame area
+function Previews:Area(bar, kind, reach)
+	local areas = self.areas[bar] or {}
+	local area = areas[kind]
+
+	self.areas[bar] = areas
+
+	if not area then
+		area = CreateFrame("Frame", nil, self.sample)
+		areas[kind] = area
+	end
+
+	if area:GetParent() ~= self.sample then
+		area:SetParent(self.sample)
+	end
+
+	area:ClearAllPoints()
+
+	if kind == "border" then
+		area:SetPoint("TOPLEFT", bar, "TOPLEFT", -reach, reach)
+		area:SetPoint("BOTTOMRIGHT", bar, "BOTTOMRIGHT", reach, -reach)
+	elseif kind == "spark" then
+		area:SetPoint("TOPLEFT", bar.clip, "TOPRIGHT", -SPARK_HIT / 2, 0)
+		area:SetPoint("BOTTOMLEFT", bar.clip, "BOTTOMRIGHT", -SPARK_HIT / 2, 0)
+		area:SetWidth(SPARK_HIT)
+	else
+		area:SetPoint("BOTTOMLEFT", bar, "TOPLEFT")
+		area:SetPoint("BOTTOMRIGHT", bar, "TOPRIGHT")
+		area:SetHeight(reach)
+	end
+
+	area:Show()
+
+	return area
+end
+
+---Hides a sample bar's text, which belongs to the progress type pages.
+---@param bar LBBar
+function Previews:Bare(bar)
+	bar.textSuppressed = true
+	LB.TextSlot:UpdateBar(bar)
+end
+
+---@return number width the preview's fixed bar width
+---@return number height the bars' real height
+local function SharedSize()
+	return PREVIEW_WIDTH, LB.Layout.Height(LB.Profile:Get("layout"), FixedHeight())
 end
 
 ---@param id string
@@ -136,16 +201,15 @@ local function BarSize(id)
 	if LB.Layout.Independent(LB.Profile:Get("layout")) then
 		local entry = LB.Profile:Get("layout.independent")[id]
 
-		width = entry and entry.width or width
-		height = entry and entry.height or height
+		height = LB.Layout.Height(LB.Profile:Get("layout"), FixedHeight(), entry and entry.height)
 	end
 
 	return width, height
 end
 
----@return number room above a bar for its gain indicator
+---@return number room above a bar for its gain indicator, which keeps clear of the border
 local function GainRoom()
-	return LB.Profile:Get("gain.text.size") * 2 + SLOT_ROOM * 2
+	return LB.Profile:Get("gain.text.size") * 2 + SLOT_ROOM * 2 + LB.TextSlot:BorderReach(nil)
 end
 
 ---Places bars in a column from `top` down, `gap` apart, and returns the column's width and bottom.
@@ -215,8 +279,6 @@ end
 ---@return table preview
 local function TypePreview(id)
 	return {
-		minRows = ROWS.TYPE,
-		maxRows = ROWS.TYPE,
 		Pick = function(key)
 			if SLOT_KEYS[key] and LB.Settings.window then
 				LB.SettingsText:Choose(id, key)
@@ -228,11 +290,12 @@ local function TypePreview(id)
 			Previews:Begin(sample)
 
 			local width, height = BarSize(id)
-			local keys = LB.SettingsText:Keys(id)
+			local keys = LB.SettingsText:Usable(id)
 			local outer = #keys > 3
 			local zone = LB.Profile:Get("text.style.size") + SLOT_ROOM
-			local above = math.max(outer and zone or 0, GainRoom())
-			local below = outer and zone or 0
+			local reach = outer and LB.TextSlot:BorderReach(nil) or 0
+			local above = math.max(outer and zone + reach or 0, GainRoom())
+			local below = outer and zone + reach or 0
 			local bar = Previews:Bar(id, width, height)
 
 			bar:SetPoint("TOPLEFT", sample, "TOPLEFT", PAD, -(PAD + above))
@@ -247,7 +310,7 @@ local function TypePreview(id)
 			LB.TextSlot:ApplySample(bar, true)
 
 			for _, key in ipairs(keys) do
-				addPart(Previews:Zone(bar, key, zone), "slot", false, key)
+				addPart(Previews:Zone(bar, key, zone), ("slotText.%s.%s"):format(id, key), false, key)
 			end
 
 			if LB.Settings.window then
@@ -303,14 +366,16 @@ function Previews:Zone(bar, key, height)
 		zone:SetSize(width, bar:GetHeight())
 	else
 		-- Above and below boxes take their column's inside box's exact width.
+		-- Clear of the border, as the slots' text is.
 		local inside = self:Zone(bar, "INSIDE_" .. column, height)
+		local reach = LB.TextSlot:BorderReach(bar)
 
 		if row == "ABOVE" then
-			zone:SetPoint("BOTTOMLEFT", inside, "TOPLEFT")
-			zone:SetPoint("BOTTOMRIGHT", inside, "TOPRIGHT")
+			zone:SetPoint("BOTTOMLEFT", inside, "TOPLEFT", 0, reach)
+			zone:SetPoint("BOTTOMRIGHT", inside, "TOPRIGHT", 0, reach)
 		else
-			zone:SetPoint("TOPLEFT", inside, "BOTTOMLEFT")
-			zone:SetPoint("TOPRIGHT", inside, "BOTTOMRIGHT")
+			zone:SetPoint("TOPLEFT", inside, "BOTTOMLEFT", 0, -reach)
+			zone:SetPoint("TOPRIGHT", inside, "BOTTOMRIGHT", 0, -reach)
 		end
 
 		zone:SetHeight(height)
@@ -339,86 +404,8 @@ function Previews:Zone(bar, key, height)
 	return zone
 end
 
----Every enabled type in the chosen layout mode, at the set size and gap.
----@return table preview
-local function LayoutPreview()
-	return {
-		minRows = ROWS.LAYOUT,
-		maxRows = ROWS.LAYOUT,
-		Draw = function(sample, _, addPart)
-			Previews:Begin(sample)
-
-			local layout = LB.Profile:Get("layout")
-			local ids = Types()
-			local segmented = layout.mode == "SEGMENTED"
-			local width, bottom = 0, 0
-
-			if segmented then
-				local rects = LB.BarGroup:ComputeLayout(ids, layout.width)
-
-				for _, id in ipairs(ids) do
-					local rect = rects[id]
-					local bar = Previews:Bar(id, rect.width, rect.height, "NONE")
-
-					bar:SetPoint("TOPLEFT", sample, "TOPLEFT", PAD + rect.x, -PAD)
-					width = math.max(width, rect.x + rect.width)
-					bottom = math.max(bottom, rect.height)
-					addPart(bar, "mode")
-				end
-			else
-				-- Connected and Independent show the same stack: up to three bars at the shared size, the gap
-				-- measured between their borders.
-				local style = Fullscreen() and "NONE" or LB.Profile:Get("appearance.border.style")
-				local spacing = layout.gap + 2 * LB.Border:Outset(style, layout.height)
-
-				for index = 1, math.min(#ids, STACK_MAX) do
-					local bar = Previews:Bar(ids[index], layout.width, layout.height)
-					local y = (index - 1) * (layout.height + spacing)
-
-					bar:SetPoint("TOPLEFT", sample, "TOPLEFT", PAD, -(PAD + y))
-					width = layout.width
-					bottom = y + layout.height
-					addPart(bar, "mode")
-				end
-			end
-
-			if segmented and #ids > 0 and not Fullscreen() then
-				Previews:GroupBorder(width, bottom)
-			end
-
-			Previews:Finish()
-
-			return math.max(width, 1) + PAD * 2, math.max(bottom, 1) + PAD * 2
-		end,
-	}
-end
-
----The border around a segmented sample, which reads as one bar.
----@param width number
----@param height number
-function Previews:GroupBorder(width, height)
-	local group = self.group
-
-	if not group then
-		group = CreateFrame("Frame", nil, self.sample)
-		group.border = LB.Border:Create(group)
-		self.group = group
-	end
-
-	if group:GetParent() ~= self.sample then
-		group:SetParent(self.sample)
-	end
-
-	local border = LB.Profile:Get("appearance.border")
-
-	group:ClearAllPoints()
-	group:SetPoint("TOPLEFT", self.sample, "TOPLEFT", PAD, -PAD)
-	group:SetSize(width, height)
-	group:SetFrameLevel(self.sample:GetFrameLevel() + 10)
-	group.border:Apply(border.style, LB.Border:Color(border.style, border), height)
-end
-
----Experience and one other bar, with the border, spark and background; Gaining plays the gain effect.
+---Experience and one other bar, with the border, spark and background; the gain effect replays on a loop while
+---the gain shimmer is on.
 ---@return table preview
 local function AppearancePreview()
 	local function StopGlint()
@@ -429,11 +416,8 @@ local function AppearancePreview()
 	end
 
 	return {
-		minRows = ROWS.APPEARANCE,
-		maxRows = ROWS.APPEARANCE,
-		states = { STATE_NORMAL, STATE_GAINING },
 		Stop = StopGlint,
-		Draw = function(sample, state, addPart)
+		Draw = function(sample, _, addPart)
 			StopGlint()
 			Previews:Begin(sample)
 
@@ -443,17 +427,27 @@ local function AppearancePreview()
 			for _, id in ipairs(Pair()) do
 				local bar = Previews:Bar(id, width, height)
 
+				Previews:Bare(bar)
 				bars[#bars + 1] = bar
+
+				-- Later parts win where they overlap: the ring finds the border, the fill the texture and the fill's
+				-- end the spark.
+				local border = LB.Profile:Get("appearance.border")
+				local style = Fullscreen() and "NONE" or border.style
+				local ring = math.max(LB.Border:Outset(style, height, border.width), BORDER_HIT)
+
+				addPart(Previews:Area(bar, "border", ring), "borderStyle")
 				addPart(bar, "texture")
-				addPart(bar.border, "borderStyle")
+				addPart(Previews:Area(bar, "spark"), "spark")
 			end
 
 			-- Apart by their borders' reach and a clear gap, so each bar reads on its own.
-			local style = Fullscreen() and "NONE" or LB.Profile:Get("appearance.border.style")
-			local gap = APPEARANCE_GAP + 2 * LB.Border:Outset(style, height)
+			local border = LB.Profile:Get("appearance.border")
+			local style = Fullscreen() and "NONE" or border.style
+			local gap = APPEARANCE_GAP + 2 * LB.Border:Outset(style, height, border.width)
 			local columnWidth, bottom = Column(bars, PAD, gap)
 
-			if state == STATE_GAINING then
+			if LB.Profile:Get("appearance.shimmer") then
 				local function Glint()
 					for _, bar in ipairs(bars) do
 						bar:Glint(true)
@@ -510,8 +504,6 @@ end
 ---@return table preview
 local function GainPreview()
 	return {
-		minRows = ROWS.GAIN,
-		maxRows = ROWS.GAIN,
 		Stop = StopGains,
 		Draw = function(sample, _, addPart)
 			StopGains()
@@ -529,22 +521,23 @@ local function GainPreview()
 				return width + PAD * 2, height + PAD * 2
 			end
 
-			local width, height = SharedSize()
+			-- Short bars, up to four to a row: this page is about the arrows, not the bars.
+			local width, height = GAIN_WIDTH, LB.Border:HeldHeight() or GAIN_HEIGHT
 			local room = GainRoom()
-			local columns = #ids > 2 and 2 or 1
+			local columns = math.max(math.min(#ids, GAIN_COLUMNS), 1)
 			local bars = {}
 			local rows = math.ceil(#ids / columns)
 
-			-- Two columns once there are more than two bars, filled row by row.
 			for index, id in ipairs(ids) do
 				local bar = Previews:Bar(id, width, height)
 				local column = (index - 1) % columns
 				local row = math.floor((index - 1) / columns)
 
-				bar:SetPoint("TOPLEFT", sample, "TOPLEFT", PAD + column * (width + COLUMN_GAP),
+				bar:SetPoint("TOPLEFT", sample, "TOPLEFT", PAD + column * (width + GAIN_COLUMN_GAP),
 					-(PAD + room + row * (height + room)))
 				bars[#bars + 1] = bar
 				addPart(bar, "tint." .. id)
+				addPart(Previews:Area(bar, "gain", room), "tint." .. id)
 			end
 
 			local y = PAD + rows * (height + room)
@@ -559,46 +552,129 @@ local function GainPreview()
 			Previews.gainLoop = C_Timer.NewTicker(LB.NoticeStack.DURATION + GAIN_PAUSE, Play)
 			Previews:Finish()
 
-			return columns * width + (columns - 1) * COLUMN_GAP + PAD * 2, y + PAD
+			return columns * width + (columns - 1) * GAIN_COLUMN_GAP + PAD * 2, y + PAD
 		end,
 	}
 end
 
----The experience bar with a sample party's markers, at the markers' opacity.
+---Sets the sample markers' and bar's opacity as the experience bar on screen has them, hovered or not.
+---@param bar LBBar
+---@param animated boolean?
+function Previews:ApplyMarkerOpacity(bar, animated)
+	local layer = bar.markerLayer
+
+	if not layer then
+		return
+	end
+
+	local opacity = LB.Profile:Get("party.opacity")
+	local settings = LB.Profile:Get("visibility")
+	local visibility = {
+		inCombat = false,
+		hasTarget = false,
+		blocked = false,
+		hovered = self.hovered and "xp" or nil,
+		editing = false,
+	}
+	local alpha = LB.Visibility:ResolveMarkers(opacity, settings, visibility, "xp", true)
+	local barAlpha = opacity.matchBar and LB.Visibility:Resolve(settings, visibility, "xp") or 1
+
+	layer:SetIgnoreParentAlpha(false)
+	LB.Visibility:SetAlpha(layer, layer, opacity.matchBar and 1 or alpha, animated)
+	LB.Visibility:SetAlpha(bar, self.hover, barAlpha, animated)
+end
+
+---Stops the markers sample's fades and forgets its hover.
+local function StopMarkers()
+	Previews.hovered = false
+
+	if Previews.hover then
+		Previews.hover:SetScript("OnUpdate", nil)
+		LB:StopTween(Previews.hover)
+	end
+
+	local bar = Previews.bars.xp
+
+	if bar and bar.markerLayer then
+		LB:StopTween(bar.markerLayer)
+	end
+end
+
+---Clears the markers sample's hover and fades the markers back.
+---@param hover Frame
+local function Unhover(hover)
+	hover:SetScript("OnUpdate", nil)
+	Previews.hovered = false
+	Previews:ApplyMarkerOpacity(hover.bar, true)
+end
+
+---Covers the sample bar with a mouse area that fades the markers as hovering the bar on screen does.
+---@param bar LBBar
+function Previews:Hover(bar)
+	local hover = self.hover
+
+	if not hover then
+		hover = CreateFrame("Frame", nil, self.sample)
+		hover:SetScript("OnEnter", function()
+			hover:SetScript("OnUpdate", nil)
+			Previews.hovered = true
+			Previews:ApplyMarkerOpacity(hover.bar, true)
+		end)
+		hover:SetScript("OnLeave", function()
+			-- A marker's hit area, drawn above this frame, takes the cursor while it is still over the bar.
+			if hover:IsMouseOver() then
+				-- The cursor can leave the bar from that hit area, which sends this frame no event, so watch for it
+				-- until the cursor leaves the bar or comes back to this frame.
+				hover:SetScript("OnUpdate", function()
+					if not hover:IsMouseOver() then
+						Unhover(hover)
+					end
+				end)
+
+				return
+			end
+
+			Unhover(hover)
+		end)
+		self.hover = hover
+	end
+
+	if hover:GetParent() ~= self.sample then
+		hover:SetParent(self.sample)
+	end
+
+	hover.bar = bar
+	hover:ClearAllPoints()
+	hover:SetAllPoints(bar)
+	hover:SetFrameLevel(bar:GetFrameLevel() + 20)
+	hover:EnableMouse(true)
+	hover:Show()
+end
+
+---The experience bar with a sample party's markers, at the markers' opacity; hovering the bar fades them as on
+---screen.
 ---@return table preview
 local function MarkersPreview()
 	return {
-		minRows = ROWS.MARKERS,
-		maxRows = ROWS.MARKERS,
-		states = { STATE_NORMAL, STATE_HOVERED },
-		Draw = function(sample, state, addPart)
+		Stop = StopMarkers,
+		Draw = function(sample, _, addPart)
 			Previews:Begin(sample)
 
 			local width, height = SharedSize()
-			-- Room for the largest marker, so changing the markers' size never rescales the bar.
-			local size = MARKER_ROOM
+			local party = LB.Profile:Get("party")
+			local metrics = LB.Marker:Current()
+			local above, below = LB.Marker.Reach(party.style, metrics.anchor, metrics.y, metrics.height, height)
+			-- At least the largest marker's room, so changing the markers' size alone never rescales the bar.
+			above, below = math.max(above, MARKER_SIZE_MAX), math.max(below, MARKER_SIZE_MAX)
 			local bar = Previews:Bar("xp", width, height)
 
-			bar:SetPoint("TOPLEFT", sample, "TOPLEFT", PAD, -(PAD + size))
+			Previews:Bare(bar)
+			bar:SetPoint("TOPLEFT", sample, "TOPLEFT", PAD, -(PAD + above))
 			LB.Marker:Apply(bar, LB.Marker:SampleParty())
-
-			local layer = bar.markerLayer
-
-			if layer then
-				local opacity = LB.Profile:Get("party.opacity")
-				local visibility = {
-					inCombat = false,
-					hasTarget = false,
-					blocked = false,
-					hovered = state == STATE_HOVERED and "xp" or nil,
-					editing = false,
-				}
-				local alpha = LB.Visibility:ResolveMarkers(opacity, LB.Profile:Get("visibility"), visibility, "xp", true)
-
-				layer:SetIgnoreParentAlpha(false)
-				layer:SetAlpha(opacity.matchBar and 1 or alpha)
-				bar:SetAlpha(opacity.matchBar and LB.Visibility:Resolve(LB.Profile:Get("visibility"), visibility, "xp") or 1)
-			end
+			Previews:Hover(bar)
+			StopMarkers()
+			Previews.hovered = Previews.hover:IsMouseOver()
+			Previews:ApplyMarkerOpacity(bar, false)
 
 			for _, marker in pairs(bar.markerShown or {}) do
 				addPart(marker, "style")
@@ -606,7 +682,7 @@ local function MarkersPreview()
 
 			Previews:Finish()
 
-			return width + PAD * 2, height + (PAD + size) * 2
+			return width + PAD * 2, height + above + below + PAD * 2
 		end,
 	}
 end
@@ -638,8 +714,6 @@ end
 ---@return table preview
 local function LevelUpsPreview()
 	return {
-		minRows = ROWS.LEVELUPS,
-		maxRows = ROWS.LEVELUPS,
 		Stop = function()
 			LB.LevelUpNotice:StopPreviewSample()
 		end,
@@ -670,6 +744,7 @@ local function LevelUpsPreview()
 			local above, below = NoticeRoom(settings, stack, height)
 			local bar = Previews:Bar("xp", width, height)
 
+			Previews:Bare(bar)
 			bar:SetPoint("TOPLEFT", sample, "TOPLEFT", PAD + math.max(0, -settings.x), -(PAD + above))
 			addPart(bar, "anchor")
 
@@ -684,22 +759,104 @@ local function LevelUpsPreview()
 	}
 end
 
+-- Fixed heights ---------------------------------------------------------------------------------------------
+
+---@return number the farthest any border style can reach past a bar
+local function ReachMax()
+	local pixel = LB.Border:Outset("PIXEL", BAR_MAX, BORDER_PIXELS_MAX)
+
+	return math.max(pixel, LB.Border:Outset("METALLIC", BAR_MAX), LB.Border:Outset("BLIZZARD", BAR_MAX))
+end
+
+---@return number room above a bar for the largest gain indicator
+local function GainRoomMax()
+	return TEXT_MAX * 2 + SLOT_ROOM * 2 + ReachMax()
+end
+
+-- Each page's sample height with every setting at its largest.
+local FIXED = {
+	type = function()
+		return PAD * 2 + BAR_MAX + GainRoomMax() + TEXT_MAX + SLOT_ROOM + ReachMax()
+	end,
+	layout = function()
+		return PAD * 2 + BAR_MAX * 2 + APPEARANCE_GAP + ReachMax() * 2
+	end,
+	gain = function()
+		-- Rows for every type this client can track, enabled or not, so the height holds as types are switched.
+		local capable = 0
+
+		for _, id in ipairs(LB.Model:Order()) do
+			if LB.Model:Capable(id) then
+				capable = capable + 1
+			end
+		end
+
+		local rows = math.max(math.ceil(capable / GAIN_COLUMNS), 1)
+
+		return PAD * 2 + rows * (GAIN_HEIGHT + GainRoomMax())
+	end,
+	markers = function()
+		local above = LB.Marker.Reach("DIAMOND", "TOP", MARKER_OFFSET_MAX, MARKER_SIZE_MAX, BAR_MAX)
+
+		return PAD * 2 + BAR_MAX + math.max(above, MARKER_SIZE_MAX) * 2
+	end,
+	levelups = function()
+		return PAD * 2 + BAR_MAX + NOTICE_LINES * (TEXT_MAX + 4)
+	end,
+}
+
+---Holds a preview at its page's fixed height: the drawing is centered in it, and shrinks only when its settings
+---carry it past that height, so the panel never changes size.
+---@param preview table
+---@param height fun(): number
+---@return table preview
+local function Framed(preview, height)
+	local draw = preview.Draw
+
+	preview.Draw = function(sample, state, addPart)
+		local inner = Previews.inner
+
+		if not inner then
+			inner = CreateFrame("Frame", nil, sample)
+			Previews.inner = inner
+		end
+
+		if inner:GetParent() ~= sample then
+			inner:SetParent(sample)
+		end
+
+		inner:SetScale(1)
+		inner:Show()
+
+		local width, drawn = draw(inner, state, addPart)
+		local fixed = height()
+		local scale = drawn > fixed and fixed / drawn or 1
+
+		inner:SetScale(scale)
+		inner:SetSize(width, drawn)
+		inner:ClearAllPoints()
+		inner:SetPoint("CENTER", sample, "CENTER")
+
+		return width * scale, fixed
+	end
+
+	return preview
+end
+
 ---@param pageID string
 ---@return table? preview the page's preview, or nil for a page without one
 function Previews:For(pageID)
 	local typeID = pageID:match("^type%.(.+)$")
 
 	if typeID then
-		return TypePreview(typeID)
+		return Framed(TypePreview(typeID), FIXED.type)
 	elseif pageID == "layout" then
-		return LayoutPreview()
-	elseif pageID == "appearance" then
-		return AppearancePreview()
+		return Framed(AppearancePreview(), FIXED.layout)
 	elseif pageID == "gain" then
-		return GainPreview()
+		return Framed(GainPreview(), FIXED.gain)
 	elseif pageID == "markers" then
-		return MarkersPreview()
+		return Framed(MarkersPreview(), FIXED.markers)
 	elseif pageID == "levelups" then
-		return LevelUpsPreview()
+		return Framed(LevelUpsPreview(), FIXED.levelups)
 	end
 end

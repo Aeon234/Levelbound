@@ -4,7 +4,7 @@ local L = LB.L
 
 local DEFAULT_PROFILE = "Default"
 local FONT = LB.DEFAULT_FONT
-local SCHEMA_VERSION = 1
+local SCHEMA_VERSION = 2
 local EXPORT_FORMAT = 1
 local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 
@@ -80,9 +80,10 @@ local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 ---@field background LBColor
 ---@field typeColors table<string, LBColor>
 ---@field standingColors table<string, LBColor> overrides on Blizzard's FACTION_BAR_COLORS
----@field border { style: string, color: LBColor, customColor: boolean }
+---@field border { style: string, width: integer, color: LBColor, customColor: boolean } width: the Pixel style's line in physical pixels
 ---@field spark { enabled: boolean, customColor: boolean, color: LBColor } the bar's own color unless customColor
----@field dividers { enabled: boolean, customColor: boolean, color: LBColor } tenths on the XP and pet XP bars
+---@field dividers { enabled: boolean, spacing: 5|10, customColor: boolean, color: LBColor } marks on the XP and pet XP
+---bars every `spacing` percent of a level
 ---@field shimmer boolean sweep a highlight across the fill on each gain
 
 ---@class LBTextSettings
@@ -134,10 +135,12 @@ local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 ---@class LBPartySettings
 ---@field markers boolean
 ---@field opacity LBMarkerOpacitySettings
----@field style "DOT" | "TICK" | "NOTCH" | "DIAMOND"
+---@field style "DOT" | "TICK" | "NOTCH" | "DIAMOND" | "PIP"
 ---@field size number
+---@field anchor "CENTER" | "TOP" | "BOTTOM" the bar line the markers sit on; the full-height tick ignores it
+---@field y number the markers' vertical offset from their anchor, up positive; the full-height tick ignores it
 ---@field levelUp LBLevelUpSettings
----@field announce { levelUpParty: boolean, levelUpGuild: boolean, runSummary: boolean, runChannel: "SELF"|"PARTY"|"INSTANCE"|"GUILD" } messages sent for the player
+---@field announce { levelUpEmote: boolean, levelUpParty: boolean, levelUpGuild: boolean, runSummary: boolean, runChannel: "SELF"|"PARTY"|"INSTANCE"|"GUILD" } messages sent for the player
 
 ---@class LBDatabase
 ---@field version integer
@@ -149,6 +152,7 @@ local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 ---@field minimapButton { hide: boolean }
 ---@field requestTimePlayed boolean
 ---@field editMode { snap: boolean, grid: "DIMMED" | "BRIGHT" | "OFF", hoverBar: boolean }
+---@field styleChosen boolean the starting look was chosen; true from the start for data saved before it was offered
 
 ---@class LBCharacterDatabase
 ---@field useCharacterProfile boolean
@@ -164,8 +168,8 @@ local defaults = {
 		width = 560,
 		height = 24,
 		positions = {
-			SEGMENTED = { point = "TOP", x = 0, y = -40 },
-			CONNECTED = { point = "TOP", x = 0, y = -40 },
+			SEGMENTED = { point = "TOP", x = 0, y = -100 },
+			CONNECTED = { point = "TOP", x = 0, y = -100 },
 			INDEPENDENT = { point = "CENTER", x = 0, y = 0 },
 		},
 		growth = "DOWN",
@@ -197,9 +201,9 @@ local defaults = {
 			endeavor = { 0.294, 0.365, 0.106 },
 		},
 		standingColors = {},
-		border = { style = "NONE", color = { 1, 1, 1, 1 }, customColor = false },
+		border = { style = "NONE", width = 1, color = { 1, 1, 1, 1 }, customColor = false },
 		spark = { enabled = true, customColor = false, color = { 1, 1, 1, 1 } },
-		dividers = { enabled = false, customColor = false, color = { 1, 1, 1, 1 } },
+		dividers = { enabled = false, spacing = 10, customColor = false, color = { 1, 1, 1, 1 } },
 		shimmer = true,
 	},
 	text = {
@@ -246,7 +250,13 @@ local defaults = {
 		},
 	},
 	party = {
-		announce = { levelUpParty = true, levelUpGuild = false, runSummary = true, runChannel = "SELF" },
+		announce = {
+			levelUpEmote = true,
+			levelUpParty = true,
+			levelUpGuild = false,
+			runSummary = true,
+			runChannel = "SELF",
+		},
 		markers = true,
 		opacity = {
 			matchBar = true,
@@ -258,6 +268,8 @@ local defaults = {
 		},
 		style = "DIAMOND",
 		size = 14,
+		anchor = "CENTER",
+		y = 0,
 		levelUp = {
 			enabled = true,
 			onScreen = true,
@@ -420,7 +432,28 @@ function Profile:ResolveName()
 end
 
 ---@type table<integer, fun(db: LBDatabase)>
-local migrations = {}
+local migrations = {
+	-- A notch saved without an anchor takes the top edge it was drawn from; the 1 Pixel and 2 Pixel styles become
+	-- Pixel at width 1 and 2.
+	[2] = function(db)
+		local widths = { ONE_PIXEL = 1, TWO_PIXEL = 2 }
+
+		for _, profile in pairs(type(db.profiles) == "table" and db.profiles or {}) do
+			local party = type(profile) == "table" and profile.party
+			local appearance = type(profile) == "table" and profile.appearance
+			local border = type(appearance) == "table" and appearance.border
+
+			if type(party) == "table" and party.style == "NOTCH" and party.anchor == nil then
+				party.anchor = "TOP"
+			end
+
+			if type(border) == "table" and widths[border.style] then
+				border.width = widths[border.style]
+				border.style = "PIXEL"
+			end
+		end
+	end,
+}
 
 ---@param db LBDatabase
 ---@return integer from
@@ -450,6 +483,7 @@ function Profile:Migrate(db)
 end
 
 function Profile:Initialize()
+	local fresh = LevelboundDB == nil
 	local db = LevelboundDB or {}
 	local char = LevelboundDBChar or {}
 	---@cast db LBDatabase
@@ -462,6 +496,11 @@ function Profile:Initialize()
 
 	LB:MergeDefaults(db, globalDefaults)
 	LB:MergeDefaults(char, characterDefaults)
+
+	-- Only an account with no saved data is offered the starting look.
+	if db.global.styleChosen == nil then
+		db.global.styleChosen = not fresh
+	end
 
 	self.db = db
 	self.char = char
@@ -854,6 +893,24 @@ function Profile:Global()
 	return self.db.global
 end
 
+---Runs `fn` with `profile` read as the active profile, to draw a sample of settings not chosen yet. The real
+---profile is active again afterwards, even when `fn` raises an error.
+---@param profile LBProfileData
+---@param fn fun()
+function Profile:Read(profile, fn)
+	local active = self.active
+
+	self.active = profile
+
+	local ok, err = pcall(fn)
+
+	self.active = active
+
+	if not ok then
+		error(err, 0)
+	end
+end
+
 ---@return LBProfileData copy of the active profile, for an editing session to fall back to
 function Profile:Snapshot()
 	return LB:CopyTable(self.active)
@@ -865,6 +922,14 @@ function Profile:Restore(data)
 
 	self.db.profiles[self.activeName] = data
 	self.active = data
+
+	LB.Callbacks:Fire("Settings", nil, nil)
+end
+
+---Changes several settings of the active profile at once, then reports one whole-profile change.
+---@param change fun(profile: LBProfileData) edits the profile in place
+function Profile:Apply(change)
+	change(self.active)
 
 	LB.Callbacks:Fire("Settings", nil, nil)
 end

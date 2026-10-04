@@ -2,6 +2,11 @@ local LB = select(2, ...)
 
 local FLAT = [[Interface\Buttons\WHITE8X8]]
 local OUTLINE = 1
+-- The pip is Blizzard's 10 x 14 rested tick, drawn from the top-left of a 32 x 32 file without an outline of ours;
+-- its highlight art is 12 x 14, stretched to the pip as Blizzard draws it.
+local PIP_ASPECT = 10 / 14
+local PIP_COORDS = { 0, 20 / 32, 0, 28 / 32 }
+local PIP_HIGHLIGHT_COORDS = { 0, 24 / 32, 0, 28 / 32 }
 local FADE = 0.5
 local OFFLINE_ALPHA = 0.4
 local NEUTRAL = { 0.7, 0.7, 0.7 }
@@ -55,6 +60,90 @@ local function SampleMembers()
 	end
 
 	return members
+end
+
+---Returns where a marker attaches: its own point, the bar point it sits on, and whether its shape is drawn upside
+---down. The full-height tick always centers on the bar; the notch points into the bar from the edge it sits on.
+---@param style string
+---@param anchor string "CENTER", "TOP" or "BOTTOM"
+---@return string point
+---@return string relativePoint
+---@return boolean flipped
+function Marker.Point(style, anchor)
+	if style == "TICK" or (anchor ~= "TOP" and anchor ~= "BOTTOM") then
+		return "CENTER", "LEFT", false
+	elseif style == "NOTCH" then
+		return anchor, anchor .. "LEFT", anchor == "BOTTOM"
+	end
+
+	return "CENTER", anchor .. "LEFT", false
+end
+
+---@class LBMarkerMetrics
+---@field width number
+---@field height number the full-height tick's is the bar's own, filled in when drawn
+---@field anchor string
+---@field y number
+
+-- Blizzard's rested tick on its experience bar: 10 x 14, centered on the bar with Forever's offset of 0. The pip
+-- marker takes these settings when it and the Blizzard border are first combined.
+Marker.BLIZZARD_PIP = { size = 14, anchor = "CENTER", y = 0 }
+local BLIZZARD_PIP_KEYS = { "size", "anchor", "y" }
+
+---Calls `write` once for each party setting that puts the pip at Blizzard's rested tick, in a fixed order.
+---@param write fun(key: string, value: any) `key` is relative to the party settings
+function Marker.WriteBlizzardPip(write)
+	for _, key in ipairs(BLIZZARD_PIP_KEYS) do
+		write(key, Marker.BLIZZARD_PIP[key])
+	end
+end
+
+---Returns the markers' size and placement from their settings; the pip keeps its 10:14 shape, its height the size.
+---@param party LBPartySettings
+---@return LBMarkerMetrics
+function Marker.Metrics(party)
+	local width = party.style == "PIP" and party.size * PIP_ASPECT or party.size
+
+	return { width = width, height = party.size, anchor = party.anchor, y = party.y }
+end
+
+---@return LBMarkerMetrics
+function Marker:Current()
+	return Marker.Metrics(LB.Profile:Get("party"))
+end
+
+---Returns how far a marker reaches past the bar's top and bottom edges, outline included.
+---@param style string
+---@param anchor string
+---@param y number ignored by the full-height tick
+---@param size number
+---@param height number the bar's height
+---@return number above
+---@return number below
+function Marker.Reach(style, anchor, y, size, height)
+	local half = size / 2
+	local center
+
+	if style == "TICK" then
+		half, center = height / 2, height / 2
+	else
+		local point, relative = Marker.Point(style, anchor)
+		local base = relative == "TOPLEFT" and height or relative == "BOTTOMLEFT" and 0 or height / 2
+
+		center = base + y
+
+		if point == "TOP" then
+			center = center - half
+		elseif point == "BOTTOM" then
+			center = center + half
+		end
+	end
+
+	if style ~= "PIP" then
+		half = half + OUTLINE
+	end
+
+	return math.max(0, center + half - height), math.max(0, half - center)
 end
 
 ---@param members LBRosterMember[] in a stable order
@@ -144,6 +233,9 @@ local function Reset(_, frame)
 	frame.x = nil
 	frame.style = nil
 	frame.barWidth = nil
+	frame.point = nil
+	frame.relativePoint = nil
+	frame.offsetY = nil
 end
 
 ---@param bar LBBar
@@ -177,6 +269,11 @@ local function Build(frame)
 
 	frame.outline = frame:CreateTexture(nil, "BORDER")
 	frame.shape = frame:CreateTexture(nil, "ARTWORK")
+	frame.highlight = frame:CreateTexture(nil, "HIGHLIGHT")
+	frame.highlight:SetTexture(LB.Media.textures.markerPipHighlight)
+	frame.highlight:SetTexCoord(unpack(PIP_HIGHLIGHT_COORDS))
+	frame.highlight:SetBlendMode("ADD")
+	frame.highlight:SetAllPoints(frame)
 end
 
 ---@param frame Frame
@@ -188,7 +285,7 @@ local function OnEnter(frame)
 		return
 	end
 
-	local size = LB.Profile:Get("party.size")
+	local size = Marker:Current().width
 	local anchor = nil
 
 	for _, placement in ipairs(placements) do
@@ -225,13 +322,7 @@ end
 ---@param x number
 local function Anchor(frame, bar, x)
 	frame:ClearAllPoints()
-
-	if frame.style == "NOTCH" then
-		frame:SetPoint("TOP", bar, "TOPLEFT", x, 0)
-	else
-		frame:SetPoint("CENTER", bar, "LEFT", x, 0)
-	end
-
+	frame:SetPoint(frame.point, bar, frame.relativePoint, x, frame.offsetY)
 	frame.x = x
 end
 
@@ -271,8 +362,8 @@ end
 ---@param placements LBMarkerPlacement[]
 local function Draw(frame, bar, placement, placements)
 	local party = LB.Profile:Get("party")
+	local metrics = Marker:Current()
 	local member = placement.member
-	local size = party.size
 	local height = bar:GetHeight()
 	local color = ClassColor(member)
 	local style = party.style
@@ -284,10 +375,15 @@ local function Draw(frame, bar, placement, placements)
 	frame.placements = placements
 
 	local tall = style == "TICK"
-	local markerHeight = tall and height or size
+	local pip = style == "PIP"
+	local markerHeight = tall and height or metrics.height
 
-	LB:SetPixelSize(frame, size, markerHeight)
+	LB:SetPixelSize(frame, metrics.width, markerHeight)
 
+	local point, relativePoint, flipped = Marker.Point(style, metrics.anchor)
+
+	frame.point, frame.relativePoint = point, relativePoint
+	frame.offsetY = tall and 0 or metrics.y
 	frame:SetFrameLevel(bar:GetFrameLevel() + 10)
 	Place(frame, bar, placement.x, style)
 
@@ -307,6 +403,17 @@ local function Draw(frame, bar, placement, placements)
 		frame.outline:SetTexture(FLAT)
 	end
 
+	local top, bottom = flipped and 1 or 0, flipped and 0 or 1
+
+	if pip then
+		frame.shape:SetTexCoord(unpack(PIP_COORDS))
+	else
+		frame.shape:SetTexCoord(0, 1, top, bottom)
+	end
+
+	frame.outline:SetTexCoord(0, 1, top, bottom)
+	frame.outline:SetShown(not pip)
+	frame.highlight:SetShown(pip)
 	frame.shape:SetVertexColor(color[1], color[2], color[3], 1)
 	frame.outline:SetVertexColor(0, 0, 0, 1)
 
@@ -360,7 +467,7 @@ function Marker:Apply(bar, members)
 	end
 
 	members = members or bar.markerMembers or LB.Roster:Visible()
-	local placements = self:Positions(members, bar:GetWidth(), party.size)
+	local placements = self:Positions(members, bar:GetWidth(), self:Current().width)
 	local wanted = {}
 
 	for _, placement in ipairs(placements) do

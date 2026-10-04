@@ -67,6 +67,7 @@ local adapter = {
 function Profiles:Page()
 	if not self.page then
 		self.page = AS:CreateProfilesPage({ id = "profiles", title = L["Profiles"], adapter = adapter })
+		self.page.description = L["Per-character or shared settings, with copy, export and import."]
 	end
 
 	return self.page

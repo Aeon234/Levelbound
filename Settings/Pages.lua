@@ -1,6 +1,7 @@
 local LB = select(2, ...)
 
 local L = LB.L
+local LIMITS = LB.LIMITS
 
 ---@class LBSettingsPages
 local Pages = {}
@@ -242,6 +243,7 @@ local function BorderStyles()
 		{ value = "ROUNDED_THICK", label = L["Simple Thick"] },
 		{ value = "BRONZE", label = L["Bronze"] },
 		{ value = "METALLIC", label = L["Metallic"] },
+		{ value = "BLIZZARD", label = L["Blizzard"] },
 	}
 
 	table.sort(textured, function(a, b)
@@ -250,8 +252,7 @@ local function BorderStyles()
 
 	local options = {
 		{ value = "NONE", label = NONE },
-		{ value = "ONE_PIXEL", label = L["1 Pixel"] },
-		{ value = "TWO_PIXEL", label = L["2 Pixel"] },
+		{ value = "PIXEL", label = L["Pixel"] },
 	}
 
 	for _, option in ipairs(textured) do
@@ -259,6 +260,34 @@ local function BorderStyles()
 	end
 
 	return options
+end
+
+---Saves a choice of marker style or border style; when it puts the pip on the Blizzard border, the pip starts at
+---Blizzard's rested tick's size and place, which the player can change afterwards. Settings using it rebuild the
+---page, so the rows show the values it set.
+---@param path string
+---@return fun(value: any)
+local function SetStyle(path)
+	local function Paired()
+		return LB.Profile:Get("party.style") == "PIP" and LB.Profile:Get("appearance.border.style") == "BLIZZARD"
+	end
+
+	return function(value)
+		local wasPaired = Paired()
+
+		LB.Profile:Set(path, value)
+
+		if not wasPaired and Paired() then
+			LB.Marker.WriteBlizzardPip(function(key, value)
+				LB.Profile:Set("party." .. key, value)
+			end)
+		end
+	end
+end
+
+---@return integer the widest a bar can be set: the screen's width in UI units, read when the page is built
+local function MaxWidth()
+	return math.floor(UIParent:GetWidth())
 end
 
 ---@return boolean
@@ -282,9 +311,16 @@ end
 Pages.OnlyIndependent = OnlyIndependent
 
 ---@return string?
-local function NotSegmented()
-	if LB.Profile:Get("layout.mode") == "SEGMENTED" then
-		return L["Only in Connected or Independent layout."]
+local function HeightFixed()
+	if LB.Border:HeldHeight() then
+		return L["Set by the border style."]
+	end
+end
+
+---@return string?
+local function OnlyConnected()
+	if LB.Profile:Get("layout.mode") ~= "CONNECTED" then
+		return L["Only in Connected layout."]
 	end
 end
 
@@ -349,8 +385,7 @@ local function General(ctx)
 			Check(ctx, "clickActions", L["Click to Open or Share"], "tooltip.clickActions")
 		),
 		Section("time", L["Time Tracking"]),
-		Row(timePlayed),
-		Row(resetSession),
+		Row(timePlayed, resetSession),
 	}
 end
 
@@ -358,7 +393,7 @@ end
 ---@return table[]
 local function Layout(ctx)
 	return {
-		Section("placement", L["Placement"]),
+		Section("placement", L["Placement"], { tab = "layout" }),
 		Row(
 			Choice(ctx, "mode", L["Layout Mode"], "layout.mode", LB.Layout.MODES),
 			Choice(ctx, "fullscreen", L["Fullscreen Edge"], "layout.fullscreen", {
@@ -373,20 +408,21 @@ local function Layout(ctx)
 			{ value = "MEDIUM", label = L["Medium"] },
 			{ value = "HIGH", label = L["High"] },
 		})),
-		Section("size", L["Size"]),
+		Section("size", L["Size"], { tab = "layout" }),
 		Row(
-			Slider(ctx, "width", L["Width"], "layout.width", 100, 1600, 10),
-			Slider(ctx, "height", L["Height"], "layout.height", 4, 64, 1)
+			Slider(ctx, "width", L["Width"], "layout.width", LIMITS.barWidth.min, MaxWidth(), 1),
+			Slider(ctx, "height", L["Height"], "layout.height", LIMITS.barHeight.min, LIMITS.barHeight.max, 1,
+				{ blocked = HeightFixed })
 		),
-		Section("stacking", L["Stacking"]),
+		Section("stacking", L["Stacking"], { tab = "layout" }),
 		Row(
 			Choice(ctx, "growth", L["Growth Direction"], "layout.growth", UP_DOWN, {
-				blocked = NotSegmented,
+				blocked = OnlyConnected,
 				set = function(value)
 					LB.BarGroup:SetGrowth(value)
 				end,
 			}),
-			Slider(ctx, "gap", L["Gap Between Bars"], "layout.gap", 0, 10, 1, { blocked = NotSegmented })
+			Slider(ctx, "gap", L["Gap Between Bars"], "layout.gap", 0, 10, 1, { blocked = OnlyConnected })
 		),
 	}
 end
@@ -398,29 +434,58 @@ local function Appearance(ctx)
 		return LB.Border:IsTextured(LB.Profile:Get("appearance.border.style"))
 	end
 
+	---@return string?
+	local function NoBorder()
+		if LB.Profile:Get("appearance.border.style") == "NONE" then
+			return L["Requires a border style."]
+		end
+	end
+
+	local style = Choice(ctx, "borderStyle", L["Border Style"], "appearance.border.style", BorderStyles, {
+		set = SetStyle("appearance.border.style"),
+		rebuild = true,
+	})
+	-- Built either way, so Defaults resets it; shown only beside the Pixel style.
+	local width = Slider(ctx, "borderWidth", L["Border Width"], "appearance.border.width", LIMITS.borderWidth.min,
+		LIMITS.borderWidth.max, 1)
+	local pixel = LB.Profile:Get("appearance.border.style") == "PIXEL"
+
 	return {
-		Section("bars", L["Bars"]),
-		Row(Texture(ctx, "texture", L["Bar Texture"], "appearance.texture")),
-		Row(Color(ctx, "background", BACKGROUND, "appearance.background", true)),
-		Section("border", L["Border"]),
-		Row(Choice(ctx, "borderStyle", L["Border Style"], "appearance.border.style", BorderStyles)),
+		Section("bars", L["Bars"], { tab = "appearance" }),
+		Row(
+			Texture(ctx, "texture", L["Bar Texture"], "appearance.texture"),
+			Color(ctx, "background", BACKGROUND, "appearance.background", true)
+		),
+		Section("border", L["Border"], { tab = "appearance" }),
+		Row(style, pixel and width or nil),
 		Row(
 			Check(ctx, "borderCustom", L["Custom Color"], "appearance.border.customColor", {
 				blocked = function()
-					if not Textured() then
+					if NoBorder() then
+						return NoBorder()
+					elseif not Textured() then
 						return L["Pixel borders always use Border Color."]
 					end
 				end,
 			}),
 			Color(ctx, "borderColor", L["Border Color"], "appearance.border.color", true, {
 				blocked = function()
-					if Textured() and LB.Profile:Get("appearance.border.customColor") ~= true then
+					-- Segmented layout's separators take Border Color even with no border.
+					if NoBorder() and LB.Profile:Get("layout.mode") ~= "SEGMENTED" then
+						return NoBorder()
+					elseif Textured() and LB.Profile:Get("appearance.border.customColor") ~= true then
 						return L["Requires Custom Color to be enabled."]
 					end
 				end,
 			})
 		),
-		Row(Check(ctx, "dividers", L["Show XP Dividers"], "appearance.dividers.enabled")),
+		Row(
+			Check(ctx, "dividers", L["Show XP Dividers"], "appearance.dividers.enabled"),
+			Choice(ctx, "dividerSpacing", L["Divider Spacing"], "appearance.dividers.spacing", {
+				{ value = 10, label = L["Every 10%"] },
+				{ value = 5, label = L["Every 5%"] },
+			}, { depends = "dividers" })
+		),
 		Row(
 			Check(ctx, "dividerCustom", L["Divider Custom Color"], "appearance.dividers.customColor", {
 				depends = "dividers",
@@ -429,7 +494,7 @@ local function Appearance(ctx)
 				depends = "dividerCustom",
 			})
 		),
-		Section("spark", L["Spark and Shimmer"]),
+		Section("spark", L["Spark and Shimmer"], { tab = "appearance" }),
 		Row(
 			Check(ctx, "spark", L["Progress Spark"], "appearance.spark.enabled"),
 			Check(ctx, "shimmer", L["Gain Shimmer"], "appearance.shimmer")
@@ -449,16 +514,16 @@ end
 ---@return table[]
 local function Text(ctx)
 	return {
-		Section("style", L["Text Style"]),
+		Section("style", L["Text Style"], { tab = "text" }),
 		Row(
 			Font(ctx, "font", L["Font"], "text.style.font"),
-			Slider(ctx, "size", L["Size"], "text.style.size", 6, 32, 1)
+			Slider(ctx, "size", L["Size"], "text.style.size", LIMITS.textSize.min, LIMITS.textSize.max, 1)
 		),
 		Row(
 			Choice(ctx, "outline", L["Outline"], "text.style.outline", Outlines),
 			Color(ctx, "color", COLOR, "text.style.color", false)
 		),
-		Section("numbers", L["Numbers"]),
+		Section("numbers", L["Numbers"], { tab = "text" }),
 		Row(
 			Check(ctx, "compact", L["Compact Numbers"], "text.compactNumbers"),
 			Check(ctx, "decimals", L["Show Decimals"], "text.decimals")
@@ -476,7 +541,7 @@ local function Visibility(ctx)
 	end
 
 	return {
-		Section("fading", L["Fading"]),
+		Section("fading", L["Fading"], { tab = "visibility" }),
 		Row(
 			Check(ctx, "fade", L["Fade Until Hovered"], "visibility.fadeUntilHovered"),
 			Percent(ctx, "fadedAlpha", L["Faded Opacity"], "visibility.fadedAlpha", { blocked = NeedsFade })
@@ -487,14 +552,29 @@ local function Visibility(ctx)
 				blocked = NeedsFade,
 			})
 		),
-		Section("focus", L["Focus Mode"]),
+		Section("focus", L["Focus Mode"], { tab = "visibility" }),
 		Row(
 			Check(ctx, "focus", L["Dim Other Bars on Hover"], "visibility.focus.enabled"),
 			Percent(ctx, "focusAlpha", L["Dimmed Opacity"], "visibility.focus.alpha", { depends = "focus" })
 		),
-		Section("hiding", L["Hiding"]),
+		Section("hiding", L["Hiding"], { tab = "visibility" }),
 		Row(Check(ctx, "hideInCombat", L["Hide in Combat"], "visibility.hideInCombat")),
 	}
+end
+
+---The Bars page: Layout, Appearance, Text and Visibility, one tab each.
+---@param ctx LBPageContext
+---@return table[]
+local function Bars(ctx)
+	local elements = {}
+
+	for _, build in ipairs({ Layout, Appearance, Text, Visibility }) do
+		for _, element in ipairs(build(ctx)) do
+			elements[#elements + 1] = element
+		end
+	end
+
+	return elements
 end
 
 ---@param ctx LBPageContext
@@ -505,13 +585,13 @@ local function Gain(ctx)
 	end
 
 	local elements = {
-		Section("behavior", L["Behavior"]),
+		Section("behavior", L["Behavior"], { tab = "behavior" }),
 		Row(Toggle(ctx, "enabled", L["Show Gain Indicator"], "gain.enabled", { pageSwitch = true })),
 		Row(
 			Check(ctx, "hideInCombat", L["Hide in Combat"], "gain.hideInCombat"),
 			Check(ctx, "detached", L["Detach from Bar"], "gain.detached", { description = L["Place it in Edit Mode."] })
 		),
-		Section("placement", L["Placement"]),
+		Section("placement", L["Placement"], { tab = "behavior" }),
 		Row(
 			Choice(ctx, "position", L["Position"], "gain.position", {
 				{ value = "FILL_EDGE", label = L["Fill Edge"] },
@@ -531,8 +611,11 @@ local function Gain(ctx)
 				end,
 			})
 		),
-		Section("amount", L["Amount Text"]),
-		Row(Font(ctx, "font", L["Font"], "gain.text.font"), Slider(ctx, "size", L["Size"], "gain.text.size", 6, 32, 1)),
+		Section("amount", L["Amount Text"], { tab = "amount" }),
+		Row(
+			Font(ctx, "font", L["Font"], "gain.text.font"),
+			Slider(ctx, "size", L["Size"], "gain.text.size", LIMITS.textSize.min, LIMITS.textSize.max, 1)
+		),
 		Row(
 			Choice(ctx, "outline", L["Outline"], "gain.text.outline", Outlines),
 			Color(ctx, "color", COLOR, "gain.text.color", false)
@@ -545,7 +628,7 @@ local function Gain(ctx)
 			Slider(ctx, "x", L["Horizontal Offset"], "gain.text.x", -40, 40, 1),
 			Slider(ctx, "y", L["Vertical Offset"], "gain.text.y", -40, 40, 1)
 		),
-		Section("tints", L["Arrow Tints"]),
+		Section("tints", L["Arrow Tints"], { tab = "amount" }),
 	}
 
 	local tints = {}
@@ -584,19 +667,35 @@ local function Markers(ctx)
 		end
 	end
 
+	local function Tick()
+		if LB.Profile:Get("party.style") == "TICK" then
+			return L["The full-height tick always spans the bar."]
+		end
+	end
+
 	return {
-		Section("markers", L["Party Markers"]),
+		Section("markers", L["Party Markers"], { tab = "markers" }),
 		Row(Toggle(ctx, "markers", L["Show Party Markers"], "party.markers", { pageSwitch = true })),
 		Row(
 			Choice(ctx, "style", L["Marker Style"], "party.style", {
 				{ value = "DOT", label = L["Dot"] },
 				{ value = "TICK", label = L["Full-Height Tick"] },
-				{ value = "NOTCH", label = L["Top-Edge Notch"] },
+				{ value = "NOTCH", label = L["Notch"] },
 				{ value = "DIAMOND", label = L["Diamond"] },
-			}),
-			Slider(ctx, "size", L["Marker Size"], "party.size", 4, 24, 1)
+				{ value = "PIP", label = L["Pip"] },
+			}, { set = SetStyle("party.style"), rebuild = true }),
+			Slider(ctx, "size", L["Marker Size"], "party.size", LIMITS.markerSize.min, LIMITS.markerSize.max, 1)
 		),
-		Section("fading", L["Marker Fading"]),
+		Row(
+			Choice(ctx, "anchor", L["Anchor"], "party.anchor", {
+				{ value = "CENTER", label = L["Center"] },
+				{ value = "TOP", label = L["Top"] },
+				{ value = "BOTTOM", label = L["Bottom"] },
+			}, { blocked = Tick }),
+			Slider(ctx, "y", L["Vertical Offset"], "party.y", LIMITS.markerOffset.min, LIMITS.markerOffset.max, 1,
+				{ blocked = Tick })
+		),
+		Section("fading", L["Marker Fading"], { tab = "fading" }),
 		Row(
 			Check(ctx, "matchBar", L["Match Bar Opacity"], "party.opacity.matchBar"),
 			Percent(ctx, "alpha", L["Marker Opacity"], "party.opacity.alpha", { blocked = Matched })
@@ -632,7 +731,7 @@ local function LevelUps(ctx)
 	})
 
 	return {
-		Section("notices", L["Party Notices"]),
+		Section("notices", L["Party Notices"], { tab = "notices" }),
 		Row(Toggle(ctx, "notices", L["Show Level-Up Notices"], "party.levelUp.enabled")),
 		Row(
 			Check(ctx, "onScreen", L["On-Screen Notice"], "party.levelUp.onScreen", { depends = "notices" }),
@@ -642,7 +741,7 @@ local function LevelUps(ctx)
 			sound,
 			Check(ctx, "hideInCombat", L["Hide in Combat"], "party.levelUp.hideInCombat", { depends = "notices" })
 		),
-		Section("placement", L["Placement"]),
+		Section("placement", L["Placement"], { tab = "notices" }),
 		Row(Check(ctx, "detached", L["Detach from Bar"], "party.levelUp.detached", {
 			depends = "onScreen",
 			description = L["Place it in Edit Mode."],
@@ -675,17 +774,20 @@ local function LevelUps(ctx)
 				blocked = Detached,
 			})
 		),
-		Section("text", L["Notice Text"]),
+		Section("text", L["Notice Text"], { tab = "notices" }),
 		Row(
 			Font(ctx, "font", L["Font"], "party.levelUp.text.font", { depends = "onScreen" }),
-			Slider(ctx, "size", L["Size"], "party.levelUp.text.size", 6, 32, 1, { depends = "onScreen" })
+			Slider(ctx, "size", L["Size"], "party.levelUp.text.size", LIMITS.textSize.min, LIMITS.textSize.max, 1,
+				{ depends = "onScreen" })
 		),
 		Row(Choice(ctx, "outline", L["Outline"], "party.levelUp.text.outline", Outlines, { depends = "onScreen" })),
-		Section("announce", L["Announcements"]),
+		Section("announce", L["Level-Ups"], { tab = "announce" }),
+		Row(Check(ctx, "levelUpEmote", L["Emote Level-Up Message"], "party.announce.levelUpEmote")),
 		Row(
 			Check(ctx, "levelUpParty", L["Party Level-Up Message"], "party.announce.levelUpParty"),
 			Check(ctx, "levelUpGuild", L["Guild Level-Up Message"], "party.announce.levelUpGuild")
 		),
+		Section("summary", L["Dungeon Summary"], { tab = "announce" }),
 		Row(
 			Check(ctx, "runSummary", L["Post-Dungeon Summary"], "party.announce.runSummary"),
 			Choice(ctx, "runChannel", L["Channels"], "party.announce.runChannel", {
@@ -744,7 +846,7 @@ local function TypePage(ctx, id)
 			}
 		end
 
-		Open(Section("colors", L["Colors"]))
+		Open(Section("colors", L["Colors"], { tab = "bar" }))
 		Add(Row(Check(ctx, "classColor", L["XP Uses Class Color"], "appearance.xpUseClassColor")))
 		Add(
 			Row(
@@ -759,15 +861,16 @@ local function TypePage(ctx, id)
 			)
 		)
 	elseif id ~= "reputation" then
-		Open(Section("colors", L["Colors"]))
-		Add(Row(Color(ctx, "color", L["Bar Color"], "appearance.typeColors." .. id, false)))
+		Add(Section("colors", L["Colors"], { tab = "bar" }))
+		Add(Row(switch, Color(ctx, "color", L["Bar Color"], "appearance.typeColors." .. id, false)))
+		switched = true
 	end
 
-	Open(Section("size", L["Size"], { action = Pages:SharedSizeAction(id) }))
+	Open(Section("size", L["Size"], { tab = "bar" }))
 	Add(
 		Row(
-			Pages:BarSize(ctx, id, "width", L["Width"], 100, 1600, 10),
-			Pages:BarSize(ctx, id, "height", L["Height"], 4, 64, 1)
+			Pages:BarSize(ctx, id, "width", L["Width"], LIMITS.barWidth.min, MaxWidth(), 1),
+			Pages:BarSize(ctx, id, "height", L["Height"], LIMITS.barHeight.min, LIMITS.barHeight.max, 1)
 		)
 	)
 
@@ -778,7 +881,7 @@ local function TypePage(ctx, id)
 	return elements
 end
 
----A bar's own width or height in Independent layout; the shared size until set.
+---A bar's own width or height in Independent layout; the shared size until set, and again after Use Shared.
 ---@param ctx LBPageContext
 ---@param id string
 ---@param field "width" | "height"
@@ -804,7 +907,27 @@ function Pages:BarSize(ctx, id, field, label, minimum, maximum, step)
 		max = maximum,
 		step = step,
 		format = "integer",
-		blocked = OnlyIndependent,
+		blocked = function()
+			return OnlyIndependent() or (field == "height" and HeightFixed() or nil)
+		end,
+		inherit = {
+			custom = function()
+				local entry = LB.Profile:Get("layout.independent")[id]
+
+				return entry ~= nil and entry[field] ~= nil
+			end,
+			clear = function()
+				local independent = LB.Profile:Get("layout.independent")
+				local entry = independent[id]
+
+				if entry and entry[field] ~= nil then
+					entry[field] = nil
+					LB.Profile:Set("layout.independent", independent)
+				end
+
+				return true
+			end,
+		},
 		get = function()
 			local entry = LB.Profile:Get("layout.independent")[id]
 
@@ -817,30 +940,6 @@ function Pages:BarSize(ctx, id, field, label, minimum, maximum, step)
 			entry[field] = value
 			independent[id] = entry
 			LB.Profile:Set("layout.independent", independent)
-		end,
-	}
-end
-
----The Size section's header action: clears the bar's own width and height.
----@param id string
----@return table setting
-function Pages:SharedSizeAction(id)
-	return {
-		id = "sharedSize",
-		control = "action",
-		label = L["Use Shared Size"],
-		verb = L["Use Shared Size"],
-		blocked = OnlyIndependent,
-		set = function()
-			local independent = LB.Profile:Get("layout.independent")
-			local entry = independent[id]
-
-			if entry then
-				entry.width, entry.height = nil, nil
-				LB.Profile:Set("layout.independent", independent)
-			end
-
-			return true
 		end,
 	}
 end
@@ -894,10 +993,21 @@ end
 ---@param id string
 ---@param title string
 ---@param build fun(ctx: LBPageContext): table[]
----@param descriptions string? the descriptions' page key; the page id when nil
+---@param options { description: string?, descriptions: string?, tabs: { id: string, title: string }[]? }?
+---`description` is the line under the page's title; `descriptions` is the setting descriptions' page key, the page
+---id when nil; `tabs` are the page's tabs, which its sections name.
 ---@return table page
-local function Page(id, title, build, descriptions)
-	local page = { id = id, title = title, preview = LB.SettingsPreviews:For(id) }
+local function Page(id, title, build, options)
+	options = options or {}
+
+	local descriptions = options.descriptions
+	local page = {
+		id = id,
+		title = title,
+		description = options.description,
+		preview = LB.SettingsPreviews:For(id),
+		tabs = options.tabs,
+	}
 
 	function page.Build()
 		local ctx = Context()
@@ -942,21 +1052,47 @@ function Pages:Categories()
 		if LB.Model:Capable(id) then
 			types[#types + 1] = Page("type." .. id, LB.Model:Label(id), function(ctx)
 				return TypePage(ctx, id)
-			end, "type")
+			end, {
+				description = L["This bar's colors, its own size and its text."],
+				descriptions = "type",
+				tabs = {
+					{ id = "bar", title = L["Bar"] },
+					{ id = "text", title = L["Text"] },
+				},
+			})
 		end
 	end
 
 	return {
-		{ id = "general", title = GENERAL, pages = { Page("general", GENERAL, General) } },
+		{
+			id = "general",
+			title = GENERAL,
+			pages = {
+				Page("general", GENERAL, General, {
+					description = L["The minimap button, bar tooltips and clicks, and time tracking."],
+				}),
+			},
+		},
 		{
 			id = "bars",
 			title = L["Bars"],
 			pages = {
-				Page("layout", L["Layout"], Layout),
-				Page("appearance", L["Appearance"], Appearance),
-				Page("text", L["Text"], Text),
-				Page("visibility", L["Visibility"], Visibility),
-				Page("gain", L["Gain Indicator"], Gain),
+				Page("layout", L["Layout"], Bars, {
+					description = L["How every bar is arranged, sized, drawn and shown."],
+					tabs = {
+						{ id = "layout", title = L["Layout"] },
+						{ id = "appearance", title = L["Appearance"] },
+						{ id = "text", title = L["Text"] },
+						{ id = "visibility", title = L["Visibility"] },
+					},
+				}),
+				Page("gain", L["Gain Indicator"], Gain, {
+					description = L["The arrow and amount shown each time a bar gains progress."],
+					tabs = {
+						{ id = "behavior", title = L["Behavior"] },
+						{ id = "amount", title = L["Amount"] },
+					},
+				}),
 			},
 		},
 		{ id = "types", title = L["Progress Types"], pages = types },
@@ -964,8 +1100,20 @@ function Pages:Categories()
 			id = "party",
 			title = L["Party"],
 			pages = {
-				Page("markers", L["Markers"], Markers),
-				Page("levelups", L["Level-Ups"], LevelUps),
+				Page("markers", L["Markers"], Markers, {
+					description = L["Where party members running Levelbound are on your experience bar."],
+					tabs = {
+						{ id = "markers", title = L["Markers"] },
+						{ id = "fading", title = L["Fading"] },
+					},
+				}),
+				Page("levelups", L["Level-Ups"], LevelUps, {
+					description = L["Party level-up notices, and messages about your own level-ups and runs."],
+					tabs = {
+						{ id = "notices", title = L["Notices"] },
+						{ id = "announce", title = L["Announcements"] },
+					},
+				}),
 			},
 		},
 		{ id = "profiles", title = L["Profiles"], pages = { LB.SettingsProfiles:Page() } },

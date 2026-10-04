@@ -5,6 +5,7 @@ local L = LB.L
 local SETTLE = 0.5
 local RATE_AFTER = 60
 local RUN_TYPES = { party = true, scenario = true }
+local LEVEL_UP_ICON = "{rt1}" -- the star raid target icon, which chat draws for every reader
 
 ---@class LBRun
 ---@field instance number
@@ -31,7 +32,7 @@ function Announce:LevelUpText(level, seconds)
 	local took = LB.Format:Short(seconds)
 	local text = took and L["Reached level %d in %s"]:format(level, took) or L["Reached level %d"]:format(level)
 
-	return ("%s %s"):format(LB.Share.PREFIX, text)
+	return ("%s %s %s"):format(LEVEL_UP_ICON, LB.Share.PREFIX, text)
 end
 
 function Announce:Flush()
@@ -58,6 +59,11 @@ end
 function Announce:OnLevelUp(level)
 	local settings = Settings().announce
 	local text = self:LevelUpText(level, LB.TimePlayed.completed)
+
+	-- A public emote to players nearby, only outside a group, where the party message reaches the group.
+	if settings.levelUpEmote and not IsInGroup() then
+		self:Send(text, "EMOTE")
+	end
 
 	if settings.levelUpParty then
 		local channel = LB.Comms:Channel()

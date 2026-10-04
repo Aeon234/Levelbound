@@ -19,6 +19,14 @@ Media.textures = {
 	markerDisc = PATH .. [[Textures\MarkerDisc-White.tga]],
 	markerTriangle = PATH .. [[Textures\MarkerTriangle-White.tga]],
 	markerDiamond = PATH .. [[Textures\MarkerDiamond-White.tga]],
+	markerPip = PATH .. [[Textures\MarkerPip-White.tga]],
+	markerPipHighlight = PATH .. [[Textures\MarkerPip-Highlight.tga]],
+	styleCardFrame = PATH .. [[Textures\StyleCardFrame.tga]],
+	styleCardFill = PATH .. [[Textures\StyleCardFill.tga]],
+	blizzardFrame = PATH .. [[Borders\BlizzardBorderWhite.tga]],
+	blizzardDivider = PATH .. [[Borders\BlizzardDividerWhite.tga]],
+	maskLeft = PATH .. [[Textures\BlizzardMaskLeft.tga]],
+	maskRight = PATH .. [[Textures\BlizzardMaskRight.tga]],
 }
 
 Media.icons = {
@@ -33,6 +41,7 @@ Media.markerShapes = {
 	DOT = Media.textures.markerDisc,
 	NOTCH = Media.textures.markerTriangle,
 	DIAMOND = Media.textures.markerDiamond,
+	PIP = Media.textures.markerPip,
 }
 
 Media.outlines = {
@@ -57,6 +66,10 @@ local fonts = {
 	[LB.DEFAULT_FONT] = PATH .. [[Fonts\GilroyBold.ttf]],
 }
 
+local statusbars = {
+	["Levelbound Blizzard"] = PATH .. [[Textures\LevelboundBlizzard.tga]],
+}
+
 local borders = {
 	["Levelbound Ring Medium"] = PATH .. [[Borders\RingBorderMediumWhite.tga]],
 	["Levelbound Ring Thick"] = PATH .. [[Borders\RingBorderThickWhite.tga]],
@@ -75,6 +88,10 @@ function Media:Register()
 
 	for name, path in pairs(borders) do
 		LSM:Register(LSM.MediaType.BORDER, name, path)
+	end
+
+	for name, path in pairs(statusbars) do
+		LSM:Register(LSM.MediaType.STATUSBAR, name, path)
 	end
 
 	LSM:Register(LSM.MediaType.SOUND, LB.SOUND_LEVEL_UP, self.sounds.levelUp)
