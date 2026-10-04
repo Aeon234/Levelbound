@@ -98,10 +98,32 @@ local function StringFor(host, key)
 	return fontString
 end
 
+---How far the drawn border stands out past a bar's top and bottom edges, which the outer slots keep clear of.
+---@param bar LBBar?
+---@return number reach in UI units; 0 along a screen edge, where no border is drawn
+function TextSlot:BorderReach(bar)
+	local layout = LB.Profile:Get("layout")
+
+	if LB.Layout.Fullscreen(layout) then
+		return 0
+	end
+
+	local style = LB.Profile:Get("appearance.border.style")
+	local height = bar and bar:GetHeight() or 0
+
+	if height <= 0 then
+		height = LB.Layout.Height(layout, LB.Border:FixedHeight(style))
+	end
+
+	return LB.Border:Outset(style, height)
+end
+
 ---@param host LBTextHost
 ---@param keys table<string, true> the slots this host owns
 ---@param typeId string?
 local function Configure(host, keys, typeId)
+	local reach = TextSlot:BorderReach(host.bar)
+
 	local slots = typeId and LB.Profile:Get("text.slots." .. typeId) or {}
 
 	host.typeId = typeId
@@ -133,7 +155,9 @@ local function Configure(host, keys, typeId)
 			local y = anchor.y + (slot.y or 0)
 
 			if anchor.below then
-				y = y - style.size
+				y = y - style.size - reach
+			elseif not anchor.span then
+				y = y + reach
 			end
 
 			y = LB.Placement:ToPixel(y, pixel)
@@ -332,13 +356,28 @@ local function Independent()
 	return LB.Layout.Independent(LB.Profile:Get("layout"))
 end
 
+---@return boolean hidden the bars are held too short for text inside them by their border style
+function TextSlot:InsideHidden()
+	return LB.Border:FixedHeight(LB.Profile:Get("appearance.border.style")) ~= nil
+		and not LB.Layout.Fullscreen(LB.Profile:Get("layout"))
+end
+
+---@param key string a slot key
+---@return boolean
+function TextSlot:IsInside(key)
+	return INSIDE[key] == true
+end
+
 ---@param bar LBBar
 function TextSlot:ApplyBar(bar)
 	local host = HostFor(bar)
+	local inside = not self:InsideHidden()
 	local keys = {}
 
 	for _, key in ipairs(LB.TextSlotKeys) do
-		if INSIDE[key] or Independent() then
+		if INSIDE[key] then
+			keys[key] = inside or nil
+		elseif Independent() then
 			keys[key] = true
 		end
 	end
@@ -350,17 +389,19 @@ function TextSlot:ApplyBar(bar)
 	self:UpdateTicker()
 end
 
----Draws all nine of a bar's slots around it, whatever the layout mode, for a settings preview.
+---Draws a bar's slots around it, whatever the layout mode, for a settings preview: all nine, or the six outside it
+---while the bars are too short for text inside.
 ---@param bar LBBar a bar outside the bar group
 ---@param hovered boolean
 ---@return table<string, FontString> strings the shown slots' font strings, by slot key
 function TextSlot:ApplySample(bar, hovered)
 	local host = HostFor(bar)
+	local inside = not self:InsideHidden()
 	local keys = {}
 	local shown = {}
 
 	for _, key in ipairs(LB.TextSlotKeys) do
-		keys[key] = true
+		keys[key] = inside or not INSIDE[key] or nil
 	end
 
 	bar.hovered = hovered

@@ -135,7 +135,7 @@ local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 ---@class LBPartySettings
 ---@field markers boolean
 ---@field opacity LBMarkerOpacitySettings
----@field style "DOT" | "TICK" | "NOTCH" | "DIAMOND"
+---@field style "DOT" | "TICK" | "NOTCH" | "DIAMOND" | "PIP"
 ---@field size number
 ---@field anchor "CENTER" | "TOP" | "BOTTOM" the bar line the markers sit on; the full-height tick ignores it
 ---@field y number the markers' vertical offset from their anchor, up positive; the full-height tick ignores it

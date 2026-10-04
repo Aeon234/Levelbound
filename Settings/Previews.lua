@@ -103,10 +103,15 @@ function Previews:Bar(id, width, height, borderStyle)
 
 	local border = LB.Profile:Get("appearance.border")
 	local style = borderStyle or (Fullscreen() and "NONE" or border.style)
-
 	bar.border:Apply(style, LB.Border:Color(style, border), height)
+	bar:SetEndMasks(LB.Border:EndMask(style), true, true)
 
 	return bar
+end
+
+---@return number? height the border style's fixed bar height, or nil
+local function FixedHeight()
+	return LB.Border:FixedHeight(LB.Profile:Get("appearance.border.style"))
 end
 
 ---@return number width
@@ -114,7 +119,7 @@ end
 local function SharedSize()
 	local layout = LB.Profile:Get("layout")
 
-	return layout.width, layout.height
+	return layout.width, LB.Layout.Height(layout, FixedHeight())
 end
 
 ---@param id string
@@ -127,15 +132,15 @@ local function BarSize(id)
 		local entry = LB.Profile:Get("layout.independent")[id]
 
 		width = entry and entry.width or width
-		height = entry and entry.height or height
+		height = LB.Layout.Height(LB.Profile:Get("layout"), FixedHeight(), entry and entry.height)
 	end
 
 	return width, height
 end
 
----@return number room above a bar for its gain indicator
+---@return number room above a bar for its gain indicator, which keeps clear of the border
 local function GainRoom()
-	return LB.Profile:Get("gain.text.size") * 2 + SLOT_ROOM * 2
+	return LB.Profile:Get("gain.text.size") * 2 + SLOT_ROOM * 2 + LB.TextSlot:BorderReach(nil)
 end
 
 ---Places bars in a column from `top` down, `gap` apart, and returns the column's width and bottom.
@@ -216,11 +221,12 @@ local function TypePreview(id)
 			Previews:Begin(sample)
 
 			local width, height = BarSize(id)
-			local keys = LB.SettingsText:Keys(id)
+			local keys = LB.SettingsText:Usable(id)
 			local outer = #keys > 3
 			local zone = LB.Profile:Get("text.style.size") + SLOT_ROOM
-			local above = math.max(outer and zone or 0, GainRoom())
-			local below = outer and zone or 0
+			local reach = outer and LB.TextSlot:BorderReach(nil) or 0
+			local above = math.max(outer and zone + reach or 0, GainRoom())
+			local below = outer and zone + reach or 0
 			local bar = Previews:Bar(id, width, height)
 
 			bar:SetPoint("TOPLEFT", sample, "TOPLEFT", PAD, -(PAD + above))
@@ -291,14 +297,16 @@ function Previews:Zone(bar, key, height)
 		zone:SetSize(width, bar:GetHeight())
 	else
 		-- Above and below boxes take their column's inside box's exact width.
+		-- Clear of the border, as the slots' text is.
 		local inside = self:Zone(bar, "INSIDE_" .. column, height)
+		local reach = LB.TextSlot:BorderReach(bar)
 
 		if row == "ABOVE" then
-			zone:SetPoint("BOTTOMLEFT", inside, "TOPLEFT")
-			zone:SetPoint("BOTTOMRIGHT", inside, "TOPRIGHT")
+			zone:SetPoint("BOTTOMLEFT", inside, "TOPLEFT", 0, reach)
+			zone:SetPoint("BOTTOMRIGHT", inside, "TOPRIGHT", 0, reach)
 		else
-			zone:SetPoint("TOPLEFT", inside, "BOTTOMLEFT")
-			zone:SetPoint("TOPRIGHT", inside, "BOTTOMRIGHT")
+			zone:SetPoint("TOPLEFT", inside, "BOTTOMLEFT", 0, -reach)
+			zone:SetPoint("TOPRIGHT", inside, "BOTTOMRIGHT", 0, -reach)
 		end
 
 		zone:SetHeight(height)
@@ -350,6 +358,9 @@ local function AppearancePreview()
 			for _, id in ipairs(Pair()) do
 				local bar = Previews:Bar(id, width, height)
 
+				-- The bars alone: their text belongs to the progress type pages.
+				bar.textSuppressed = true
+				LB.TextSlot:UpdateBar(bar)
 				bars[#bars + 1] = bar
 				addPart(bar, "texture")
 				addPart(bar.border, "borderStyle")
@@ -557,7 +568,8 @@ local function MarkersPreview()
 
 			local width, height = SharedSize()
 			local party = LB.Profile:Get("party")
-			local above, below = LB.Marker.Reach(party.style, party.anchor, party.y, party.size, height)
+			local metrics = LB.Marker:Current()
+			local above, below = LB.Marker.Reach(party.style, metrics.anchor, metrics.y, metrics.height, height)
 			-- At least the largest marker's room, so changing the markers' size alone never rescales the bar.
 			above, below = math.max(above, MARKER_ROOM), math.max(below, MARKER_ROOM)
 			local bar = Previews:Bar("xp", width, height)

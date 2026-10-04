@@ -19,6 +19,12 @@ Media.textures = {
 	markerDisc = PATH .. [[Textures\MarkerDisc-White.tga]],
 	markerTriangle = PATH .. [[Textures\MarkerTriangle-White.tga]],
 	markerDiamond = PATH .. [[Textures\MarkerDiamond-White.tga]],
+	markerPip = PATH .. [[Textures\MarkerPip-White.tga]],
+	markerPipHighlight = PATH .. [[Textures\MarkerPip-Highlight.tga]],
+	blizzardFrame = PATH .. [[Borders\BlizzardBorderWhite.tga]],
+	blizzardDivider = PATH .. [[Borders\BlizzardDividerWhite.tga]],
+	maskLeft = PATH .. [[Textures\BlizzardMaskLeft.tga]],
+	maskRight = PATH .. [[Textures\BlizzardMaskRight.tga]],
 }
 
 Media.icons = {
@@ -33,6 +39,7 @@ Media.markerShapes = {
 	DOT = Media.textures.markerDisc,
 	NOTCH = Media.textures.markerTriangle,
 	DIAMOND = Media.textures.markerDiamond,
+	PIP = Media.textures.markerPip,
 }
 
 Media.outlines = {

@@ -242,6 +242,7 @@ local function BorderStyles()
 		{ value = "ROUNDED_THICK", label = L["Simple Thick"] },
 		{ value = "BRONZE", label = L["Bronze"] },
 		{ value = "METALLIC", label = L["Metallic"] },
+		{ value = "BLIZZARD", label = L["Blizzard"] },
 	}
 
 	table.sort(textured, function(a, b)
@@ -259,6 +260,25 @@ local function BorderStyles()
 	end
 
 	return options
+end
+
+---Saves a choice of marker style or border style; when it puts the pip on the Blizzard border, the pip starts at
+---Blizzard's rested tick's size and place, which the player can change afterwards. Settings using it rebuild the
+---page, so the rows show the values it set.
+---@param path string
+---@return fun(value: any)
+local function SetStyle(path)
+	return function(value)
+		LB.Profile:Set(path, value)
+
+		if LB.Profile:Get("party.style") == "PIP" and LB.Border:BlizzardDrawn() then
+			local pip = LB.Marker.BLIZZARD_PIP
+
+			LB.Profile:Set("party.size", pip.size)
+			LB.Profile:Set("party.anchor", pip.anchor)
+			LB.Profile:Set("party.y", pip.y)
+		end
+	end
 end
 
 ---@return boolean
@@ -280,6 +300,15 @@ local function OnlyIndependent()
 	end
 end
 Pages.OnlyIndependent = OnlyIndependent
+
+---@return string?
+local function HeightFixed()
+	local layout = LB.Profile:Get("layout")
+
+	if LB.Border:FixedHeight(LB.Profile:Get("appearance.border.style")) and not LB.Layout.Fullscreen(layout) then
+		return L["Set by the border style."]
+	end
+end
 
 ---@return string?
 local function NotSegmented()
@@ -376,7 +405,7 @@ local function Layout(ctx)
 		Section("size", L["Size"], { tab = "layout" }),
 		Row(
 			Slider(ctx, "width", L["Width"], "layout.width", 100, 1600, 1),
-			Slider(ctx, "height", L["Height"], "layout.height", 4, 64, 1)
+			Slider(ctx, "height", L["Height"], "layout.height", 4, 64, 1, { blocked = HeightFixed })
 		),
 		Section("stacking", L["Stacking"], { tab = "layout" }),
 		Row(
@@ -403,7 +432,10 @@ local function Appearance(ctx)
 		Row(Texture(ctx, "texture", L["Bar Texture"], "appearance.texture")),
 		Row(Color(ctx, "background", BACKGROUND, "appearance.background", true)),
 		Section("border", L["Border"], { tab = "appearance" }),
-		Row(Choice(ctx, "borderStyle", L["Border Style"], "appearance.border.style", BorderStyles)),
+		Row(Choice(ctx, "borderStyle", L["Border Style"], "appearance.border.style", BorderStyles, {
+			set = SetStyle("appearance.border.style"),
+			rebuild = true,
+		})),
 		Row(
 			Check(ctx, "borderCustom", L["Custom Color"], "appearance.border.customColor", {
 				blocked = function()
@@ -611,6 +643,7 @@ local function Markers(ctx)
 		end
 	end
 
+
 	return {
 		Section("markers", L["Party Markers"], { tab = "markers" }),
 		Row(Toggle(ctx, "markers", L["Show Party Markers"], "party.markers", { pageSwitch = true })),
@@ -620,7 +653,8 @@ local function Markers(ctx)
 				{ value = "TICK", label = L["Full-Height Tick"] },
 				{ value = "NOTCH", label = L["Notch"] },
 				{ value = "DIAMOND", label = L["Diamond"] },
-			}),
+				{ value = "PIP", label = L["Pip"] },
+			}, { set = SetStyle("party.style"), rebuild = true }),
 			Slider(ctx, "size", L["Marker Size"], "party.size", 4, 24, 1)
 		),
 		Row(
@@ -839,7 +873,9 @@ function Pages:BarSize(ctx, id, field, label, minimum, maximum, step)
 		max = maximum,
 		step = step,
 		format = "integer",
-		blocked = OnlyIndependent,
+		blocked = function()
+			return OnlyIndependent() or (field == "height" and HeightFixed() or nil)
+		end,
 		inherit = {
 			custom = function()
 				local entry = LB.Profile:Get("layout.independent")[id]

@@ -34,6 +34,16 @@ local DIVIDER_EDGE_SLICE = 0.125
 local NOTCH = { 0, 0, 0, 0.5 }
 local DIVIDED = { xp = true, petxp = true }
 
+-- End masks, each the bar's full height; past its own width each clamps to white and masks nothing. A texture takes
+-- at most three masks, so one mask cuts both corners of an end.
+local ENDS = {
+	{ side = "LEFT", texture = "maskLeft", left = true },
+	{ side = "RIGHT", texture = "maskRight", left = false },
+}
+
+---@type table<Texture, table<Texture, true>> the end masks attached to each texture
+local attached = setmetatable({}, { __mode = "k" })
+
 ---@class LBBar : Frame
 ---@field id string
 ---@field clip Frame reveals the full-width fill art; only its width changes, so the art never stretches
@@ -67,6 +77,10 @@ local DIVIDED = { xp = true, petxp = true }
 ---@field markerLayer Frame?
 ---@field markerAlpha number?
 ---@field markerFade number?
+---@field masks table<Frame, { mask: Texture, left: boolean }[]>? end masks on each frame that draws the fill
+---@field maskWidth number? the end masks' width; nil cuts neither end
+---@field maskLeft boolean? the left end is cut
+---@field maskRight boolean? the right end is cut
 local BarMixin = {}
 LB.BarMixin = BarMixin
 
@@ -309,7 +323,83 @@ function BarMixin:ApplyAppearance()
 
 	self:ApplySpark(appearance.spark, tip)
 	self:ApplyDividers()
+	self:RefreshMasks()
 	LB.TextSlot:ApplyBar(self)
+end
+
+---Cuts the ends of the fill, its overlays, effects and background to a border's bevel, at the left end, the right
+---end or both.
+---@param width number? the masks' width, from `Border:EndMask`; nil cuts neither end
+---@param left boolean
+---@param right boolean
+function BarMixin:SetEndMasks(width, left, right)
+	self.maskWidth = width
+	self.maskLeft, self.maskRight = width ~= nil and left, width ~= nil and right
+	self:RefreshMasks()
+end
+
+---@param frame Frame
+---@return Texture[] the textures on `frame` that the end masks cut
+function BarMixin:MaskedTextures(frame)
+	if frame == self.content then
+		return { self.fillTexture, self.shimmer[1], self.shimmer[2], self.flare, self.spark }
+	end
+
+	---@cast frame StatusBar
+	return { frame:GetStatusBarTexture() }
+end
+
+---Attaches or detaches each end mask to match `maskLeft` and `maskRight`; a status bar's texture may be replaced
+---when its texture changes, so this runs again after every appearance change.
+function BarMixin:RefreshMasks()
+	if not self.masks then
+		if not self.maskLeft and not self.maskRight then
+			return
+		end
+
+		self.masks = {}
+
+		for _, frame in ipairs({ self.background, self.rested, self.quest, self.content }) do
+			local set = {}
+
+			for _, entry in ipairs(ENDS) do
+				local mask = frame:CreateMaskTexture()
+
+				mask:SetTexture(LB.Media.textures[entry.texture], "CLAMPTOWHITE", "CLAMPTOWHITE")
+				mask:SetPoint("TOP" .. entry.side, frame, "TOP" .. entry.side)
+				mask:SetPoint("BOTTOM" .. entry.side, frame, "BOTTOM" .. entry.side)
+				set[#set + 1] = { mask = mask, left = entry.left }
+			end
+
+			self.masks[frame] = set
+		end
+	end
+
+	for frame, set in pairs(self.masks) do
+		local textures = self:MaskedTextures(frame)
+
+		for _, entry in ipairs(set) do
+			local wanted = (entry.left and self.maskLeft) or (not entry.left and self.maskRight)
+
+			if self.maskWidth then
+				entry.mask:SetWidth(self.maskWidth)
+			end
+
+			for _, texture in ipairs(textures) do
+				local masks = attached[texture] or {}
+
+				attached[texture] = masks
+
+				if wanted and not masks[entry.mask] then
+					texture:AddMaskTexture(entry.mask)
+					masks[entry.mask] = true
+				elseif not wanted and masks[entry.mask] then
+					texture:RemoveMaskTexture(entry.mask)
+					masks[entry.mask] = nil
+				end
+			end
+		end
+	end
 end
 
 function BarMixin:ApplyDividers()
@@ -325,11 +415,14 @@ function BarMixin:ApplyDividers()
 	local settings = appearance.dividers
 	local border = appearance.border
 	local pixels, path = LB.Border:Parts(border.style)
+	local art = LB.Border:DividerArt(border.style)
 	local color = LB.Border:Color(border.style, border)
 
 	if settings.customColor then
 		color = settings.color
-	elseif not pixels and not path then
+	elseif art and not border.customColor then
+		color = art.tint
+	elseif not pixels and not path and not art then
 		color = NOTCH
 	end
 
@@ -348,9 +441,13 @@ function BarMixin:ApplyDividers()
 	self.dividers.segments = settings.spacing == 5 and 20 or 10
 	self.dividers.pixels = pixels or 1
 	self.dividers.textured = path ~= nil
+	self.dividers.art = art
 
 	for _, line in ipairs(self.dividers.lines) do
-		if path then
+		if art then
+			line:SetTexture(art.path)
+			line:SetTexCoord(unpack(art.coords))
+		elseif path then
 			line:SetTexture(path)
 			line:SetTexCoord(0, DIVIDER_EDGE_SLICE, 0, 1)
 		else
@@ -384,7 +481,9 @@ function BarMixin:PlaceDividers()
 	local pixel = LB:Pixel(self)
 	local lineWidth = dividers.pixels * pixel
 
-	if dividers.textured then
+	if dividers.art then
+		lineWidth = LB.Placement:ToPixel(dividers.art.width, pixel)
+	elseif dividers.textured then
 		lineWidth = LB.Placement:ToPixel(LB.Border:EdgeMetrics(height), pixel)
 	end
 

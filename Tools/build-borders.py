@@ -7,17 +7,21 @@ Usage:
     ui-hud-experiencebar-frame-c60-2x.png                        frame, 2040 x 26
     ui-hud-experiencebar-divider-c60-2x.png                      divider, 8 x 14
     ui-hud-experiencebar-fill-reputation-faction-green-c60-2x.png fill, 2040 x 26
+    ui-hud-experiencebar-frame-pip-c60-2x.png                    pip, 20 x 28
+    ui-hud-experiencebar-frame-pip-mouseover-c60-2x.png          pip highlight, 24 x 28
 
 Writes, as uncompressed 32-bit TGA with power-of-two canvases:
     Media/Borders/BlizzardBorderWhite.tga         the frame at 2x on a 2048 x 32 canvas, drawn in three slices
-    Media/Borders/BlizzardEnhancedBorderWhite.tga a backdrop edge file, eight 32 px slices
     Media/Borders/BlizzardDividerWhite.tga        the divider on an 8 x 16 canvas
-    Media/Textures/BlizzardMask<Corner>.tga       32 x 32 alpha masks of the fill's beveled corners
+    Media/Textures/BlizzardMask<Left|Right>.tga   32 x 64 alpha masks of the fill's beveled ends
     Media/Textures/LevelboundBlizzard.tga         the fill's two-tone profile as a 64 x 32 bar texture
+    Media/Textures/MarkerPip-White.tga            the pip as a party marker, gray, at (0, 0) of a 32 x 32 canvas
+    Media/Textures/MarkerPip-Highlight.tga        the pip's mouseover art unchanged, at (0, 0) of a 32 x 32 canvas
 
 The frame and divider are made white by dividing each channel by a reference color, the 99th percentile of their
 opaque pixels, so tinting with that color draws the art as exported; the script prints both colors. The bar texture
-is the fill's brightness, its light half at full white. Requires Python 3 and Pillow.
+is the fill's brightness, its light half at full white, and the pip marker is the pip's brightness, its brightest
+pixel at white, so a class color shades it. Requires Python 3 and Pillow.
 """
 
 import sys
@@ -31,11 +35,12 @@ ROOT = Path(__file__).resolve().parent.parent
 FRAME = "ui-hud-experiencebar-frame-c60-2x.png"
 DIVIDER = "ui-hud-experiencebar-divider-c60-2x.png"
 FILL = "ui-hud-experiencebar-fill-reputation-faction-green-c60-2x.png"
+PIP = "ui-hud-experiencebar-frame-pip-c60-2x.png"
+PIP_HIGHLIGHT = "ui-hud-experiencebar-frame-pip-mouseover-c60-2x.png"
 
-SLICE = 32  # edge file slice size
+SLICE = 32  # mask width
 CORNER = 13  # the frame's bevel fits a 13 px square at each corner
 INSET = 2  # the fill starts 2 px inside the frame on every side, so the bar sits 1 UI unit inside it
-BAND_SAMPLE = slice(16, 64)  # columns past the bevel that give the straight bands' profile
 OPAQUE = 200
 PERCENTILE = 99
 
@@ -77,75 +82,20 @@ def canvas(width, height):
     return np.zeros((height, width, 4))
 
 
-def edge_file(frame):
-    """Eight slices, left to right: left, right, top, bottom, top-left, top-right, bottom-left, bottom-right; the top
-    and bottom edges are stored turned a quarter counterclockwise, as backdrop edge files are."""
-    height = frame.shape[0]
-    top = frame[0:CORNER, BAND_SAMPLE].mean(axis=1)  # rows from the outer edge in
-    bottom = frame[height - CORNER:height, BAND_SAMPLE].mean(axis=1)
-    left = frame[height // 2, 0:CORNER]  # columns from the outer edge in
-
-    def left_slice():
-        piece = canvas(SLICE, SLICE)
-        piece[:, 0:CORNER] = left[np.newaxis, :, :]
-
-        return piece
-
-    def top_strip():
-        strip = canvas(SLICE, SLICE)
-        strip[0:CORNER, :] = top[:, np.newaxis, :]
-
-        return strip
-
-    def bottom_strip():
-        strip = canvas(SLICE, SLICE)
-        strip[SLICE - CORNER:SLICE, :] = bottom[:, np.newaxis, :]
-
-        return strip
-
-    def top_left():
-        piece = top_strip()
-        piece[CORNER:, 0:CORNER] = left[np.newaxis, :, :]
-        piece[0:CORNER, 0:CORNER] = frame[0:CORNER, 0:CORNER]
-
-        return piece
-
-    def bottom_left():
-        piece = bottom_strip()
-        piece[0:SLICE - CORNER, 0:CORNER] = left[np.newaxis, :, :]
-        piece[SLICE - CORNER:SLICE, 0:CORNER] = frame[height - CORNER:height, 0:CORNER]
-
-        return piece
-
-    slices = [
-        left_slice(),
-        left_slice()[:, ::-1],
-        np.rot90(top_strip(), 1),
-        np.rot90(bottom_strip(), 1),
-        top_left(),
-        top_left()[:, ::-1],
-        bottom_left(),
-        bottom_left()[:, ::-1],
-    ]
-
-    return np.concatenate(slices, axis=1)
-
-
-def corner_masks(fill):
-    """The fill's top-left bevel, measured from the bar's corner, as a white alpha mask, and its mirror images for
-    the other corners."""
-    alpha = Image.fromarray(fill[INSET:INSET + CORNER, INSET:INSET + CORNER, 3].astype(np.uint8), "L")
-    alpha = np.asarray(alpha.resize((SLICE, SLICE), Image.BILINEAR)).astype(np.float64)
-    mask = canvas(SLICE, SLICE)
+def end_masks(fill):
+    """The fill's beveled left end, over the bar's full height, as a white alpha mask, and its mirror image for the
+    right end. A texture takes at most three masks, so each end's two corners share one mask; that suits only a bar of
+    the art's own height."""
+    rows = fill[:, CORNER + INSET, 3] >= 255
+    top = int(np.argmax(rows))
+    bottom = len(rows) - int(np.argmax(rows[::-1]))
+    alpha = Image.fromarray(fill[top:bottom, INSET:INSET + CORNER, 3].astype(np.uint8), "L")
+    alpha = np.asarray(alpha.resize((SLICE, 2 * SLICE), Image.BILINEAR)).astype(np.float64)
+    mask = canvas(SLICE, 2 * SLICE)
     mask[:, :, :3] = 255
     mask[:, :, 3] = alpha
 
-    return {
-        "TopLeft": mask,
-        "TopRight": mask[:, ::-1],
-        "BottomLeft": mask[::-1, :],
-        "BottomRight": mask[::-1, ::-1],
-    }
+    return {"Left": mask, "Right": mask[:, ::-1]}
 
 
 def bar_texture(fill):
@@ -163,6 +113,23 @@ def bar_texture(fill):
     return np.asarray(image.resize((64, 32), Image.BILINEAR)).astype(np.float64)
 
 
+def grayscale(image):
+    """Each pixel's strongest channel, scaled so the brightest opaque pixel is white; alpha kept."""
+    out = image.copy()
+    brightness = image[:, :, :3].max(axis=2)
+    peak = brightness[image[:, :, 3] >= OPAQUE].max()
+    out[:, :, :3] = np.clip(brightness / peak * 255, 0, 255)[:, :, np.newaxis]
+
+    return out
+
+
+def on_canvas(image, size):
+    out = canvas(size, size)
+    out[0:image.shape[0], 0:image.shape[1]] = image
+
+    return out
+
+
 def blizzard(directory):
     frame = load(directory, FRAME)
     divider = load(directory, DIVIDER)
@@ -175,19 +142,24 @@ def blizzard(directory):
     strip = canvas(2048, 32)
     strip[0:frame.shape[0], 0:frame.shape[1]] = white_frame
     save(strip, "Media/Borders/BlizzardBorderWhite.tga")
-    save(edge_file(white_frame), "Media/Borders/BlizzardEnhancedBorderWhite.tga")
 
     marks = canvas(8, 16)
     marks[1:1 + divider.shape[0], 0:divider.shape[1]] = whiten(divider, divider_tint)
     save(marks, "Media/Borders/BlizzardDividerWhite.tga")
 
-    for corner, mask in corner_masks(fill).items():
-        save(mask, f"Media/Textures/BlizzardMask{corner}.tga")
+    for end, mask in end_masks(fill).items():
+        save(mask, f"Media/Textures/BlizzardMask{end}.tga")
 
     save(bar_texture(fill), "Media/Textures/LevelboundBlizzard.tga")
 
+    pip = load(directory, PIP)
+    highlight = load(directory, PIP_HIGHLIGHT)
+    save(on_canvas(grayscale(pip), SLICE), "Media/Textures/MarkerPip-White.tga")
+    save(on_canvas(highlight, SLICE), "Media/Textures/MarkerPip-Highlight.tga")
+
     print(f"frame: {frame.shape[1]} x {frame.shape[0]} px; default tint {hex_color(frame_tint)}")
     print(f"divider: {divider.shape[1]} x {divider.shape[0]} px at (0, 1); default tint {hex_color(divider_tint)}")
+    print(f"pip: {pip.shape[1]} x {pip.shape[0]} px; highlight {highlight.shape[1]} x {highlight.shape[0]} px")
 
 
 def main():

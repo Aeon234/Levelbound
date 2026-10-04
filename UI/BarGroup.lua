@@ -85,41 +85,44 @@ end
 ---@return number groupHeight
 function BarGroup:ComputeLayout(ids, screenWidth)
 	local layout = LB.Profile:Get("layout")
+	local style = LB.Profile:Get("appearance.border.style")
+	local fixed = LB.Border:FixedHeight(style)
+	local height = LB.Layout.Height(layout, fixed)
 	local count = #ids
 	local rects = {}
 	local width = LB.Layout.Fullscreen(layout) and screenWidth or layout.width
 
 	if count == 0 then
-		return rects, width, layout.height
+		return rects, width, height
 	end
 
 	if layout.mode == "SEGMENTED" then
 		local widths, offsets = self:SegmentWidths(width, count, SEPARATOR)
 
 		for index, id in ipairs(ids) do
-			rects[id] = { width = widths[index], height = layout.height, x = offsets[index], y = 0 }
+			rects[id] = { width = widths[index], height = height, x = offsets[index], y = 0 }
 		end
 
-		return rects, width, layout.height
+		return rects, width, height
 	end
 
 	-- Stacked bars each carry a border; the gap is measured between the borders' outer edges.
 	local spacing = layout.gap
 
 	if not LB.Layout.Fullscreen(layout) then
-		spacing = spacing + 2 * LB.Border:Outset(LB.Profile:Get("appearance.border.style"), layout.height)
+		spacing = spacing + 2 * LB.Border:Outset(style, height)
 	end
 
 	if layout.mode == "CONNECTED" then
-		local step = layout.height + spacing
-		local total = layout.height * count + spacing * (count - 1)
+		local step = height + spacing
+		local total = height * count + spacing * (count - 1)
 
 		local growth = LB.Layout.Growth(layout)
 
 		for index, id in ipairs(ids) do
-			local y = growth == "UP" and (total - layout.height - (index - 1) * step) or ((index - 1) * step)
+			local y = growth == "UP" and (total - height - (index - 1) * step) or ((index - 1) * step)
 
-			rects[id] = { width = width, height = layout.height, x = 0, y = y }
+			rects[id] = { width = width, height = height, x = 0, y = y }
 		end
 
 		return rects, width, total
@@ -133,15 +136,15 @@ function BarGroup:ComputeLayout(ids, screenWidth)
 
 		rects[id] = {
 			width = stored and stored.width or layout.width,
-			height = stored and stored.height or layout.height,
+			height = LB.Layout.Height(layout, fixed, stored and stored.height),
 			point = position.point,
 			x = position.x,
 			y = (stored and stored.position) and position.y
-				or (position.y - (index - 1) * (layout.height + spacing)),
+				or (position.y - (index - 1) * (height + spacing)),
 		}
 	end
 
-	return rects, layout.width, layout.height
+	return rects, layout.width, height
 end
 
 function BarGroup:Create()
@@ -234,17 +237,20 @@ function BarGroup:ApplyBorders(frame, ids, rects, override)
 	local style = override or border.style
 	local grouped = LB.Profile:Get("layout.mode") == "SEGMENTED"
 	local color = LB.Border:Color(style, border)
+	local mask = LB.Border:EndMask(style)
 
 	self.border = self.border or LB.Border:Create(frame)
 	self.border:Apply(grouped and style or "NONE", color, frame:GetHeight())
 
-	for _, id in ipairs(ids) do
+	for index, id in ipairs(ids) do
 		local bar = self.bars[id]
 		local rect = rects[id]
 
 		if bar and rect then
 			bar.border = bar.border or LB.Border:Create(bar)
 			bar.border:Apply(grouped and "NONE" or style, color, rect.height)
+			-- A segmented group's frame bevels only the group's two ends.
+			bar:SetEndMasks(mask, not grouped or index == 1, not grouped or index == #ids)
 		end
 	end
 end
@@ -464,7 +470,8 @@ function BarGroup:SetGrowth(growth)
 	LB.Profile:Set("layout.growth", growth)
 
 	if left and bottom and total then
-		local leadBottom = growth == "DOWN" and bottom or (bottom + total - layout.height)
+		local height = LB.Layout.Height(layout, LB.Border:FixedHeight(LB.Profile:Get("appearance.border.style")))
+		local leadBottom = growth == "DOWN" and bottom or (bottom + total - height)
 
 		LB.Profile:Set(
 			"layout.positions.CONNECTED",
@@ -472,7 +479,7 @@ function BarGroup:SetGrowth(growth)
 				left,
 				leadBottom,
 				layout.width,
-				layout.height,
+				height,
 				total,
 				growth,
 				UIParent:GetWidth(),

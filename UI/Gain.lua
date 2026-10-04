@@ -179,16 +179,18 @@ end
 local function Anchor(frame, bar, x, height, above)
 	local top = bar:GetTop()
 	local screen = UIParent:GetTop()
+	-- Clear of the drawn border, as the outer text is.
+	local gap = GAP + LB.TextSlot:BorderReach(bar)
 
 	frame:ClearAllPoints()
 
-	if not above and top and screen and top + height + TRAVEL > screen then
-		frame:SetPoint("BOTTOM", bar, "BOTTOMLEFT", x, -(height + GAP))
+	if not above and top and screen and top + gap + height + TRAVEL > screen then
+		frame:SetPoint("BOTTOM", bar, "BOTTOMLEFT", x, -(height + gap))
 
 		return
 	end
 
-	frame:SetPoint("BOTTOM", bar, "TOPLEFT", x, GAP)
+	frame:SetPoint("BOTTOM", bar, "TOPLEFT", x, gap)
 end
 
 ---@return boolean
