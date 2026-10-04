@@ -1,9 +1,9 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/">
 	<Frame name="LevelboundSettings_DropdownTemplate" mixin="LevelboundSettings_DropdownMixin" virtual="true">
-		<Size x="256" y="29"/>
+		<Size x="220" y="29"/>
 		<Frames>
 			<Frame parentKey="Motion">
-				<Size x="256" y="29"/>
+				<Size x="220" y="29"/>
 				<Anchors>
 					<Anchor point="CENTER"/>
 				</Anchors>

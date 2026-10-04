@@ -1,4 +1,4 @@
--- Section header: the top of a section panel, with its title and, on a collapsible group, a plus/minus.
+-- Section header: a section's capitalized title over a line across the list and, on a collapsible group, a plus/minus.
 local _, ns = ...
 local AS = ns.AeonSettings
 local tokens = AS.tokens
@@ -13,18 +13,17 @@ local ACTION_TO_TOGGLE = 10
 LevelboundSettings_SectionHeaderMixin = {}
 
 function LevelboundSettings_SectionHeaderMixin:OnLoad()
-	self.surface = AS:CreateSurface(self)
-	AS:SetFont(self.Title, "header")
-	self.Title:SetTextColor(unpack(tokens.color.sectionTitle))
+	AS:StyleHeaderTitle(self.Title)
 
-	-- The section gap above the surface takes no clicks.
+	-- The section gap above the header takes no clicks.
 	self:SetHitRectInsets(0, 0, tokens.space.sectionGap, 0)
 
 	self.titleCenter, self.toggleLift = AS:HeaderLayout()
 	local inset = tokens.space.rowInset
 	-- Regions declared without anchors fill their parent; clear that before placing them.
 	self.Title:ClearAllPoints()
-	self.Title:SetPoint("LEFT", self, "TOPLEFT", inset, -self.titleCenter)
+	self.Title:SetPoint("LEFT", self, "TOPLEFT", 0, -self.titleCenter)
+	self.line = AS:CreateHeaderLine(self)
 	self.Toggle:ClearAllPoints()
 	self.Toggle:SetPoint("RIGHT", self, "TOPRIGHT", -inset, -self.titleCenter + self.toggleLift)
 
@@ -34,10 +33,6 @@ function LevelboundSettings_SectionHeaderMixin:OnLoad()
 	self.action = action
 	self.actionSlot = AS:CreateSettingSlot()
 	self.menuSlot = AS:CreateSettingSlot()
-
-	self.outline = AS:CreateOutline(self, tokens.color.flash)
-	self.outline:SetPoint("TOPLEFT", 0, -tokens.space.sectionGap)
-	self.outline:SetPoint("BOTTOMRIGHT")
 end
 
 ---@param entry AeonSettingsEntry
@@ -47,8 +42,7 @@ function LevelboundSettings_SectionHeaderMixin:Init(entry, window)
 	self.window = window
 	self.entry = entry
 
-	self.surface:SetShape((entry.collapsed or entry.empty) and "CLOSED_HEADER" or "HEADER")
-	self.Title:SetText(data.title)
+	self.Title:SetText(data.title and data.title:upper())
 
 	local collapsible = data.collapsible == true
 	self:EnableMouse(collapsible)
@@ -121,7 +115,6 @@ function LevelboundSettings_SectionHeaderMixin:OnClick()
 end
 
 function LevelboundSettings_SectionHeaderMixin:Release()
-	AS:HideOutline(self.outline)
 	self.actionSlot:Release()
 	self.action:Hide()
 	self.menuSlot:Release()
@@ -134,6 +127,7 @@ end
 AS:RegisterElementKind("section", {
 	template = "LevelboundSettings_SectionHeaderTemplate",
 	section = true,
+	extent = AS:HeaderExtent(),
 	Init = function(frame, entry, window)
 		frame:Init(entry, window)
 	end,
@@ -142,9 +136,5 @@ AS:RegisterElementKind("section", {
 	end,
 	Refresh = function(frame)
 		frame:RefreshState()
-	end,
-	-- A header shows no findable setting, so it always flashes whole.
-	Flash = function(frame)
-		AS:FlashOutline(frame.outline)
 	end,
 })

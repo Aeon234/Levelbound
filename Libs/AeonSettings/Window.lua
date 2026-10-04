@@ -1,4 +1,4 @@
--- Settings window: chrome, category column, page list, search, bands and session memory.
+-- Settings window: chrome, category column, page heading, tabs, preview and list, search, bands and session memory.
 local _, ns = ...
 local AS = ns.AeonSettings
 local L = AS.L
@@ -6,10 +6,13 @@ local tokens = AS.tokens
 
 local CATEGORY_X = tokens.size.categoryColumnX
 local CATEGORY_WIDTH = tokens.size.categoryColumn
+local NATIVE_COLUMN = 192 -- the column width Options_InnerFrame's left slot is drawn for
+local CATEGORY_EXTRA = CATEGORY_WIDTH - NATIVE_COLUMN
 local PAGE_X = 18 + CATEGORY_WIDTH + tokens.space.columnGap
 local TOP = 76
 local TOP_BAND = 28
 local CLOSE_RIGHT = 16
+-- The window's height: TOP, then this room and the caller's rows at `size.windowRow`, then BOTTOM.
 local HEADER_HEIGHT = 50
 local LIST_GAP = 4
 local BOTTOM = 47
@@ -18,17 +21,40 @@ local SCROLLBAR_GAP = 6
 local RELOAD_NOTICE_GAP = 10
 local DEFAULT_CONTENT_WIDTH = 1065
 local DEFAULT_ROWS = 20
-local DEFAULTS_RIGHT = 36
-local TITLE_X = 7
-local JUMP_GAP = 8
-local JUMP_WIDTH = 25
-local JUMP_MIN_SECTIONS = 3
-local JUMP_FLASH_DELAY = 0.25
+-- The page, on the content side of the inner frame: the heading's inset from the content side's left and right
+-- edges and below the inner frame's top, the description under the title, and the gap under the description.
+local HEADING_X = 14
+local HEADING_TOP = 16
+local DESCRIPTION_GAP = 8
+local HEADING_GAP = 16
+local DEFAULTS_GAP = 12 -- the title's room before the Defaults button
+local SCROLLBAR_ROOM = 16 -- right of the list, for its scroll bar
+local LIST_BOTTOM = 8 -- the list's bottom above the fill's bottom edge
+local EMPTY_TOP = 40 -- "No settings match." below the list's top
+local TAB_HEIGHT = 30
+local TAB_TEMPLATE = "MinimalTabTemplate"
+local INTERNAL_TAB_TEMPLATE = "LevelboundSettings_InternalTabTemplate"
+local INTERNAL_TAB_ATLAS = "common-internaltab" -- present on Forever, whose tabs draw the shipped tab art
+-- The shipped tab art: 192x60 in the top-left of a 256x64 file, drawn at half size. Its ends keep their size
+-- and its middle stretches, so a tab is as wide as its title needs.
+local INTERNAL_TAB_ART_WIDTH, INTERNAL_TAB_ART_HEIGHT = 192, 60
+local INTERNAL_TAB_FILE_WIDTH, INTERNAL_TAB_FILE_HEIGHT = 256, 64
+local INTERNAL_TAB_CAP = 32 -- art pixels at each end, beveled corners included, that never stretch
+local INTERNAL_TAB_MIN_WIDTH = 96
+local INTERNAL_TAB_TEXT_PADDING = 32 -- width beyond the title: both ends, drawn 16 wide
+local TAB_GAP = 5 -- between tabs, as Blizzard's Settings panel spaces its own
+local TAB_TEXT_PADDING = 40 -- MinimalTabTemplate's width beyond its text
 local VERSION_COLOR = "|cff9d9d9d"
 
--- Options_InnerFrame nine-slice insets, in atlas pixels drawn at one UI unit each.
+-- Options_InnerFrame nine-slice insets, in atlas pixels drawn at one UI unit each. The left slot is cut at
+-- INNER_SPLIT: left of it stretches by the column's width beyond Blizzard's, the strip holding the divider does not.
 local INNER_ATLAS = "Options_InnerFrame"
 local INNER_LEFT, INNER_RIGHT, INNER_TOP, INNER_BOTTOM = 204, 8, 8, 8
+local INNER_SPLIT = 196
+-- The content fill's reach: this far from the inner frame's top, right and bottom edges (its border's visible line
+-- is about this deep), and FILL_LEFT left of the content side's edge, under the divider's line.
+local FILL_INSET = 3
+local FILL_LEFT = 2
 local INNER_X, INNER_Y = tokens.space.innerFrameX, tokens.space.innerFrameY
 local INNER_BOTTOM_OFFSET = tokens.space.innerBottom
 
@@ -39,6 +65,7 @@ local RESET_POPUP = "LevelboundSettings_RESET_PAGE"
 ---An element kind's functions run through `AS:CallHost`: an error is reported and leaves the frame as it is.
 ---@class AeonSettingsElementKind
 ---@field template string virtual frame template the page list creates for this kind
+---@field extent number? the element's height in the page list; `size.row` when nil
 ---@field Init fun(frame: Frame, entry: AeonSettingsEntry, window: table) binds a pooled frame to an entry
 ---@field Reset (fun(frame: Frame))? clears a frame before it returns to the pool
 ---@field Search (fun(data: table): string?)? text matched by search; nil excludes the element
@@ -54,15 +81,15 @@ local RESET_POPUP = "LevelboundSettings_RESET_PAGE"
 ---@field data table the element the page built
 ---@field pageID string? page the element belongs to
 ---@field position integer? 1-based position within its section, or within its search group
----@field last boolean? last element of its section
----@field onSurface boolean? drawn on a section surface
 ---@field collapsed boolean? a collapsible section that is collapsed
----@field empty boolean? a section with no elements after it
+---@field picked string? a picker's picked option
+---@field settings table[]? the settings the element shows, from the build
+---@field indent boolean? the row sits one level in, under the setting it depends on
 
 ---@type table<string, AeonSettingsElementKind>
 AS.elementKinds = AS.elementKinds or {}
 
----Registers a kind of page-list element. Every element is one row tall.
+---Registers a kind of page-list element, `size.row` tall unless it gives its own `extent`.
 ---@param kind string
 ---@param definition AeonSettingsElementKind
 function AS:RegisterElementKind(kind, definition)
@@ -71,7 +98,24 @@ end
 
 -- Search divider --------------------------------------------------------------------------------------------
 
+---A search-result page divider, drawn as a section header: the page's name in capitals over the header line. A
+---click opens the page at its first hit.
 LevelboundSettings_SearchDividerMixin = {}
+
+function LevelboundSettings_SearchDividerMixin:OnLoad()
+	local gap = tokens.space.sectionGap
+	local titleCenter = AS:HeaderLayout()
+	AS:StyleHeaderTitle(self.Title)
+	-- Regions declared without anchors fill their parent; clear that before placing them.
+	self.Title:ClearAllPoints()
+	self.Title:SetPoint("LEFT", self, "TOPLEFT", 0, -titleCenter)
+	self.Title:SetPoint("RIGHT", self, "TOPRIGHT", 0, -titleCenter)
+	AS:CreateHeaderLine(self)
+	self.MouseoverOverlay:SetPoint("TOPLEFT", 0, -gap)
+	self.MouseoverOverlay:SetPoint("BOTTOMRIGHT")
+	-- The section gap above the header takes no clicks.
+	self:SetHitRectInsets(0, 0, gap, 0)
+end
 
 function LevelboundSettings_SearchDividerMixin:OnClick()
 	PlaySound(SOUNDKIT.IG_CHARACTER_INFO_TAB)
@@ -88,10 +132,11 @@ end
 
 AS:RegisterElementKind("searchDivider", {
 	template = "LevelboundSettings_SearchDividerTemplate",
+	extent = AS:HeaderExtent(),
 	Init = function(frame, entry, window)
 		frame.window = window
 		frame.data = entry.data
-		frame.Title:SetText(entry.data.title)
+		frame.Title:SetText(entry.data.title:upper())
 	end,
 	Reset = function(frame)
 		frame.MouseoverOverlay:Hide()
@@ -99,6 +144,62 @@ AS:RegisterElementKind("searchDivider", {
 		frame.data = nil
 	end,
 })
+
+-- Internal tab -------------------------------------------------------------------------------------------
+
+---A page tab drawn with the shipped tab art (`Media\Tab`): the base, with the selected art over it while selected
+---and the hover art in the highlight layer. Each look is a three-slice whose middle stretches with the tab's
+---width. It offers what the window uses of `MinimalTabTemplate`, `Text` and `SetSelected`, plus `textPadding`
+---and `minWidth`, which the window sizes it by. Its title is white in every state; only the art marks hover and
+---selection.
+LevelboundSettings_InternalTabMixin = {}
+
+---Creates one look of the tab art as a left end, a stretching middle and a right end in `layer`.
+---@param layer DrawLayer
+---@param file string the file name in `Media\Tab`, without extension
+---@return Texture[] slices left, middle, right
+function LevelboundSettings_InternalTabMixin:CreateArt(layer, file)
+	local edges = { 0, INTERNAL_TAB_CAP, INTERNAL_TAB_ART_WIDTH - INTERNAL_TAB_CAP, INTERNAL_TAB_ART_WIDTH }
+	local bottom = INTERNAL_TAB_ART_HEIGHT / INTERNAL_TAB_FILE_HEIGHT
+	local slices = {}
+	for index = 1, 3 do
+		local texture = self:CreateTexture(nil, layer)
+		texture:SetTexture(AS.MEDIA .. "Tab\\" .. file .. ".png")
+		texture:SetTexCoord(edges[index] / INTERNAL_TAB_FILE_WIDTH, edges[index + 1] / INTERNAL_TAB_FILE_WIDTH, 0, bottom)
+		slices[index] = texture
+	end
+
+	local left, middle, right = slices[1], slices[2], slices[3]
+	left:SetPoint("TOPLEFT")
+	left:SetPoint("BOTTOMLEFT")
+	left:SetWidth(INTERNAL_TAB_CAP / 2)
+	right:SetPoint("TOPRIGHT")
+	right:SetPoint("BOTTOMRIGHT")
+	right:SetWidth(INTERNAL_TAB_CAP / 2)
+	middle:SetPoint("TOPLEFT", left, "TOPRIGHT")
+	middle:SetPoint("BOTTOMRIGHT", right, "BOTTOMLEFT")
+
+	return slices
+end
+
+function LevelboundSettings_InternalTabMixin:OnLoad()
+	AS:SetFont(self.Text, "body", tokens.font.tabSize)
+	self.Text:SetTextColor(unpack(tokens.color.text))
+	self:CreateArt("BACKGROUND", "Base")
+	self.selectedArt = self:CreateArt("OVERLAY", "Selected")
+	self:CreateArt("HIGHLIGHT", "Hover")
+	self.textPadding = INTERNAL_TAB_TEXT_PADDING
+	self.minWidth = INTERNAL_TAB_MIN_WIDTH
+	self:SetSelected(false)
+end
+
+---@param selected boolean
+function LevelboundSettings_InternalTabMixin:SetSelected(selected)
+	self.selected = selected
+	for _, slice in ipairs(self.selectedArt) do
+		slice:SetShown(selected)
+	end
+end
 
 -- Reset confirmation ----------------------------------------------------------------------------------------
 
@@ -121,31 +222,37 @@ StaticPopupDialogs[RESET_POPUP] = {
 ---@field options table creation options
 ---@field categories table[] category definitions
 ---@field pages table<string, table> page definitions by id
----@field memory { page: string?, scroll: table<string, number>, sections: table<string, table<string, boolean>>, initial: table<string, any>, previewHidden: boolean, previewStates: table<string, string> }
+---@field memory { page: string?, scroll: table<string, number>, sections: table<string, table<string, boolean>>, tabs: table<string, string>, picks: table<string, table<string, string>>, initial: table<string, any> }
 ---`memory.page` is the page the window is on, kept through a search; `memory.scroll` holds each page's scroll
----position from when it was last left.
----@field scrollGeneration integer increments with each smooth scroll; a stale scroll's follow-up is dropped
+---position, per tab, from when it was last left; `memory.tabs` each page's chosen tab.
+---@field scrollGeneration integer increments with each find; a stale find's glide and flash are dropped
 ---@field reloadPending table<string, true>
 ---@field shownElements AeonSettingsEntry[]? entries in the page list, in order
 ---@field model AeonSettingsPageModel
 ---@field sections AeonSettingsEntry[] section entries of the shown page
 ---@field listPageID string? the page the list shows; nil while it shows search results
----@field listHeight number height of the list area at the window's size, before any pinned preview
+---@field listTabID string? the tab the list shows, on a page with tabs
+---@field tabButtons Button[] the tab bar's buttons, reused across pages
+---@field tabsShown boolean the tab bar shows, under the heading
 ---@field initializers table<string, fun(frame: Frame, entry: AeonSettingsEntry)> cached frame initializers by kind
----@field pinnedHeight number? height of the preview panel pinned above the list
+---@field pinnedHeight number? the list's top below the page's: what the heading, tabs and preview take
+---@field glide Frame drives a find's scroll
 ---@field searching boolean the list shows search results
 LevelboundSettings_WindowMixin = {}
 
 function LevelboundSettings_WindowMixin:OnLoad()
 	self.categories = {}
 	self.pages = {}
-	self.memory = { scroll = {}, sections = {}, initial = {}, previewHidden = false, previewStates = {} }
+	self.memory = { scroll = {}, sections = {}, tabs = {}, picks = {}, initial = {} }
 	self.scrollGeneration = 0
 	self.reloadPending = {}
 	self.sections = {}
 	self.model = AS.CreatePageModel(self.memory, AS.elementKinds)
 	self.searching = false
 	self.initializers = {}
+	self.tabButtons = {}
+	self.tabsShown = false
+	self.glide = CreateFrame("Frame", nil, self)
 
 	self:RegisterForDrag("LeftButton")
 	self:RegisterEvent("PLAYER_REGEN_DISABLED")
@@ -155,8 +262,9 @@ function LevelboundSettings_WindowMixin:OnLoad()
 
 	self:BuildInnerFrame()
 	self:InitPageList()
+	self:InitTabBar()
 	self:InitBands()
-	self:InitHeader()
+	self:InitHeading()
 
 	self.Categories.onSelect = function(pageID)
 		PlaySound(SOUNDKIT.IG_CHARACTER_INFO_TAB)
@@ -168,17 +276,28 @@ function LevelboundSettings_WindowMixin:OnLoad()
 	end)
 end
 
----Draws Options_InnerFrame as a nine-slice: the left column and caps keep their native size, the middle
----stretches. Draws nothing when the client lacks the atlas.
+---Draws Options_InnerFrame as a nine-slice, its left slot cut at the divider: the column's background stretches
+---with the column, the divider, the caps and the right edge keep their native size, and the content middle
+---stretches. The content fill is drawn even when the client lacks the atlas; the art is not.
 function LevelboundSettings_WindowMixin:BuildInnerFrame()
+	local anchor = CreateFrame("Frame", nil, self)
+	anchor:SetPoint("TOPLEFT", INNER_X, -INNER_Y)
+	anchor:SetPoint("BOTTOMRIGHT", -INNER_X, INNER_BOTTOM_OFFSET)
+	self.InnerFrame = anchor
+
+	local left = INNER_LEFT + CATEGORY_EXTRA
+	local split = INNER_SPLIT + CATEGORY_EXTRA
+
+	-- The content side's fill, under the frame's art: up to the border's line, and under the divider's.
+	local fill = self:CreateTexture(nil, "OVERLAY", nil, 1)
+	fill:SetColorTexture(unpack(tokens.color.contentFill))
+	fill:SetPoint("TOPLEFT", anchor, "TOPLEFT", left - FILL_LEFT, -FILL_INSET)
+	fill:SetPoint("BOTTOMRIGHT", anchor, "BOTTOMRIGHT", -FILL_INSET, FILL_INSET)
+
 	local info = C_Texture.GetAtlasInfo(INNER_ATLAS)
 	if not info then
 		return
 	end
-
-	local anchor = CreateFrame("Frame", nil, self)
-	anchor:SetPoint("TOPLEFT", INNER_X, -INNER_Y)
-	anchor:SetPoint("BOTTOMRIGHT", -INNER_X, INNER_BOTTOM_OFFSET)
 
 	local file = info.file or info.filename
 	local width, height = info.width, info.height
@@ -187,8 +306,9 @@ function LevelboundSettings_WindowMixin:BuildInnerFrame()
 
 	-- Each column and row: start and end in atlas pixels, and the anchor side and offset for each edge.
 	local columns = {
-		{ 0, INNER_LEFT, "LEFT", 0, "LEFT", INNER_LEFT },
-		{ INNER_LEFT, width - INNER_RIGHT, "LEFT", INNER_LEFT, "RIGHT", -INNER_RIGHT },
+		{ 0, INNER_SPLIT, "LEFT", 0, "LEFT", split },
+		{ INNER_SPLIT, INNER_LEFT, "LEFT", split, "LEFT", left },
+		{ INNER_LEFT, width - INNER_RIGHT, "LEFT", left, "RIGHT", -INNER_RIGHT },
 		{ width - INNER_RIGHT, width, "RIGHT", -INNER_RIGHT, "RIGHT", 0 },
 	}
 	local rows = {
@@ -222,7 +342,11 @@ function LevelboundSettings_WindowMixin:InitPageList()
 		local kind = kinds[data.kind]
 		factory(kind.template, self:Initializer(data.kind))
 	end)
-	view:SetElementExtent(tokens.size.row)
+	view:SetElementExtentCalculator(function(_, data)
+		local kind = kinds[data.kind]
+
+		return kind and kind.extent or tokens.size.row
+	end)
 	view:SetElementResetter(function(frame, data)
 		local kind = kinds[data.kind]
 		if kind and kind.Reset then
@@ -234,6 +358,15 @@ function LevelboundSettings_WindowMixin:InitPageList()
 	page.ScrollBar:SetPoint("TOPLEFT", page.ScrollBox, "TOPRIGHT", SCROLLBAR_GAP, 0)
 	page.ScrollBar:SetPoint("BOTTOMLEFT", page.ScrollBox, "BOTTOMRIGHT", SCROLLBAR_GAP, 0)
 	ScrollUtil.AddManagedScrollBarVisibilityBehavior(page.ScrollBox, page.ScrollBar)
+end
+
+---Creates the tab bar under the heading, with the content side's divider line under it.
+function LevelboundSettings_WindowMixin:InitTabBar()
+	local bar = CreateFrame("Frame", nil, self.Page)
+	bar:SetHeight(TAB_HEIGHT)
+	bar:Hide()
+	bar.dividerHeight = AS:CreateContentDivider(bar, HEADING_X, HEADING_X)
+	self.Page.TabBar = bar
 end
 
 ---Returns the cached frame initializer for an element kind.
@@ -277,7 +410,8 @@ function LevelboundSettings_WindowMixin:InitBands()
 		self:Hide()
 	end)
 
-	self.SearchBox:SetPoint("BOTTOMRIGHT", self.Page, "TOPRIGHT", 4, 20)
+	-- The page starts at the inner frame's top and right edge; the box keeps its place above the old page.
+	self.SearchBox:SetPoint("BOTTOMRIGHT", self.Page, "TOPRIGHT", -1, 8)
 
 	AS:SetFont(self.ReloadNotice, "body")
 	self.ReloadNotice:SetTextColor(unpack(tokens.color.notice))
@@ -301,51 +435,52 @@ function LevelboundSettings_WindowMixin:InitBands()
 	status.fade = fade
 end
 
-function LevelboundSettings_WindowMixin:InitHeader()
-	local header = self.Page.Header
+---Sets up the page heading: the title, the description under it and Defaults at the title line's right end; and
+---the preview's divider line.
+function LevelboundSettings_WindowMixin:InitHeading()
+	local page = self.Page
+	local heading = page.Heading
+	local font = tokens.font
 
-	header.DefaultsButton:SetText(SETTINGS_DEFAULTS)
-	AS:FitButtonWidth(header.DefaultsButton)
-	header.DefaultsButton:SetScript("OnClick", function()
+	heading:SetPoint("TOPLEFT", HEADING_X, -HEADING_TOP)
+	heading:SetPoint("TOPRIGHT", -HEADING_X, -HEADING_TOP)
+
+	-- Regions declared without anchors fill their parent; clear that before placing them.
+	local title = heading.Title
+	AS:SetFont(title, "header", font.titleSize)
+	title:SetTextColor(unpack(tokens.color.text))
+	title:ClearAllPoints()
+	title:SetPoint("TOPLEFT")
+
+	local description = heading.Description
+	AS:SetFont(description, "header", font.descriptionSize)
+	description:SetTextColor(1, 1, 1, tokens.alpha.description)
+	description:ClearAllPoints()
+	description:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -DESCRIPTION_GAP)
+	description:SetPoint("RIGHT", heading, "RIGHT")
+
+	local defaults = heading.DefaultsButton
+	defaults:SetPoint("RIGHT", heading, "TOPRIGHT", 0, -font.titleSize / 2)
+	defaults:SetText(SETTINGS_DEFAULTS)
+	AS:FitButtonWidth(defaults)
+	defaults:SetScript("OnClick", function()
 		PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
-		local page = self.pages[self.memory.page]
-		if page then
-			StaticPopup_Show(RESET_POPUP, page.title, nil, { window = self, pageID = page.id })
+		local shown = self.pages[self.memory.page]
+		if shown then
+			StaticPopup_Show(RESET_POPUP, shown.title, nil, { window = self, pageID = shown.id })
 		end
 	end)
 
-	local jump = header.JumpDropdown
-	jump:EnableMouseWheel(false)
-	jump:HookScript("OnEnter", function()
-		GameTooltip:SetOwner(jump, "ANCHOR_RIGHT")
-		GameTooltip:SetText(L["Jump to section"])
-		GameTooltip:Show()
-	end)
-	jump:HookScript("OnLeave", function()
-		GameTooltip:Hide()
-	end)
-	jump:SetupMenu(function(_, root)
-		for _, section in ipairs(self.sections) do
-			local text = section.data.title
-			if section.collapsed then
-				text = L["%s (collapsed)"]:format(text)
-			end
-			root:CreateRadio(text, function()
-				local current = self:CurrentSection()
-				return current ~= nil and current.data.id == section.data.id
-			end, function()
-				self:JumpToSection(section)
-			end)
-		end
-	end)
+	page.Preview.dividerHeight = AS:CreateContentDivider(page.Preview, HEADING_X, HEADING_X)
 end
 
----Sizes the window from the content width and the number of rows.
+---Sizes the window from the content width and the number of rows, and places the page on the content side of
+---the inner frame. The content width and the rows (at `size.windowRow`) give the window's size, as before the page
+---scrolled freely; the list takes what the heading, tabs and preview leave.
 function LevelboundSettings_WindowMixin:Layout()
 	local contentWidth = self.options.contentWidth or DEFAULT_CONTENT_WIDTH
 	local rows = self.options.rows or DEFAULT_ROWS
-	local listHeight = rows * tokens.size.row
-	local pageHeight = HEADER_HEIGHT + LIST_GAP + listHeight
+	local pageHeight = HEADER_HEIGHT + LIST_GAP + rows * tokens.size.windowRow
 
 	self:SetSize(PAGE_X + contentWidth + RIGHT, TOP + pageHeight + BOTTOM)
 
@@ -355,31 +490,92 @@ function LevelboundSettings_WindowMixin:Layout()
 
 	local page = self.Page
 	page:ClearAllPoints()
-	page:SetPoint("TOPLEFT", PAGE_X, -TOP)
-	page:SetSize(contentWidth, pageHeight)
-	page.Preview:ClearAllPoints()
-	page.Preview:SetPoint("TOPLEFT", 0, -(HEADER_HEIGHT + LIST_GAP))
-	page.Preview:SetWidth(contentWidth)
+	page:SetPoint("TOPLEFT", self.InnerFrame, "TOPLEFT", INNER_LEFT + CATEGORY_EXTRA, 0)
+	page:SetPoint("BOTTOMRIGHT", self.InnerFrame, "BOTTOMRIGHT")
 
-	self.listHeight = listHeight
-	self:LayoutList(0)
+	self:LayoutList()
 end
 
----Places the page list below a pinned area of `pinned` height; the list keeps its bottom edge.
----@param pinned number
-function LevelboundSettings_WindowMixin:LayoutList(pinned)
-	self.pinnedHeight = pinned
-	local scrollBox = self.Page.ScrollBox
+---Places the tab bar under the description, the preview under the tabs' line (or the description), and the page
+---list under the last of them, down to just above the fill's bottom edge.
+function LevelboundSettings_WindowMixin:LayoutList()
+	local page = self.Page
+	local description = page.Heading.Description
+	local bar = page.TabBar
+	bar:ClearAllPoints()
+	bar:SetPoint("TOPLEFT", description, "BOTTOMLEFT", 0, -HEADING_GAP)
+	bar:SetPoint("TOPRIGHT", description, "BOTTOMRIGHT", 0, -HEADING_GAP)
+
+	local above, gap = description, HEADING_GAP
+	if self.tabsShown then
+		above, gap = bar, bar.dividerHeight
+	end
+
+	local preview = page.Preview
+	preview:ClearAllPoints()
+	preview:SetPoint("TOPLEFT", above, "BOTTOMLEFT", 0, -gap)
+	preview:SetPoint("TOPRIGHT", above, "BOTTOMRIGHT", 0, -gap)
+	if preview:IsShown() then
+		above, gap = preview, preview.dividerHeight
+	end
+
+	local scrollBox = page.ScrollBox
 	scrollBox:ClearAllPoints()
-	scrollBox:SetPoint("TOPLEFT", 0, -(HEADER_HEIGHT + LIST_GAP + pinned))
-	scrollBox:SetSize(self.Page:GetWidth(), self.listHeight - pinned)
+	scrollBox:SetPoint("TOPLEFT", above, "BOTTOMLEFT", 0, -gap)
+	scrollBox:SetPoint("BOTTOMRIGHT", page, "BOTTOMRIGHT", -(HEADING_X + SCROLLBAR_ROOM), FILL_INSET + LIST_BOTTOM)
+
+	page.Empty:ClearAllPoints()
+	page.Empty:SetPoint("TOP", scrollBox, "TOP", 0, -EMPTY_TOP)
+
+	self.pinnedHeight = (page:GetTop() or 0) - (scrollBox:GetTop() or 0)
 end
 
----Returns the key a page's selected preview state is remembered under; pages sharing a `stateKey` share it.
----@param page table a page with a `preview`
----@return string
-local function PreviewStateKey(page)
-	return page.preview.stateKey or page.id
+---Shows the tab bar for a page with tabs, the active one selected, or hides it. Takes effect at the next
+---`LayoutList`.
+---@param page table? nil for search results
+function LevelboundSettings_WindowMixin:UpdateTabs(page)
+	local tabs = page and self.model:Tabs(page.id)
+	local count = tabs and #tabs or 0
+	self.tabsShown = count > 0
+	self.Page.TabBar:SetShown(self.tabsShown)
+	self.listTabID = page and self.model:ActiveTab(page.id)
+
+	local buttons = self.tabButtons
+	for index = 1, math.max(count, #buttons) do
+		local tab = tabs and tabs[index]
+		local button = buttons[index] or tab and self:CreateTabButton(index)
+		if tab then
+			button.tabID = tab.id
+			button.Text:SetText(tab.title)
+			local padding = button.textPadding or TAB_TEXT_PADDING
+			button:SetWidth(math.max(button.minWidth or 0, math.ceil(button.Text:GetStringWidth()) + padding))
+			button:SetSelected(tab.id == self.listTabID)
+			button:Show()
+		elseif button then
+			button:Hide()
+		end
+	end
+end
+
+---Creates the tab bar's button at `index`, after the one before it.
+---@param index integer
+---@return Button
+function LevelboundSettings_WindowMixin:CreateTabButton(index)
+	local bar = self.Page.TabBar
+	local previous = self.tabButtons[index - 1]
+	local template = C_Texture.GetAtlasInfo(INTERNAL_TAB_ATLAS) and INTERNAL_TAB_TEMPLATE or TAB_TEMPLATE
+	local button = CreateFrame("Button", nil, bar, template)
+	if previous then
+		button:SetPoint("BOTTOMLEFT", previous, "BOTTOMRIGHT", TAB_GAP, 0)
+	else
+		button:SetPoint("BOTTOMLEFT", bar, "BOTTOMLEFT")
+	end
+	button:SetScript("OnClick", function()
+		self:SelectTab(button.tabID)
+	end)
+	self.tabButtons[index] = button
+
+	return button
 end
 
 ---Shows the page's preview panel, or hides it when the page has none, and fits the list below it.
@@ -388,18 +584,18 @@ function LevelboundSettings_WindowMixin:LayoutPreview(page)
 	local panel = self.Page.Preview
 	if not page or not page.preview or self.searching then
 		panel:Hide()
-		self:LayoutList(0)
+		self:LayoutList()
 
 		return
 	end
 
-	local preview = page.preview
-	local state = self.memory.previewStates[PreviewStateKey(page)] or (preview.states and preview.states[1])
+	-- Placed first, so the panel knows its width when it fits the sample.
+	panel:Show()
+	self:LayoutList()
 	local switch = self.model:PageSwitch(page.id)
 	local faded = switch ~= nil and not AS:CallHost(nil, switch.get)
-	local availableRows = math.floor(self.listHeight / tokens.size.row) - 1
-	local height = panel:Setup(self, page, self.memory.previewHidden, state, faded, availableRows)
-	self:LayoutList(height)
+	panel:Setup(self, page, faded)
+	self:LayoutList()
 end
 
 ---Calls the page's preview `Stop`, when it has one.
@@ -434,16 +630,6 @@ function LevelboundSettings_WindowMixin:SetPreviewChosen(key)
 	self.Page.Preview:SetChosen(key)
 end
 
----Hides or shows the preview body on every page for the session, keeping the list's pixel scroll position.
----@param hidden boolean
-function LevelboundSettings_WindowMixin:SetPreviewHidden(hidden)
-	if hidden then
-		self:StopPreview(self:CurrentPage())
-	end
-	self.memory.previewHidden = hidden
-	self:RedrawPreview()
-end
-
 ---Redraws the preview from the page's current settings, keeping the rows where they are on screen.
 function LevelboundSettings_WindowMixin:RedrawPreview()
 	if not self:IsShown() or self.searching then
@@ -465,19 +651,6 @@ function LevelboundSettings_WindowMixin:KeepScrollOffset(rebuild)
 	local before = self.pinnedHeight or 0
 	rebuild()
 	scrollBox:ScrollToOffset(offset + (self.pinnedHeight or 0) - before, ScrollBoxConstants.NoScrollInterpolation)
-end
-
----Selects a sample state for the page's preview kind, for the session.
----@param state string
-function LevelboundSettings_WindowMixin:SetPreviewState(state)
-	local page = self:CurrentPage()
-	if not page or not page.preview then
-		return
-	end
-
-	self:StopPreview(page)
-	self.memory.previewStates[PreviewStateKey(page)] = state
-	self:RedrawPreview()
 end
 
 -- Public interface ------------------------------------------------------------------------------------------
@@ -508,9 +681,11 @@ function AS:CreateWindow(options)
 end
 
 ---Replaces the category and page definitions.
----Each category is `{ id, title, icon?, pages }`; each page is `{ id, title, icon?, Build, Reset?, preview? }`,
----where `Build()` returns the page's element list, `Reset()`, when present, restores the page's defaults, and
----`preview` is an `AeonSettingsPreview`.
+---Each category is `{ id, title, icon?, pages }`; each page is
+---`{ id, title, description?, icon?, Build, Reset?, preview?, tabs? }`, where `description` is the line under the
+---page's title, `Build()` returns the page's element list, `Reset()`, when present, restores the page's defaults,
+---`preview` is an `AeonSettingsPreview`, and `tabs`, `{ { id, title } }`, splits the page's sections across tabs:
+---each section names its tab in `tab`, and a tab that holds nothing is not shown.
 ---@param categories table[]
 function LevelboundSettings_WindowMixin:SetCategories(categories)
 	self.categories = categories
@@ -607,6 +782,17 @@ function LevelboundSettings_WindowMixin:RefreshPage()
 	end)
 end
 
+---Picks a picker's option on a page, for the session, keeping the rows where they are on screen.
+---@param pageID string
+---@param pickerID string
+---@param optionID string
+function LevelboundSettings_WindowMixin:SetPick(pageID, pickerID, optionID)
+	self.model:SetPick(pageID, pickerID, optionID)
+	if pageID == self.listPageID then
+		self:RefreshPage()
+	end
+end
+
 ---Collapses or expands a collapsible section on a page, for the session.
 ---@param pageID string
 ---@param sectionID string
@@ -679,7 +865,7 @@ function LevelboundSettings_WindowMixin:BuildList(page, reuse)
 end
 
 ---Puts entries in the page list and brings everything that depends on the list up to date: reload changes,
----the header's title, Defaults button and jump menu, the empty-list message, the listed page and its
+---the heading's title, description and Defaults button, the empty-list message, the listed page, its tabs and its
 ---preview. `page` is nil for search results.
 ---@param entries AeonSettingsEntry[]
 ---@param sections AeonSettingsEntry[]
@@ -691,12 +877,11 @@ function LevelboundSettings_WindowMixin:ShowList(entries, sections, page, title,
 	self.sections = sections
 	self:ApplyReloadChanges()
 
-	local header = self.Page.Header
+	local heading = self.Page.Heading
 	local hasDefaults = page ~= nil and page.Reset ~= nil
-	local showJump = #sections >= JUMP_MIN_SECTIONS
-	header.DefaultsButton:SetShown(hasDefaults)
-	header.JumpDropdown:SetShown(showJump)
-	self:SetHeaderTitle(title, hasDefaults, showJump)
+	heading.DefaultsButton:SetShown(hasDefaults)
+	heading.Description:SetText(page and page.description or "")
+	self:SetHeadingTitle(title, hasDefaults)
 
 	local empty = self.Page.Empty
 	empty:SetText(emptyText or "")
@@ -704,6 +889,7 @@ function LevelboundSettings_WindowMixin:ShowList(entries, sections, page, title,
 
 	self.listPageID = page and page.id
 	self:NoteListedPage(page)
+	self:UpdateTabs(page)
 	self:LayoutPreview(page)
 	self.Page.ScrollBox:SetDataProvider(CreateDataProvider(entries), ScrollBoxConstants.DiscardScrollPosition)
 end
@@ -722,6 +908,7 @@ function LevelboundSettings_WindowMixin:ShowPage(page, hitIndex)
 
 	if hitIndex then
 		self.model:Reveal(page.id, hitIndex)
+		self.model:Choose(page.id, hitIndex)
 	end
 
 	local map = self:BuildList(page, hitIndex ~= nil)
@@ -730,32 +917,51 @@ function LevelboundSettings_WindowMixin:ShowPage(page, hitIndex)
 		scrollBox:ScrollToElementDataIndex(map[hitIndex], ScrollBoxConstants.AlignBegin, 0,
 			ScrollBoxConstants.NoScrollInterpolation)
 	else
-		scrollBox:SetScrollPercentage(self.memory.scroll[page.id] or 0, ScrollBoxConstants.NoScrollInterpolation)
+		scrollBox:SetScrollPercentage(self.memory.scroll[self:ScrollKey()] or 0, ScrollBoxConstants.NoScrollInterpolation)
 	end
 end
 
----Remembers the scroll position of the page the list is showing.
+---@return string key the listed page's scroll memory key, which names its tab on a page with tabs
+function LevelboundSettings_WindowMixin:ScrollKey()
+	if self.listTabID then
+		return self.listPageID .. "/" .. self.listTabID
+	end
+
+	return self.listPageID
+end
+
+---Remembers the scroll position of the page and tab the list is showing.
 function LevelboundSettings_WindowMixin:SaveScroll()
 	if self.searching or not self.listPageID then
 		return
 	end
 
-	self.memory.scroll[self.listPageID] = self.Page.ScrollBox:GetScrollPercentage()
+	self.memory.scroll[self:ScrollKey()] = self.Page.ScrollBox:GetScrollPercentage()
 end
 
----Sets the page header title, truncated so it stays clear of the jump menu and the Defaults button.
+---Shows another tab of the shown page, for the session, at the scroll position it was last left at.
+---@param tabID string
+function LevelboundSettings_WindowMixin:SelectTab(tabID)
+	local page = self:CurrentPage()
+	if not page or self.searching or tabID == self.listTabID then
+		return
+	end
+
+	PlaySound(SOUNDKIT.IG_CHARACTER_INFO_TAB)
+	self:SaveScroll()
+	self.model:SetTab(page.id, tabID)
+	self:ShowPage(page)
+end
+
+---Sets the page title, truncated so it stays clear of the Defaults button.
 ---@param text string
 ---@param hasDefaults boolean
----@param hasJump boolean
-function LevelboundSettings_WindowMixin:SetHeaderTitle(text, hasDefaults, hasJump)
-	local header = self.Page.Header
-	local title = header.Title
-	local available = self.Page:GetWidth() - TITLE_X - DEFAULTS_RIGHT
+function LevelboundSettings_WindowMixin:SetHeadingTitle(text, hasDefaults)
+	local heading = self.Page.Heading
+	local title = heading.Title
+	local available = heading:GetWidth()
 	if hasDefaults then
-		available = available - header.DefaultsButton:GetWidth() - JUMP_GAP
-	end
-	if hasJump then
-		available = available - JUMP_GAP - JUMP_WIDTH
+		available = available - heading.DefaultsButton:GetWidth() - DEFAULTS_GAP
 	end
 
 	title:SetWidth(0)
@@ -847,95 +1053,18 @@ function LevelboundSettings_WindowMixin:RefreshRows()
 	end)
 end
 
--- Jump to section -------------------------------------------------------------------------------------------
+-- Find ----------------------------------------------------------------------------------------------------
 
----@return table? section the section whose header is at, or was last passed at, the top of the list
-function LevelboundSettings_WindowMixin:CurrentSection()
-	local offset = self.Page.ScrollBox:GetDerivedScrollOffset()
-	local rowHeight = tokens.size.row
-	local current = self.sections[1]
-
-	for index, entry in ipairs(self.shownElements or {}) do
-		if (index - 1) * rowHeight > offset + 0.5 then
-			break
-		end
-		if AS.elementKinds[entry.kind].section then
-			current = entry
-		end
-	end
-
-	return current
-end
-
----Scrolls a section's header to the top of the list, expanding it first when collapsed, then flashes it.
----@param section table
-function LevelboundSettings_WindowMixin:JumpToSection(section)
-	local page = self:CurrentPage()
-	if not page then
-		return
-	end
-
-	if section.collapsed then
-		self:SetSectionCollapsed(page.id, section.data.id, false)
-	end
-
-	local scrollBox = self.Page.ScrollBox
-	local index = scrollBox:FindElementDataIndexByPredicate(function(entry)
-		return entry.kind == section.kind and entry.data.id == section.data.id
-	end)
-	if not index then
-		return
-	end
-
-	self:SmoothScrollTo(index, function()
-		local entry = scrollBox:FindElementData(index)
-		local kind = entry and AS.elementKinds[entry.kind]
-		local frame = entry and scrollBox:FindFrame(entry)
-		if frame and kind.Flash then
-			AS:CallHost(nil, kind.Flash, frame)
-		end
-	end)
-end
-
----Stops a running smooth scroll and drops its pending follow-up.
+---Stops a running find: its glide and its pending flash.
 function LevelboundSettings_WindowMixin:CancelSmoothScroll()
-	local scrollBox = self.Page.ScrollBox
 	self.scrollGeneration = self.scrollGeneration + 1
-	scrollBox:GetScrollInterpolator():Cancel()
-	scrollBox:SetInterpolateScroll(false)
-	self.Page.ScrollBar:SetInterpolateScroll(false)
+	self.glide:SetScript("OnUpdate", nil)
 end
 
----Scrolls smoothly until the entry at `index` is at the top of the list, then calls `onArrive` after the
----flash delay, unless another smooth scroll, a page change or a search has happened since.
----@param index integer
----@param onArrive fun()
-function LevelboundSettings_WindowMixin:SmoothScrollTo(index, onArrive)
-	local scrollBox = self.Page.ScrollBox
-	local scrollBar = self.Page.ScrollBar
-	self.scrollGeneration = self.scrollGeneration + 1
-	local generation = self.scrollGeneration
-	local pageID = self.memory.page
-
-	scrollBox:SetInterpolateScroll(true)
-	scrollBar:SetInterpolateScroll(true)
-	scrollBox:ScrollToElementDataIndex(index, ScrollBoxConstants.AlignBegin)
-
-	C_Timer.After(JUMP_FLASH_DELAY, function()
-		if generation ~= self.scrollGeneration then
-			return
-		end
-
-		scrollBox:SetInterpolateScroll(false)
-		scrollBar:SetInterpolateScroll(false)
-		if self:IsShown() and not self.searching and self.memory.page == pageID then
-			onArrive()
-		end
-	end)
-end
-
----Finds a setting from the preview: opens its collapsed group, scrolls its section header to the top, then
----flashes its row, or its half of a split row, if the row is on screen.
+---Finds a setting from the preview: shows its tab and picks its option, opens its collapsed group, then glides the
+---list until its row is centered, as EllesmereUI's panel scrolls: each frame covers `motion.find.speed` times the
+---frame's seconds of the distance left and stops within `motion.find.snap`. Once the row is within
+---`motion.find.flashAt` of its place, its half of the row is outlined, held `motion.find.hold` seconds and faded.
 ---@param settingID string
 function LevelboundSettings_WindowMixin:FindSetting(settingID)
 	local page = self:CurrentPage()
@@ -944,22 +1073,73 @@ function LevelboundSettings_WindowMixin:FindSetting(settingID)
 	end
 
 	local index = self.model:Locate(page.id, settingID)
-	if index and self.model:Reveal(page.id, index) then
+	if not index then
+		return
+	end
+
+	local tab = self.model:TabOf(page.id, index)
+	local otherTab = tab ~= nil and tab ~= self.listTabID
+	if otherTab then
+		self:SaveScroll()
+	end
+	local revealed = self.model:Reveal(page.id, index)
+	local chosen = self.model:Choose(page.id, index)
+	if otherTab then
+		self:ShowPage(page)
+	elseif revealed or chosen then
 		self:RefreshPage()
 	end
 
-	local _, shownIndex, anchor = self.model:Locate(page.id, settingID)
+	local _, shownIndex = self.model:Locate(page.id, settingID)
 	local target = shownIndex and self.shownElements and self.shownElements[shownIndex]
 	if not target then
 		return
 	end
 
+	-- Where the row centers: scroll there and back at once (nothing draws in between), then glide over.
 	local scrollBox = self.Page.ScrollBox
-	self:SmoothScrollTo(anchor, function()
+	local noInterpolation = ScrollBoxConstants.NoScrollInterpolation
+	self:CancelSmoothScroll()
+	local offset = scrollBox:GetDerivedScrollOffset()
+	scrollBox:ScrollToElementDataIndex(shownIndex, ScrollBoxConstants.AlignCenter, nil, noInterpolation)
+	local goal = scrollBox:GetDerivedScrollOffset()
+	scrollBox:ScrollToOffset(offset, noInterpolation)
+
+	local find = tokens.motion.find
+	local generation = self.scrollGeneration
+	local flashed = false
+
+	local function Flash()
+		flashed = true
 		local frame = scrollBox:FindFrame(target)
 		local kind = AS.elementKinds[target.kind]
 		if frame and kind and kind.Flash then
-			AS:CallHost(nil, kind.Flash, frame, settingID)
+			AS:CallHost(nil, kind.Flash, frame, settingID, find.hold, find.fade)
+		end
+	end
+
+	self.glide:SetScript("OnUpdate", function(glide, elapsed)
+		if generation ~= self.scrollGeneration then
+			glide:SetScript("OnUpdate", nil)
+
+			return
+		end
+
+		local left = goal - offset
+		if math.abs(left) < find.snap then
+			glide:SetScript("OnUpdate", nil)
+			scrollBox:ScrollToOffset(goal, noInterpolation)
+			if not flashed then
+				Flash()
+			end
+
+			return
+		end
+
+		offset = offset + left * math.min(1, find.speed * elapsed)
+		scrollBox:ScrollToOffset(offset, noInterpolation)
+		if not flashed and math.abs(goal - offset) < find.flashAt then
+			Flash()
 		end
 	end)
 end
