@@ -698,7 +698,18 @@ local FIXED = {
 		return PAD * 2 + BAR_MAX * 2 + APPEARANCE_GAP + ReachMax() * 2
 	end,
 	gain = function()
-		return PAD * 2 + 2 * (GAIN_HEIGHT + GainRoomMax())
+		-- Rows for every type this client can track, enabled or not, so the height holds as types are switched.
+		local capable = 0
+
+		for _, id in ipairs(LB.Model:Order()) do
+			if LB.Model:Capable(id) then
+				capable = capable + 1
+			end
+		end
+
+		local rows = math.max(math.ceil(capable / GAIN_COLUMNS), 1)
+
+		return PAD * 2 + rows * (GAIN_HEIGHT + GainRoomMax())
 	end,
 	markers = function()
 		local above = LB.Marker.Reach("DIAMOND", "TOP", MARKER_OFFSET_MAX, MARKER_SIZE_MAX, BAR_MAX)
