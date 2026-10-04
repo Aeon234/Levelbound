@@ -588,6 +588,7 @@ local function StopMarkers()
 	Previews.hovered = false
 
 	if Previews.hover then
+		Previews.hover:SetScript("OnUpdate", nil)
 		LB:StopTween(Previews.hover)
 	end
 
@@ -598,6 +599,14 @@ local function StopMarkers()
 	end
 end
 
+---Clears the markers sample's hover and fades the markers back.
+---@param hover Frame
+local function Unhover(hover)
+	hover:SetScript("OnUpdate", nil)
+	Previews.hovered = false
+	Previews:ApplyMarkerOpacity(hover.bar, true)
+end
+
 ---Covers the sample bar with a mouse area that fades the markers as hovering the bar on screen does.
 ---@param bar LBBar
 function Previews:Hover(bar)
@@ -606,17 +615,25 @@ function Previews:Hover(bar)
 	if not hover then
 		hover = CreateFrame("Frame", nil, self.sample)
 		hover:SetScript("OnEnter", function()
+			hover:SetScript("OnUpdate", nil)
 			Previews.hovered = true
 			Previews:ApplyMarkerOpacity(hover.bar, true)
 		end)
 		hover:SetScript("OnLeave", function()
 			-- A marker's hit area, drawn above this frame, takes the cursor while it is still over the bar.
 			if hover:IsMouseOver() then
+				-- The cursor can leave the bar from that hit area, which sends this frame no event, so watch for it
+				-- until the cursor leaves the bar or comes back to this frame.
+				hover:SetScript("OnUpdate", function()
+					if not hover:IsMouseOver() then
+						Unhover(hover)
+					end
+				end)
+
 				return
 			end
 
-			Previews.hovered = false
-			Previews:ApplyMarkerOpacity(hover.bar, true)
+			Unhover(hover)
 		end)
 		self.hover = hover
 	end
