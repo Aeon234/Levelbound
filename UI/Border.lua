@@ -8,15 +8,16 @@ local PIXEL = "PIXEL"
 local PIXEL_MIN, PIXEL_MAX = LB.LIMITS.borderWidth.min, LB.LIMITS.borderWidth.max
 
 ---@param style string
+---@param width number? the saved Border Width
 ---@return integer? pixels the flat style's line width in physical pixels, or nil for any other style
-local function PixelWidth(style)
+local function PixelWidth(style, width)
 	if style ~= PIXEL then
 		return nil
 	end
 
-	local width = math.floor(tonumber(LB.Profile:Get("appearance.border.width")) or PIXEL_MIN)
+	local pixels = math.floor(tonumber(width) or PIXEL_MIN)
 
-	return math.min(math.max(width, PIXEL_MIN), PIXEL_MAX)
+	return math.min(math.max(pixels, PIXEL_MIN), PIXEL_MAX)
 end
 
 local EDGES = {
@@ -117,12 +118,13 @@ function Border:DividerArt(style)
 end
 
 ---@param style string
+---@param width number? the saved Border Width, used by the flat style
 ---@return integer? pixels the line width of a flat style
 ---@return string? path the edge file of a textured style
-function Border:Parts(style)
+function Border:Parts(style, width)
 	local name = EDGES[style]
 
-	return PixelWidth(style), name and LB.Media:Fetch("border", name) or nil
+	return PixelWidth(style, width), name and LB.Media:Fetch("border", name) or nil
 end
 
 ---@param style string
@@ -175,9 +177,10 @@ end
 ---How far a style's border reaches outside the frame it surrounds, in UI units.
 ---@param style string
 ---@param height number the framed height
+---@param width number? the saved Border Width, used by the flat style
 ---@return number
-function Border:Outset(style, height)
-	local pixels = PixelWidth(style)
+function Border:Outset(style, height, width)
+	local pixels = PixelWidth(style, width)
 
 	if pixels then
 		return pixels * LB:Pixel()
@@ -273,9 +276,10 @@ end
 ---@param style string
 ---@param color LBColor
 ---@param height number the host's height once its layout settles
-function BorderMixin:Apply(style, color, height)
+---@param width number? the saved Border Width, used by the flat style
+function BorderMixin:Apply(style, color, height, width)
 	local host = self:GetParent()
-	local pixels = PixelWidth(style)
+	local pixels = PixelWidth(style, width)
 	local name = EDGES[style]
 	local path = name and LB.Media:Fetch("border", name)
 	local strip = style == STRIP

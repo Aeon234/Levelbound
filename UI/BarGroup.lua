@@ -110,7 +110,7 @@ function BarGroup:ComputeLayout(ids, screenWidth)
 	local spacing = layout.gap
 
 	if not LB.Layout.Fullscreen(layout) then
-		spacing = spacing + 2 * LB.Border:Outset(style, height)
+		spacing = spacing + 2 * LB.Border:Outset(style, height, LB.Profile:Get("appearance.border.width"))
 	end
 
 	if layout.mode == "CONNECTED" then
@@ -240,7 +240,7 @@ function BarGroup:ApplyBorders(frame, ids, rects, override)
 	local mask = LB.Border:EndMask(style)
 
 	self.border = self.border or LB.Border:Create(frame)
-	self.border:Apply(grouped and style or "NONE", color, frame:GetHeight())
+	self.border:Apply(grouped and style or "NONE", color, frame:GetHeight(), border.width)
 
 	for index, id in ipairs(ids) do
 		local bar = self.bars[id]
@@ -248,7 +248,7 @@ function BarGroup:ApplyBorders(frame, ids, rects, override)
 
 		if bar and rect then
 			bar.border = bar.border or LB.Border:Create(bar)
-			bar.border:Apply(grouped and "NONE" or style, color, rect.height)
+			bar.border:Apply(grouped and "NONE" or style, color, rect.height, border.width)
 			-- A segmented group's frame bevels only the group's two ends.
 			bar:SetEndMasks(mask, not grouped or index == 1, not grouped or index == #ids)
 		end

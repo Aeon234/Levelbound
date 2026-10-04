@@ -110,14 +110,14 @@ function TextSlot:BorderReach(bar)
 		return 0
 	end
 
-	local style = LB.Profile:Get("appearance.border.style")
+	local border = LB.Profile:Get("appearance.border")
 	local height = bar and bar:GetHeight() or 0
 
 	if height <= 0 then
-		height = LB.Layout.Height(layout, LB.Border:FixedHeight(style))
+		height = LB.Layout.Height(layout, LB.Border:FixedHeight(border.style))
 	end
 
-	return LB.Border:Outset(style, height)
+	return LB.Border:Outset(border.style, height, border.width)
 end
 
 ---@param host LBTextHost

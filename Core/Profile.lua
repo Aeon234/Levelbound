@@ -433,8 +433,8 @@ end
 
 ---@type table<integer, fun(db: LBDatabase)>
 local migrations = {
-	-- 1.1.0. The notch hung from the bar's top edge before markers had an anchor; 1 Pixel and 2 Pixel became one
-	-- Pixel style with a width.
+	-- A notch saved without an anchor takes the top edge it was drawn from; the 1 Pixel and 2 Pixel styles become
+	-- Pixel at width 1 and 2.
 	[2] = function(db)
 		local widths = { ONE_PIXEL = 1, TWO_PIXEL = 2 }
 
@@ -922,6 +922,14 @@ function Profile:Restore(data)
 
 	self.db.profiles[self.activeName] = data
 	self.active = data
+
+	LB.Callbacks:Fire("Settings", nil, nil)
+end
+
+---Changes several settings of the active profile at once, then reports one whole-profile change.
+---@param change fun(profile: LBProfileData) edits the profile in place
+function Profile:Apply(change)
+	change(self.active)
 
 	LB.Callbacks:Fire("Settings", nil, nil)
 end

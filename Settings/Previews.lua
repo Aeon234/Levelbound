@@ -128,7 +128,7 @@ function Previews:Bar(id, width, height, borderStyle)
 
 	local border = LB.Profile:Get("appearance.border")
 	local style = borderStyle or (Fullscreen() and "NONE" or border.style)
-	bar.border:Apply(style, LB.Border:Color(style, border), height)
+	bar.border:Apply(style, LB.Border:Color(style, border), height, border.width)
 	bar:SetEndMasks(LB.Border:EndMask(style), true, true)
 
 	return bar
@@ -432,8 +432,9 @@ local function AppearancePreview()
 
 				-- Later parts win where they overlap: the ring finds the border, the fill the texture and the fill's
 				-- end the spark.
-				local style = Fullscreen() and "NONE" or LB.Profile:Get("appearance.border.style")
-				local ring = math.max(LB.Border:Outset(style, height), BORDER_HIT)
+				local border = LB.Profile:Get("appearance.border")
+				local style = Fullscreen() and "NONE" or border.style
+				local ring = math.max(LB.Border:Outset(style, height, border.width), BORDER_HIT)
 
 				addPart(Previews:Area(bar, "border", ring), "borderStyle")
 				addPart(bar, "texture")
@@ -441,8 +442,9 @@ local function AppearancePreview()
 			end
 
 			-- Apart by their borders' reach and a clear gap, so each bar reads on its own.
-			local style = Fullscreen() and "NONE" or LB.Profile:Get("appearance.border.style")
-			local gap = APPEARANCE_GAP + 2 * LB.Border:Outset(style, height)
+			local border = LB.Profile:Get("appearance.border")
+			local style = Fullscreen() and "NONE" or border.style
+			local gap = APPEARANCE_GAP + 2 * LB.Border:Outset(style, height, border.width)
 			local columnWidth, bottom = Column(bars, PAD, gap)
 
 			if LB.Profile:Get("appearance.shimmer") then
@@ -761,7 +763,7 @@ end
 
 ---@return number the farthest any border style can reach past a bar
 local function ReachMax()
-	local pixel = BORDER_PIXELS_MAX * LB:Pixel()
+	local pixel = LB.Border:Outset("PIXEL", BAR_MAX, BORDER_PIXELS_MAX)
 
 	return math.max(pixel, LB.Border:Outset("METALLIC", BAR_MAX), LB.Border:Outset("BLIZZARD", BAR_MAX))
 end

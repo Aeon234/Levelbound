@@ -64,8 +64,9 @@ function StylePicker:Choose(style)
 	LB.Profile:Global().styleChosen = true
 
 	if style == "BLIZZARD" then
-		StylePicker.ApplyBlizzard(LB.Profile.active, UIParent:GetWidth())
-		LB.Callbacks:Fire("Settings", nil, nil)
+		LB.Profile:Apply(function(profile)
+			StylePicker.ApplyBlizzard(profile, UIParent:GetWidth())
+		end)
 	end
 
 	if self.frame then
@@ -95,7 +96,7 @@ local function Sample(parent, profile)
 		bar:SetGeometry(SAMPLE_WIDTH, height)
 		bar:ApplyAppearance()
 		bar:SetSnapshot(LB.Preview:Snapshot("xp"), false, false)
-		bar.border:Apply(border.style, LB.Border:Color(border.style, border), height)
+		bar.border:Apply(border.style, LB.Border:Color(border.style, border), height, border.width)
 		bar:SetEndMasks(LB.Border:EndMask(border.style), true, true)
 		local shown = LB.TextSlot:ApplySample(bar, false)
 		local party = LB.Profile:Get("party")

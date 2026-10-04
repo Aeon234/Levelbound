@@ -414,7 +414,7 @@ function BarMixin:ApplyDividers()
 	local appearance = LB.Profile:Get("appearance")
 	local settings = appearance.dividers
 	local border = appearance.border
-	local pixels, path = LB.Border:Parts(border.style)
+	local pixels, path = LB.Border:Parts(border.style, border.width)
 	local art = LB.Border:DividerArt(border.style)
 	local color = LB.Border:Color(border.style, border)
 
@@ -438,7 +438,7 @@ function BarMixin:ApplyDividers()
 
 	self.dividers:SetFrameLevel(self:GetFrameLevel() + LEVEL_DIVIDERS)
 	self.dividers.enabled = settings.enabled
-	self.dividers.segments = settings.spacing == 5 and 20 or 10
+	self.dividers.segments = math.min(math.floor(100 / settings.spacing), DIVIDERS_MAX + 1)
 	self.dividers.pixels = pixels or 1
 	self.dividers.textured = path ~= nil
 	self.dividers.art = art
