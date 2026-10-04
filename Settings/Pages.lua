@@ -280,6 +280,11 @@ local function SetStyle(path)
 	end
 end
 
+---@return integer the widest a bar can be set: the screen's width in UI units, read when the page is built
+local function MaxWidth()
+	return math.floor(UIParent:GetWidth())
+end
+
 ---@return boolean
 local function Independent()
 	return LB.Layout.Independent(LB.Profile:Get("layout"))
@@ -403,7 +408,7 @@ local function Layout(ctx)
 		})),
 		Section("size", L["Size"], { tab = "layout" }),
 		Row(
-			Slider(ctx, "width", L["Width"], "layout.width", 100, 1600, 1),
+			Slider(ctx, "width", L["Width"], "layout.width", 100, MaxWidth(), 1),
 			Slider(ctx, "height", L["Height"], "layout.height", 4, 64, 1, { blocked = HeightFixed })
 		),
 		Section("stacking", L["Stacking"], { tab = "layout" }),
@@ -851,7 +856,7 @@ local function TypePage(ctx, id)
 	Open(Section("size", L["Size"], { tab = "bar" }))
 	Add(
 		Row(
-			Pages:BarSize(ctx, id, "width", L["Width"], 100, 1600, 1),
+			Pages:BarSize(ctx, id, "width", L["Width"], 100, MaxWidth(), 1),
 			Pages:BarSize(ctx, id, "height", L["Height"], 4, 64, 1)
 		)
 	)
