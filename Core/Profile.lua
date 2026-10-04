@@ -80,7 +80,7 @@ local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 ---@field background LBColor
 ---@field typeColors table<string, LBColor>
 ---@field standingColors table<string, LBColor> overrides on Blizzard's FACTION_BAR_COLORS
----@field border { style: string, color: LBColor, customColor: boolean }
+---@field border { style: string, width: integer, color: LBColor, customColor: boolean } width: the Pixel style's line in physical pixels
 ---@field spark { enabled: boolean, customColor: boolean, color: LBColor } the bar's own color unless customColor
 ---@field dividers { enabled: boolean, spacing: 5|10, customColor: boolean, color: LBColor } marks on the XP and pet XP
 ---bars every `spacing` percent of a level
@@ -200,7 +200,7 @@ local defaults = {
 			endeavor = { 0.294, 0.365, 0.106 },
 		},
 		standingColors = {},
-		border = { style = "NONE", color = { 1, 1, 1, 1 }, customColor = false },
+		border = { style = "NONE", width = 1, color = { 1, 1, 1, 1 }, customColor = false },
 		spark = { enabled = true, customColor = false, color = { 1, 1, 1, 1 } },
 		dividers = { enabled = false, spacing = 10, customColor = false, color = { 1, 1, 1, 1 } },
 		shimmer = true,
@@ -426,13 +426,23 @@ end
 
 ---@type table<integer, fun(db: LBDatabase)>
 local migrations = {
-	-- The notch hung from the bar's top edge before markers had an anchor.
+	-- 1.1.0. The notch hung from the bar's top edge before markers had an anchor; 1 Pixel and 2 Pixel became one
+	-- Pixel style with a width.
 	[2] = function(db)
+		local widths = { ONE_PIXEL = 1, TWO_PIXEL = 2 }
+
 		for _, profile in pairs(type(db.profiles) == "table" and db.profiles or {}) do
 			local party = type(profile) == "table" and profile.party
+			local appearance = type(profile) == "table" and profile.appearance
+			local border = type(appearance) == "table" and appearance.border
 
 			if type(party) == "table" and party.style == "NOTCH" and party.anchor == nil then
 				party.anchor = "TOP"
+			end
+
+			if type(border) == "table" and widths[border.style] then
+				border.width = widths[border.style]
+				border.style = "PIXEL"
 			end
 		end
 	end,

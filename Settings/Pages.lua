@@ -251,8 +251,7 @@ local function BorderStyles()
 
 	local options = {
 		{ value = "NONE", label = NONE },
-		{ value = "ONE_PIXEL", label = L["1 Pixel"] },
-		{ value = "TWO_PIXEL", label = L["2 Pixel"] },
+		{ value = "PIXEL", label = L["Pixel"] },
 	}
 
 	for _, option in ipairs(textured) do
@@ -427,15 +426,20 @@ local function Appearance(ctx)
 		return LB.Border:IsTextured(LB.Profile:Get("appearance.border.style"))
 	end
 
+	local style = Choice(ctx, "borderStyle", L["Border Style"], "appearance.border.style", BorderStyles, {
+		set = SetStyle("appearance.border.style"),
+		rebuild = true,
+	})
+	-- Built either way, so Defaults resets it; shown only beside the Pixel style.
+	local width = Slider(ctx, "borderWidth", L["Border Width"], "appearance.border.width", 1, 10, 1)
+	local pixel = LB.Profile:Get("appearance.border.style") == "PIXEL"
+
 	return {
 		Section("bars", L["Bars"], { tab = "appearance" }),
 		Row(Texture(ctx, "texture", L["Bar Texture"], "appearance.texture")),
 		Row(Color(ctx, "background", BACKGROUND, "appearance.background", true)),
 		Section("border", L["Border"], { tab = "appearance" }),
-		Row(Choice(ctx, "borderStyle", L["Border Style"], "appearance.border.style", BorderStyles, {
-			set = SetStyle("appearance.border.style"),
-			rebuild = true,
-		})),
+		Row(style, pixel and width or nil),
 		Row(
 			Check(ctx, "borderCustom", L["Custom Color"], "appearance.border.customColor", {
 				blocked = function()

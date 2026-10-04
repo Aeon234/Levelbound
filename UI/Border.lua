@@ -4,10 +4,20 @@ local FLAT = [[Interface\Buttons\WHITE8X8]]
 local EDGE_SIZE = 16
 local LEVEL = 8
 
-local PIXELS = {
-	ONE_PIXEL = 1,
-	TWO_PIXEL = 2,
-}
+local PIXEL = "PIXEL"
+local PIXEL_MIN, PIXEL_MAX = 1, 10
+
+---@param style string
+---@return integer? pixels the flat style's line width in physical pixels, or nil for any other style
+local function PixelWidth(style)
+	if style ~= PIXEL then
+		return nil
+	end
+
+	local width = math.floor(tonumber(LB.Profile:Get("appearance.border.width")) or PIXEL_MIN)
+
+	return math.min(math.max(width, PIXEL_MIN), PIXEL_MAX)
+end
 
 local EDGES = {
 	ROUNDED = "Levelbound Ring Medium",
@@ -112,7 +122,7 @@ end
 function Border:Parts(style)
 	local name = EDGES[style]
 
-	return PIXELS[style], name and LB.Media:Fetch("border", name) or nil
+	return PixelWidth(style), name and LB.Media:Fetch("border", name) or nil
 end
 
 ---@param style string
@@ -167,7 +177,7 @@ end
 ---@param height number the framed height
 ---@return number
 function Border:Outset(style, height)
-	local pixels = PIXELS[style]
+	local pixels = PixelWidth(style)
 
 	if pixels then
 		return pixels * LB:Pixel()
@@ -265,7 +275,7 @@ end
 ---@param height number the host's height once its layout settles
 function BorderMixin:Apply(style, color, height)
 	local host = self:GetParent()
-	local pixels = PIXELS[style]
+	local pixels = PixelWidth(style)
 	local name = EDGES[style]
 	local path = name and LB.Media:Fetch("border", name)
 	local strip = style == STRIP

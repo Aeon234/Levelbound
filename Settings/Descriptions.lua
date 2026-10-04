@@ -57,6 +57,7 @@ LB.SettingsDescriptions = {
 		texture = L["The texture of every bar's fill."],
 		background = L["The color behind each bar's fill."],
 		borderStyle = L["The border drawn around the bars."],
+		borderWidth = L["The Pixel border's thickness, in screen pixels."],
 		borderCustom = L["Tints a textured border with Border Color instead of its own colors."],
 		borderColor = L["The border's color. The XP dividers use it too unless they have their own."],
 		dividers = L["Marks the experience and pet experience bars at even steps through the level."],

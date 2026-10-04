@@ -187,8 +187,8 @@ L["Bars"] = "Bars"
 L["Bar Texture"] = "Bar Texture"
 L["Border"] = "Border"
 L["Border Style"] = "Border Style"
-L["1 Pixel"] = "1 Pixel"
-L["2 Pixel"] = "2 Pixel"
+L["Pixel"] = "Pixel"
+L["Border Width"] = "Border Width"
 L["Simple"] = "Simple"
 L["Simple Thick"] = "Simple Thick"
 L["Bronze"] = "Bronze"
@@ -367,6 +367,7 @@ L["The interface layer the bars draw on. Raise it if other frames cover them."] 
 L["The texture of every bar's fill."] = "The texture of every bar's fill."
 L["The color behind each bar's fill."] = "The color behind each bar's fill."
 L["The border drawn around the bars."] = "The border drawn around the bars."
+L["The Pixel border's thickness, in screen pixels."] = "The Pixel border's thickness, in screen pixels."
 L["Tints a textured border with Border Color instead of its own colors."] =
 	"Tints a textured border with Border Color instead of its own colors."
 L["The border's color. The XP dividers use it too unless they have their own."] =
