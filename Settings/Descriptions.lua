@@ -127,6 +127,7 @@ LB.SettingsDescriptions = {
 		font = L["The notices' font."],
 		size = L["The notices' text size."],
 		outline = L["The notices' text outline."],
+		levelUpEmote = L["Emotes your own level-ups to players nearby, only while you are not in a group."],
 		levelUpParty = L["Posts your own level-ups to your party."],
 		levelUpGuild = L["Posts your own level-ups to your guild."],
 		runSummary = L["When a dungeon or scenario ends, sums up the experience it gave and how long it took."],

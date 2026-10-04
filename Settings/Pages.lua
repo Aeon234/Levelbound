@@ -771,11 +771,13 @@ local function LevelUps(ctx)
 			Slider(ctx, "size", L["Size"], "party.levelUp.text.size", 6, 32, 1, { depends = "onScreen" })
 		),
 		Row(Choice(ctx, "outline", L["Outline"], "party.levelUp.text.outline", Outlines, { depends = "onScreen" })),
-		Section("announce", L["Announcements"], { tab = "announce" }),
+		Section("announce", L["Level-Ups"], { tab = "announce" }),
+		Row(Check(ctx, "levelUpEmote", L["Emote Level-Up Message"], "party.announce.levelUpEmote")),
 		Row(
 			Check(ctx, "levelUpParty", L["Party Level-Up Message"], "party.announce.levelUpParty"),
 			Check(ctx, "levelUpGuild", L["Guild Level-Up Message"], "party.announce.levelUpGuild")
 		),
+		Section("summary", L["Dungeon Summary"], { tab = "announce" }),
 		Row(
 			Check(ctx, "runSummary", L["Post-Dungeon Summary"], "party.announce.runSummary"),
 			Choice(ctx, "runChannel", L["Channels"], "party.announce.runChannel", {

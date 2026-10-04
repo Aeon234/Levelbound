@@ -140,7 +140,7 @@ local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 ---@field anchor "CENTER" | "TOP" | "BOTTOM" the bar line the markers sit on; the full-height tick ignores it
 ---@field y number the markers' vertical offset from their anchor, up positive; the full-height tick ignores it
 ---@field levelUp LBLevelUpSettings
----@field announce { levelUpParty: boolean, levelUpGuild: boolean, runSummary: boolean, runChannel: "SELF"|"PARTY"|"INSTANCE"|"GUILD" } messages sent for the player
+---@field announce { levelUpEmote: boolean, levelUpParty: boolean, levelUpGuild: boolean, runSummary: boolean, runChannel: "SELF"|"PARTY"|"INSTANCE"|"GUILD" } messages sent for the player
 
 ---@class LBDatabase
 ---@field version integer
@@ -250,7 +250,13 @@ local defaults = {
 		},
 	},
 	party = {
-		announce = { levelUpParty = true, levelUpGuild = false, runSummary = true, runChannel = "SELF" },
+		announce = {
+			levelUpEmote = true,
+			levelUpParty = true,
+			levelUpGuild = false,
+			runSummary = true,
+			runChannel = "SELF",
+		},
 		markers = true,
 		opacity = {
 			matchBar = true,
