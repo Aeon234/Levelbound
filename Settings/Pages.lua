@@ -410,7 +410,7 @@ local function Layout(ctx)
 		})),
 		Section("size", L["Size"], { tab = "layout" }),
 		Row(
-			Slider(ctx, "width", L["Width"], "layout.width", 100, MaxWidth(), 1),
+			Slider(ctx, "width", L["Width"], "layout.width", LIMITS.barWidth.min, MaxWidth(), 1),
 			Slider(ctx, "height", L["Height"], "layout.height", LIMITS.barHeight.min, LIMITS.barHeight.max, 1,
 				{ blocked = HeightFixed })
 		),
@@ -869,7 +869,7 @@ local function TypePage(ctx, id)
 	Open(Section("size", L["Size"], { tab = "bar" }))
 	Add(
 		Row(
-			Pages:BarSize(ctx, id, "width", L["Width"], 100, MaxWidth(), 1),
+			Pages:BarSize(ctx, id, "width", L["Width"], LIMITS.barWidth.min, MaxWidth(), 1),
 			Pages:BarSize(ctx, id, "height", L["Height"], LIMITS.barHeight.min, LIMITS.barHeight.max, 1)
 		)
 	)

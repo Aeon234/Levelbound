@@ -62,12 +62,13 @@ LB.TYPE_ORDER = { "xp", "petxp", "reputation", "house", "endeavor", "travelers",
 
 ---@class LBLimit
 ---@field min number
----@field max number
+---@field max number? nil when the maximum is read at run time
 
 -- The ranges the settings offer, shared by their sliders, the code that clamps them and the previews sized to fit
 -- their largest values.
 ---@type table<string, LBLimit>
 LB.LIMITS = {
+	barWidth = { min = 100 }, -- up to the screen's width
 	barHeight = { min = 4, max = 64 },
 	borderWidth = { min = 1, max = 10 },
 	markerSize = { min = 4, max = 24 },
