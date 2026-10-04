@@ -198,6 +198,9 @@ L["Pixel borders always use Border Color."] = "Pixel borders always use Border C
 L["Border Color"] = "Border Color"
 L["Requires Custom Color to be enabled."] = "Requires Custom Color to be enabled."
 L["Show XP Dividers"] = "Show XP Dividers"
+L["Divider Spacing"] = "Divider Spacing"
+L["Every 10%"] = "Every 10%"
+L["Every 5%"] = "Every 5%"
 L["Divider Custom Color"] = "Divider Custom Color"
 L["Divider Color"] = "Divider Color"
 L["Spark and Shimmer"] = "Spark and Shimmer"
@@ -363,8 +366,10 @@ L["Tints a textured border with Border Color instead of its own colors."] =
 	"Tints a textured border with Border Color instead of its own colors."
 L["The border's color. The XP dividers use it too unless they have their own."] =
 	"The border's color. The XP dividers use it too unless they have their own."
-L["Marks every tenth of the experience and pet experience bars."] =
-	"Marks every tenth of the experience and pet experience bars."
+L["Marks the experience and pet experience bars at even steps through the level."] =
+	"Marks the experience and pet experience bars at even steps through the level."
+L["How far apart the dividers are, as a share of the level."] =
+	"How far apart the dividers are, as a share of the level."
 L["Gives the dividers their own color instead of the border's."] =
 	"Gives the dividers their own color instead of the border's."
 L["The dividers' own color."] = "The dividers' own color."

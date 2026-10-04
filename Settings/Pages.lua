@@ -420,7 +420,13 @@ local function Appearance(ctx)
 				end,
 			})
 		),
-		Row(Check(ctx, "dividers", L["Show XP Dividers"], "appearance.dividers.enabled")),
+		Row(
+			Check(ctx, "dividers", L["Show XP Dividers"], "appearance.dividers.enabled"),
+			Choice(ctx, "dividerSpacing", L["Divider Spacing"], "appearance.dividers.spacing", {
+				{ value = 10, label = L["Every 10%"] },
+				{ value = 5, label = L["Every 5%"] },
+			}, { depends = "dividers" })
+		),
 		Row(
 			Check(ctx, "dividerCustom", L["Divider Custom Color"], "appearance.dividers.customColor", {
 				depends = "dividers",

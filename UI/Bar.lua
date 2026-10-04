@@ -28,7 +28,7 @@ local SHIMMER_WIDTH = 90
 local SHIMMER_ALPHA = 0.55
 
 local LEVEL_DIVIDERS = LEVEL_FILL + 2
-local DIVIDERS = 9
+local DIVIDERS_MAX = 19 -- every 5 %
 local DIVIDER_MIN_SEGMENT = 16
 local DIVIDER_EDGE_SLICE = 0.125
 local NOTCH = { 0, 0, 0, 0.5 }
@@ -338,13 +338,14 @@ function BarMixin:ApplyDividers()
 		self.dividers:SetAllPoints(self)
 		self.dividers.lines = {}
 
-		for index = 1, DIVIDERS do
+		for index = 1, DIVIDERS_MAX do
 			self.dividers.lines[index] = self.dividers:CreateTexture(nil, "OVERLAY")
 		end
 	end
 
 	self.dividers:SetFrameLevel(self:GetFrameLevel() + LEVEL_DIVIDERS)
 	self.dividers.enabled = settings.enabled
+	self.dividers.segments = settings.spacing == 5 and 20 or 10
 	self.dividers.pixels = pixels or 1
 	self.dividers.textured = path ~= nil
 
@@ -371,7 +372,8 @@ function BarMixin:PlaceDividers()
 	end
 
 	local width, height = self:GetSize()
-	local shown = dividers.enabled and width / (DIVIDERS + 1) >= DIVIDER_MIN_SEGMENT
+	local segments = dividers.segments
+	local shown = dividers.enabled and width / segments >= DIVIDER_MIN_SEGMENT
 
 	dividers:SetShown(shown)
 
@@ -387,12 +389,18 @@ function BarMixin:PlaceDividers()
 	end
 
 	for index, line in ipairs(dividers.lines) do
-		local x = LB.Placement:ToPixel(width * index / (DIVIDERS + 1) - lineWidth / 2, pixel)
+		local used = index < segments
 
-		line:ClearAllPoints()
-		line:SetPoint("TOPLEFT", self, "TOPLEFT", x, 0)
-		line:SetPoint("BOTTOMLEFT", self, "BOTTOMLEFT", x, 0)
-		line:SetWidth(math.max(lineWidth, pixel))
+		line:SetShown(used)
+
+		if used then
+			local x = LB.Placement:ToPixel(width * index / segments - lineWidth / 2, pixel)
+
+			line:ClearAllPoints()
+			line:SetPoint("TOPLEFT", self, "TOPLEFT", x, 0)
+			line:SetPoint("BOTTOMLEFT", self, "BOTTOMLEFT", x, 0)
+			line:SetWidth(math.max(lineWidth, pixel))
+		end
 	end
 end
 
