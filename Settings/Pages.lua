@@ -375,7 +375,7 @@ local function Layout(ctx)
 		})),
 		Section("size", L["Size"]),
 		Row(
-			Slider(ctx, "width", L["Width"], "layout.width", 100, 1600, 10),
+			Slider(ctx, "width", L["Width"], "layout.width", 100, 1600, 1),
 			Slider(ctx, "height", L["Height"], "layout.height", 4, 64, 1)
 		),
 		Section("stacking", L["Stacking"]),
@@ -766,7 +766,7 @@ local function TypePage(ctx, id)
 	Open(Section("size", L["Size"], { action = Pages:SharedSizeAction(id) }))
 	Add(
 		Row(
-			Pages:BarSize(ctx, id, "width", L["Width"], 100, 1600, 10),
+			Pages:BarSize(ctx, id, "width", L["Width"], 100, 1600, 1),
 			Pages:BarSize(ctx, id, "height", L["Height"], 4, 64, 1)
 		)
 	)
