@@ -267,10 +267,16 @@ end
 ---@param path string
 ---@return fun(value: any)
 local function SetStyle(path)
+	local function Paired()
+		return LB.Profile:Get("party.style") == "PIP" and LB.Profile:Get("appearance.border.style") == "BLIZZARD"
+	end
+
 	return function(value)
+		local wasPaired = Paired()
+
 		LB.Profile:Set(path, value)
 
-		if LB.Profile:Get("party.style") == "PIP" and LB.Border:BlizzardDrawn() then
+		if not wasPaired and Paired() then
 			local pip = LB.Marker.BLIZZARD_PIP
 
 			LB.Profile:Set("party.size", pip.size)
