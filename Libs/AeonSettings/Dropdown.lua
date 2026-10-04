@@ -178,12 +178,13 @@ function LevelboundSettings_DropdownMixin:BuildMenu(root)
 	local scrolling = #choices > SCROLL_AFTER
 	local share = width - MENU_INSETS - ENTRY_PADDING - RADIO_MARK - (scrolling and SCROLL_SHARE_LOSS or 0)
 
+	-- No maximum width: Blizzard's menu layout then narrows every entry to the widest text, which undoes the
+	-- minimum's widening and leaves the rest of each row unclickable. Each entry's text is cut to `share` instead.
 	if scrolling then
 		root:SetScrollMode(SCROLL_AFTER * ENTRY_HEIGHT)
 		root:SetMinimumWidth(width - SCROLL_EXTRA)
 	else
 		root:SetMinimumWidth(width)
-		root:SetMaximumWidth(width)
 	end
 
 	for _, choice in ipairs(choices) do
