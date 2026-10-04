@@ -64,6 +64,10 @@ local fonts = {
 	[LB.DEFAULT_FONT] = PATH .. [[Fonts\GilroyBold.ttf]],
 }
 
+local statusbars = {
+	["Levelbound Blizzard"] = PATH .. [[Textures\LevelboundBlizzard.tga]],
+}
+
 local borders = {
 	["Levelbound Ring Medium"] = PATH .. [[Borders\RingBorderMediumWhite.tga]],
 	["Levelbound Ring Thick"] = PATH .. [[Borders\RingBorderThickWhite.tga]],
@@ -82,6 +86,10 @@ function Media:Register()
 
 	for name, path in pairs(borders) do
 		LSM:Register(LSM.MediaType.BORDER, name, path)
+	end
+
+	for name, path in pairs(statusbars) do
+		LSM:Register(LSM.MediaType.STATUSBAR, name, path)
 	end
 
 	LSM:Register(LSM.MediaType.SOUND, LB.SOUND_LEVEL_UP, self.sounds.levelUp)
