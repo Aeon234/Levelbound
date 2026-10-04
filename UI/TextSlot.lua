@@ -417,8 +417,7 @@ end
 
 ---@return boolean hidden the bars are held too short for text inside them by their border style
 function TextSlot:InsideHidden()
-	return LB.Border:FixedHeight(LB.Profile:Get("appearance.border.style")) ~= nil
-		and not LB.Layout.Fullscreen(LB.Profile:Get("layout"))
+	return LB.Border:HeldHeight() ~= nil
 end
 
 ---@param key string a slot key

@@ -311,9 +311,7 @@ Pages.OnlyIndependent = OnlyIndependent
 
 ---@return string?
 local function HeightFixed()
-	local layout = LB.Profile:Get("layout")
-
-	if LB.Border:FixedHeight(LB.Profile:Get("appearance.border.style")) and not LB.Layout.Fullscreen(layout) then
+	if LB.Border:HeldHeight() then
 		return L["Set by the border style."]
 	end
 end

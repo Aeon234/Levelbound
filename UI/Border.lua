@@ -78,15 +78,15 @@ function Border:IsTextured(style)
 	return EDGES[style] ~= nil or style == STRIP
 end
 
----@return boolean drawn the Blizzard border is the chosen style and is drawn, which it is but along a screen edge
-function Border:BlizzardDrawn()
-	return LB.Profile:Get("appearance.border.style") == STRIP and not LB.Layout.Fullscreen(LB.Profile:Get("layout"))
-end
-
 ---@param style string
 ---@return number? height the bar height the style is drawn around, or nil when it fits any height
 function Border:FixedHeight(style)
 	return FIXED_HEIGHT[style]
+end
+
+---@return number? height the height the chosen border style holds the bars at, or nil when it does not hold them
+function Border:HeldHeight()
+	return LB.Layout.HeldHeight(LB.Profile:Get("layout"), self:FixedHeight(LB.Profile:Get("appearance.border.style")))
 end
 
 ---@param style string

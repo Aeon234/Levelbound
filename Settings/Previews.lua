@@ -521,7 +521,7 @@ local function GainPreview()
 			end
 
 			-- Short bars, up to four to a row: this page is about the arrows, not the bars.
-			local width, height = GAIN_WIDTH, FixedHeight() or GAIN_HEIGHT
+			local width, height = GAIN_WIDTH, LB.Border:HeldHeight() or GAIN_HEIGHT
 			local room = GainRoom()
 			local columns = math.max(math.min(#ids, GAIN_COLUMNS), 1)
 			local bars = {}
