@@ -221,6 +221,7 @@ L["Endeavor"] = "Начинание"
 L["Gain Indicator"] = "Индикатор прироста"
 L["Show Gain Indicator"] = "Показывать индикатор прироста"
 L["Behavior"] = "Поведение"
+-- L["Amount"] = "Amount"
 L["Position"] = "Положение"
 L["Fill Edge"] = "Край заполнения"
 L["Right End"] = "Правый конец"
@@ -233,6 +234,7 @@ L["Arrow Tints"] = "Цвета стрелок"
 
 -- Settings window: Progress Types, one page per type
 L["Progress Types"] = "Типы прогресса"
+-- L["Bar"] = "Bar"
 L["Show %s Bar"] = "Полоса «%s»"
 L["Colors"] = "Цвета"
 L["XP Uses Class Color"] = "Опыт цветом класса"
@@ -276,6 +278,7 @@ L["No other bar to copy from."] = "Нет другой полосы для ко�
 -- Settings window: Party
 L["Party"] = "Группа"
 L["Markers"] = "Метки"
+-- L["Notices"] = "Notices"
 L["Party Markers"] = "Метки группы"
 L["Show Party Markers"] = "Показывать метки группы"
 L["Marker Style"] = "Стиль меток"

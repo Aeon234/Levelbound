@@ -52,8 +52,8 @@ LB.SettingsDescriptions = {
 		growth = L["Which way a stack grows from its first bar."],
 		gap = L["The space between stacked bars."],
 		strata = L["The interface layer the bars draw on. Raise it if other frames cover them."],
-	},
-	appearance = {
+
+		-- Appearance tab
 		texture = L["The texture of every bar's fill."],
 		background = L["The color behind each bar's fill."],
 		borderStyle = L["The border drawn around the bars."],
@@ -66,16 +66,16 @@ LB.SettingsDescriptions = {
 		sparkCustom = L["Gives the spark its own color instead of its bar's."],
 		sparkColor = L["The spark's own color."],
 		shimmer = L["A shine that sweeps across the fill when a bar gains progress."],
-	},
-	text = {
+
+		-- Text tab
 		font = L["The font of every bar's text, unless a text slot sets its own."],
 		size = L["The size of every bar's text, unless a text slot sets its own."],
 		outline = L["The outline of every bar's text, unless a text slot sets its own."],
 		color = L["The color of every bar's text, unless a text slot sets its own."],
 		compact = L["Shortens large numbers, such as 12.4K for 12,400."],
 		decimals = L["Shows one decimal place on percentages."],
-	},
-	visibility = {
+
+		-- Visibility tab
 		fade = L["Fades the bars until you move the mouse over them."],
 		fadedAlpha = L["How visible the bars are while faded."],
 		fullInCombat = L["Shows faded bars fully while you are in combat."],

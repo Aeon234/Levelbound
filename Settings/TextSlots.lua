@@ -318,7 +318,7 @@ function Text:Elements(ctx, typeId)
 	}
 
 	return {
-		Section("text", L["Text"], { action = useStyle, menu = copyMenu }),
+		Section("text", L["Text"], { tab = "text", action = useStyle, menu = copyMenu }),
 		Row({
 			id = "slot",
 			control = "dropdown",

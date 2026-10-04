@@ -4,7 +4,6 @@ local PAD = 8 -- room around the bars for borders and hit outlines
 local APPEARANCE_GAP = 12
 local COLUMN_GAP = 24
 local MARKER_ROOM = 24 -- the largest marker size
-local STACK_MAX = 3 -- bars a stacked sample shows, so a fixed-height panel has room for any gap
 local GAIN_AMOUNT = 1234
 local SLOT_ROOM = 4 -- room above and below the bar beyond the text size, for outer slots
 local GLINT_EVERY = 2
@@ -24,7 +23,6 @@ end
 ---@field used table<string, boolean> the bars the current draw placed
 ---@field zones table<string, Frame> text slot boxes by slot key
 ---@field glint any? the ticker replaying the gain effect
----@field group Frame? the frame a segmented sample's border goes around
 ---@field hover Frame? the mouse area over the markers sample's bar
 ---@field hovered boolean? the cursor is over the markers sample's bar
 local Previews = {
@@ -42,10 +40,6 @@ function Previews:Begin(sample)
 
 	for _, zone in pairs(self.zones) do
 		zone:Hide()
-	end
-
-	if self.group then
-		self.group.border:Hide()
 	end
 
 	if self.box then
@@ -331,83 +325,6 @@ function Previews:Zone(bar, key, height)
 	zone:Show()
 
 	return zone
-end
-
----Every enabled type in the chosen layout mode, at the set size and gap.
----@return table preview
-local function LayoutPreview()
-	return {
-		Draw = function(sample, _, addPart)
-			Previews:Begin(sample)
-
-			local layout = LB.Profile:Get("layout")
-			local ids = Types()
-			local segmented = layout.mode == "SEGMENTED"
-			local width, bottom = 0, 0
-
-			if segmented then
-				local rects = LB.BarGroup:ComputeLayout(ids, layout.width)
-
-				for _, id in ipairs(ids) do
-					local rect = rects[id]
-					local bar = Previews:Bar(id, rect.width, rect.height, "NONE")
-
-					bar:SetPoint("TOPLEFT", sample, "TOPLEFT", PAD + rect.x, -PAD)
-					width = math.max(width, rect.x + rect.width)
-					bottom = math.max(bottom, rect.height)
-					addPart(bar, "mode")
-				end
-			else
-				-- Connected and Independent show the same stack: up to three bars at the shared size, the gap
-				-- measured between their borders.
-				local style = Fullscreen() and "NONE" or LB.Profile:Get("appearance.border.style")
-				local spacing = layout.gap + 2 * LB.Border:Outset(style, layout.height)
-
-				for index = 1, math.min(#ids, STACK_MAX) do
-					local bar = Previews:Bar(ids[index], layout.width, layout.height)
-					local y = (index - 1) * (layout.height + spacing)
-
-					bar:SetPoint("TOPLEFT", sample, "TOPLEFT", PAD, -(PAD + y))
-					width = layout.width
-					bottom = y + layout.height
-					addPart(bar, "mode")
-				end
-			end
-
-			if segmented and #ids > 0 and not Fullscreen() then
-				Previews:GroupBorder(width, bottom)
-			end
-
-			Previews:Finish()
-
-			return math.max(width, 1) + PAD * 2, math.max(bottom, 1) + PAD * 2
-		end,
-	}
-end
-
----The border around a segmented sample, which reads as one bar.
----@param width number
----@param height number
-function Previews:GroupBorder(width, height)
-	local group = self.group
-
-	if not group then
-		group = CreateFrame("Frame", nil, self.sample)
-		group.border = LB.Border:Create(group)
-		self.group = group
-	end
-
-	if group:GetParent() ~= self.sample then
-		group:SetParent(self.sample)
-	end
-
-	local border = LB.Profile:Get("appearance.border")
-
-	group:ClearAllPoints()
-	group:SetPoint("TOPLEFT", self.sample, "TOPLEFT", PAD, -PAD)
-	group:SetSize(width, height)
-	group:SetFrameLevel(self.sample:GetFrameLevel() + 10)
-	group.border:Apply(border.style, LB.Border:Color(border.style, border), height)
 end
 
 ---Experience and one other bar, with the border, spark and background; the gain effect replays on a loop while
@@ -740,8 +657,6 @@ function Previews:For(pageID)
 	if typeID then
 		return TypePreview(typeID)
 	elseif pageID == "layout" then
-		return LayoutPreview()
-	elseif pageID == "appearance" then
 		return AppearancePreview()
 	elseif pageID == "gain" then
 		return GainPreview()
