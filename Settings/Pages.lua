@@ -315,9 +315,9 @@ local function HeightFixed()
 end
 
 ---@return string?
-local function NotSegmented()
-	if LB.Profile:Get("layout.mode") == "SEGMENTED" then
-		return L["Only in Connected or Independent layout."]
+local function OnlyConnected()
+	if LB.Profile:Get("layout.mode") ~= "CONNECTED" then
+		return L["Only in Connected layout."]
 	end
 end
 
@@ -414,12 +414,12 @@ local function Layout(ctx)
 		Section("stacking", L["Stacking"], { tab = "layout" }),
 		Row(
 			Choice(ctx, "growth", L["Growth Direction"], "layout.growth", UP_DOWN, {
-				blocked = NotSegmented,
+				blocked = OnlyConnected,
 				set = function(value)
 					LB.BarGroup:SetGrowth(value)
 				end,
 			}),
-			Slider(ctx, "gap", L["Gap Between Bars"], "layout.gap", 0, 10, 1, { blocked = NotSegmented })
+			Slider(ctx, "gap", L["Gap Between Bars"], "layout.gap", 0, 10, 1, { blocked = OnlyConnected })
 		),
 	}
 end
