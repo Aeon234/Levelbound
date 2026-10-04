@@ -312,6 +312,15 @@ L["This is not a Levelbound profile string, or it was cut short."] = "Este não 
 L["This profile string was made by a newer version of Levelbound."] = "Este texto de perfil foi criado por uma versão mais recente do Levelbound."
 L["This profile string has no profile in it."] = "Este texto de perfil não contém nenhum perfil."
 
+-- Settings window: page descriptions, under each page's title (Settings/Pages.lua, Settings/Profiles.lua)
+-- L["The minimap button, bar tooltips and clicks, and time tracking."] = "The minimap button, bar tooltips and clicks, and time tracking."
+-- L["How every bar is arranged, sized, drawn and shown."] = "How every bar is arranged, sized, drawn and shown."
+-- L["The arrow and amount shown each time a bar gains progress."] = "The arrow and amount shown each time a bar gains progress."
+-- L["This bar's colors, its own size and its text."] = "This bar's colors, its own size and its text."
+-- L["Where party members running Levelbound are on your experience bar."] = "Where party members running Levelbound are on your experience bar."
+-- L["Party level-up notices, and messages about your own level-ups and runs."] = "Party level-up notices, and messages about your own level-ups and runs."
+-- L["Per-character or shared settings, with copy, export and import."] = "Per-character or shared settings, with copy, export and import."
+
 -- Settings window: setting descriptions, shown in their tooltips (Settings/Descriptions.lua)
 L["Shows Levelbound's button on the minimap."] = "Mostra o botão do Levelbound no minimapa."
 L["Shows a bar's details when you hover over it."] = "Mostra os detalhes de uma barra ao passar o cursor sobre ela."

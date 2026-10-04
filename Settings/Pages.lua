@@ -903,11 +903,21 @@ end
 ---@param id string
 ---@param title string
 ---@param build fun(ctx: LBPageContext): table[]
----@param descriptions string? the descriptions' page key; the page id when nil
----@param tabs { id: string, title: string }[]? the page's tabs, which its sections name
+---@param options { description: string?, descriptions: string?, tabs: { id: string, title: string }[]? }?
+---`description` is the line under the page's title; `descriptions` is the setting descriptions' page key, the page
+---id when nil; `tabs` are the page's tabs, which its sections name.
 ---@return table page
-local function Page(id, title, build, descriptions, tabs)
-	local page = { id = id, title = title, preview = LB.SettingsPreviews:For(id), tabs = tabs }
+local function Page(id, title, build, options)
+	options = options or {}
+
+	local descriptions = options.descriptions
+	local page = {
+		id = id,
+		title = title,
+		description = options.description,
+		preview = LB.SettingsPreviews:For(id),
+		tabs = options.tabs,
+	}
 
 	function page.Build()
 		local ctx = Context()
@@ -952,28 +962,46 @@ function Pages:Categories()
 		if LB.Model:Capable(id) then
 			types[#types + 1] = Page("type." .. id, LB.Model:Label(id), function(ctx)
 				return TypePage(ctx, id)
-			end, "type", {
-				{ id = "bar", title = L["Bar"] },
-				{ id = "text", title = L["Text"] },
+			end, {
+				description = L["This bar's colors, its own size and its text."],
+				descriptions = "type",
+				tabs = {
+					{ id = "bar", title = L["Bar"] },
+					{ id = "text", title = L["Text"] },
+				},
 			})
 		end
 	end
 
 	return {
-		{ id = "general", title = GENERAL, pages = { Page("general", GENERAL, General) } },
+		{
+			id = "general",
+			title = GENERAL,
+			pages = {
+				Page("general", GENERAL, General, {
+					description = L["The minimap button, bar tooltips and clicks, and time tracking."],
+				}),
+			},
+		},
 		{
 			id = "bars",
 			title = L["Bars"],
 			pages = {
-				Page("layout", L["Layout"], Bars, nil, {
-					{ id = "layout", title = L["Layout"] },
-					{ id = "appearance", title = L["Appearance"] },
-					{ id = "text", title = L["Text"] },
-					{ id = "visibility", title = L["Visibility"] },
+				Page("layout", L["Layout"], Bars, {
+					description = L["How every bar is arranged, sized, drawn and shown."],
+					tabs = {
+						{ id = "layout", title = L["Layout"] },
+						{ id = "appearance", title = L["Appearance"] },
+						{ id = "text", title = L["Text"] },
+						{ id = "visibility", title = L["Visibility"] },
+					},
 				}),
-				Page("gain", L["Gain Indicator"], Gain, nil, {
-					{ id = "behavior", title = L["Behavior"] },
-					{ id = "amount", title = L["Amount"] },
+				Page("gain", L["Gain Indicator"], Gain, {
+					description = L["The arrow and amount shown each time a bar gains progress."],
+					tabs = {
+						{ id = "behavior", title = L["Behavior"] },
+						{ id = "amount", title = L["Amount"] },
+					},
 				}),
 			},
 		},
@@ -982,13 +1010,19 @@ function Pages:Categories()
 			id = "party",
 			title = L["Party"],
 			pages = {
-				Page("markers", L["Markers"], Markers, nil, {
-					{ id = "markers", title = L["Markers"] },
-					{ id = "fading", title = L["Fading"] },
+				Page("markers", L["Markers"], Markers, {
+					description = L["Where party members running Levelbound are on your experience bar."],
+					tabs = {
+						{ id = "markers", title = L["Markers"] },
+						{ id = "fading", title = L["Fading"] },
+					},
 				}),
-				Page("levelups", L["Level-Ups"], LevelUps, nil, {
-					{ id = "notices", title = L["Notices"] },
-					{ id = "announce", title = L["Announcements"] },
+				Page("levelups", L["Level-Ups"], LevelUps, {
+					description = L["Party level-up notices, and messages about your own level-ups and runs."],
+					tabs = {
+						{ id = "notices", title = L["Notices"] },
+						{ id = "announce", title = L["Announcements"] },
+					},
 				}),
 			},
 		},

@@ -312,6 +312,15 @@ L["This is not a Levelbound profile string, or it was cut short."] = "Levelbound
 L["This profile string was made by a newer version of Levelbound."] = "더 최신 버전의 Levelbound로 만든 프로필 문자열입니다."
 L["This profile string has no profile in it."] = "이 프로필 문자열에는 프로필이 없습니다."
 
+-- Settings window: page descriptions, under each page's title (Settings/Pages.lua, Settings/Profiles.lua)
+-- L["The minimap button, bar tooltips and clicks, and time tracking."] = "The minimap button, bar tooltips and clicks, and time tracking."
+-- L["How every bar is arranged, sized, drawn and shown."] = "How every bar is arranged, sized, drawn and shown."
+-- L["The arrow and amount shown each time a bar gains progress."] = "The arrow and amount shown each time a bar gains progress."
+-- L["This bar's colors, its own size and its text."] = "This bar's colors, its own size and its text."
+-- L["Where party members running Levelbound are on your experience bar."] = "Where party members running Levelbound are on your experience bar."
+-- L["Party level-up notices, and messages about your own level-ups and runs."] = "Party level-up notices, and messages about your own level-ups and runs."
+-- L["Per-character or shared settings, with copy, export and import."] = "Per-character or shared settings, with copy, export and import."
+
 -- Settings window: setting descriptions, shown in their tooltips (Settings/Descriptions.lua)
 L["Shows Levelbound's button on the minimap."] = "미니맵에 Levelbound 버튼을 표시합니다."
 L["Shows a bar's details when you hover over it."] = "바에 마우스를 올리면 세부 정보를 표시합니다."
