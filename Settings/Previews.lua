@@ -2,13 +2,27 @@ local LB = select(2, ...)
 
 local PAD = 8 -- room around the bars for borders and hit outlines
 local APPEARANCE_GAP = 12
-local COLUMN_GAP = 24
 local MARKER_ROOM = 24 -- the largest marker size
 local GAIN_AMOUNT = 1234
 local SLOT_ROOM = 4 -- room above and below the bar beyond the text size, for outer slots
 local GLINT_EVERY = 2
 local GAIN_PAUSE = 0.5 -- between one looped gain's fade and the next
 local ZONE_ALPHA = 0.3
+
+-- Preview bars take a fixed width, so a very wide or narrow setting never crowds the sample; their height is real.
+local PREVIEW_WIDTH = 480
+local GAIN_WIDTH = 190 -- the Gain Indicator page's bars, up to four to a row
+local GAIN_HEIGHT = 12
+local GAIN_COLUMNS = 4
+local GAIN_COLUMN_GAP = 16
+
+-- The largest values the settings allow, from which each page's preview takes a fixed height.
+local BAR_MAX = 64
+local TEXT_MAX = 32
+local BORDER_PIXELS_MAX = 10
+local MARKER_SIZE_MAX = 24
+local MARKER_OFFSET_MAX = 32
+local NOTICE_LINES = 3
 
 local SLOT_KEYS = {}
 
@@ -25,6 +39,7 @@ end
 ---@field glint any? the ticker replaying the gain effect
 ---@field hover Frame? the mouse area over the markers sample's bar
 ---@field hovered boolean? the cursor is over the markers sample's bar
+---@field inner Frame? the frame each preview draws into, centered in the panel's sample and scaled to fit
 local Previews = {
 	bars = {},
 	used = {},
@@ -114,12 +129,10 @@ local function FixedHeight()
 	return LB.Border:FixedHeight(LB.Profile:Get("appearance.border.style"))
 end
 
----@return number width
----@return number height
+---@return number width the preview's fixed bar width
+---@return number height the bars' real height
 local function SharedSize()
-	local layout = LB.Profile:Get("layout")
-
-	return layout.width, LB.Layout.Height(layout, FixedHeight())
+	return PREVIEW_WIDTH, LB.Layout.Height(LB.Profile:Get("layout"), FixedHeight())
 end
 
 ---@param id string
@@ -131,7 +144,6 @@ local function BarSize(id)
 	if LB.Layout.Independent(LB.Profile:Get("layout")) then
 		local entry = LB.Profile:Get("layout.independent")[id]
 
-		width = entry and entry.width or width
 		height = LB.Layout.Height(LB.Profile:Get("layout"), FixedHeight(), entry and entry.height)
 	end
 
@@ -445,19 +457,19 @@ local function GainPreview()
 				return width + PAD * 2, height + PAD * 2
 			end
 
-			local width, height = SharedSize()
+			-- Short bars, up to four to a row: this page is about the arrows, not the bars.
+			local width, height = GAIN_WIDTH, FixedHeight() or GAIN_HEIGHT
 			local room = GainRoom()
-			local columns = #ids > 2 and 2 or 1
+			local columns = math.max(math.min(#ids, GAIN_COLUMNS), 1)
 			local bars = {}
 			local rows = math.ceil(#ids / columns)
 
-			-- Two columns once there are more than two bars, filled row by row.
 			for index, id in ipairs(ids) do
 				local bar = Previews:Bar(id, width, height)
 				local column = (index - 1) % columns
 				local row = math.floor((index - 1) / columns)
 
-				bar:SetPoint("TOPLEFT", sample, "TOPLEFT", PAD + column * (width + COLUMN_GAP),
+				bar:SetPoint("TOPLEFT", sample, "TOPLEFT", PAD + column * (width + GAIN_COLUMN_GAP),
 					-(PAD + room + row * (height + room)))
 				bars[#bars + 1] = bar
 				addPart(bar, "tint." .. id)
@@ -475,7 +487,7 @@ local function GainPreview()
 			Previews.gainLoop = C_Timer.NewTicker(LB.NoticeStack.DURATION + GAIN_PAUSE, Play)
 			Previews:Finish()
 
-			return columns * width + (columns - 1) * COLUMN_GAP + PAD * 2, y + PAD
+			return columns * width + (columns - 1) * GAIN_COLUMN_GAP + PAD * 2, y + PAD
 		end,
 	}
 end
@@ -663,20 +675,93 @@ local function LevelUpsPreview()
 	}
 end
 
+-- Fixed heights ---------------------------------------------------------------------------------------------
+
+---@return number the farthest any border style can reach past a bar
+local function ReachMax()
+	local pixel = BORDER_PIXELS_MAX * LB:Pixel()
+
+	return math.max(pixel, LB.Border:Outset("METALLIC", BAR_MAX), LB.Border:Outset("BLIZZARD", BAR_MAX))
+end
+
+---@return number room above a bar for the largest gain indicator
+local function GainRoomMax()
+	return TEXT_MAX * 2 + SLOT_ROOM * 2 + ReachMax()
+end
+
+-- Each page's sample height with every setting at its largest.
+local FIXED = {
+	type = function()
+		return PAD * 2 + BAR_MAX + GainRoomMax() + TEXT_MAX + SLOT_ROOM + ReachMax()
+	end,
+	layout = function()
+		return PAD * 2 + BAR_MAX * 2 + APPEARANCE_GAP + ReachMax() * 2
+	end,
+	gain = function()
+		return PAD * 2 + 2 * (GAIN_HEIGHT + GainRoomMax())
+	end,
+	markers = function()
+		local above = LB.Marker.Reach("DIAMOND", "TOP", MARKER_OFFSET_MAX, MARKER_SIZE_MAX, BAR_MAX)
+
+		return PAD * 2 + BAR_MAX + math.max(above, MARKER_ROOM) * 2
+	end,
+	levelups = function()
+		return PAD * 2 + BAR_MAX + NOTICE_LINES * (TEXT_MAX + 4)
+	end,
+}
+
+---Holds a preview at its page's fixed height: the drawing is centered in it, and shrinks only when its settings
+---carry it past that height, so the panel never changes size.
+---@param preview table
+---@param height fun(): number
+---@return table preview
+local function Framed(preview, height)
+	local draw = preview.Draw
+
+	preview.Draw = function(sample, state, addPart)
+		local inner = Previews.inner
+
+		if not inner then
+			inner = CreateFrame("Frame", nil, sample)
+			Previews.inner = inner
+		end
+
+		if inner:GetParent() ~= sample then
+			inner:SetParent(sample)
+		end
+
+		inner:SetScale(1)
+		inner:Show()
+
+		local width, drawn = draw(inner, state, addPart)
+		local fixed = height()
+		local scale = drawn > fixed and fixed / drawn or 1
+
+		inner:SetScale(scale)
+		inner:SetSize(width, drawn)
+		inner:ClearAllPoints()
+		inner:SetPoint("CENTER", sample, "CENTER")
+
+		return width * scale, fixed
+	end
+
+	return preview
+end
+
 ---@param pageID string
 ---@return table? preview the page's preview, or nil for a page without one
 function Previews:For(pageID)
 	local typeID = pageID:match("^type%.(.+)$")
 
 	if typeID then
-		return TypePreview(typeID)
+		return Framed(TypePreview(typeID), FIXED.type)
 	elseif pageID == "layout" then
-		return AppearancePreview()
+		return Framed(AppearancePreview(), FIXED.layout)
 	elseif pageID == "gain" then
-		return GainPreview()
+		return Framed(GainPreview(), FIXED.gain)
 	elseif pageID == "markers" then
-		return MarkersPreview()
+		return Framed(MarkersPreview(), FIXED.markers)
 	elseif pageID == "levelups" then
-		return LevelUpsPreview()
+		return Framed(LevelUpsPreview(), FIXED.levelups)
 	end
 end

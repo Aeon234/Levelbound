@@ -5,7 +5,8 @@ local L = AS.L
 local tokens = AS.tokens
 
 local HINT_TOP = 6 -- the hint's top below the panel's
-local ROOM_VERTICAL = 12 -- kept clear above and below the sample
+local HINT_GAP = 8 -- kept clear between the hint and the sample
+local ROOM_VERTICAL = 12 -- kept clear below the sample
 local MIN_HEIGHT = 96
 local MAX_HEIGHT = 240
 local TEXT_HIT_PAD = 2
@@ -37,7 +38,9 @@ function LevelboundSettings_PreviewPanelMixin:OnLoad()
 	hint:ClearAllPoints()
 	hint:SetPoint("TOPLEFT", 0, -HINT_TOP)
 
-	self.Room:SetPoint("TOPLEFT", 0, -ROOM_VERTICAL)
+	-- The sample's room starts under the hint, so a sample that fills it never meets the hint.
+	self.roomTop = HINT_TOP + math.ceil(hint:GetStringHeight()) + HINT_GAP
+	self.Room:SetPoint("TOPLEFT", 0, -self.roomTop)
 	self.Room:SetPoint("BOTTOMRIGHT", 0, ROOM_VERTICAL)
 end
 
@@ -64,8 +67,9 @@ function LevelboundSettings_PreviewPanelMixin:Setup(window, page, faded)
 	width, height = math.max(width or 1, 1), math.max(height or 1, 1)
 
 	local real = UIParent:GetEffectiveScale() / self:GetEffectiveScale()
-	local panelHeight = Clamp(height * real + ROOM_VERTICAL * 2, MIN_HEIGHT, MAX_HEIGHT)
-	local scale = math.min(real, (panelHeight - ROOM_VERTICAL * 2) / height)
+	local room = self.roomTop + ROOM_VERTICAL
+	local panelHeight = Clamp(height * real + room, MIN_HEIGHT, MAX_HEIGHT)
+	local scale = math.min(real, (panelHeight - room) / height)
 	local roomWidth = self:GetWidth()
 	if roomWidth > 0 then
 		scale = math.min(scale, roomWidth / width)
