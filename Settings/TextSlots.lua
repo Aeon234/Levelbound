@@ -259,8 +259,18 @@ function Text:Elements(ctx, typeId)
 			id = id,
 			control = control,
 			label = label,
-			rebuild = true,
-			description = Overridden(typeId, key, field) and L["Custom for this slot."] or nil,
+			inherit = {
+				custom = function()
+					return Overridden(typeId, key, field)
+				end,
+				clear = function()
+					if Overridden(typeId, key, field) then
+						LB.Profile:Set(Path(typeId, key) .. ".style." .. field, nil)
+					end
+
+					return true
+				end,
+			},
 			get = function()
 				return Effective(typeId, key)[field]
 			end,
@@ -269,26 +279,6 @@ function Text:Elements(ctx, typeId)
 			end,
 		}, fields)
 	end
-
-	local useStyle = {
-		id = "useTextStyle",
-		control = "action",
-		label = L["Use Text Style"],
-		verb = L["Use Text Style"],
-		blocked = function()
-			local slot = Slot(typeId, key)
-
-			if not slot or type(slot.style) ~= "table" or next(slot.style) == nil then
-				return L["This slot uses the text style."]
-			end
-		end,
-		set = function()
-			EnsureSlot(typeId, key)
-			LB.Profile:Set(Path(typeId, key) .. ".style", {})
-
-			return true
-		end,
-	}
 
 	local copyChoices = CopyChoices(typeId)
 
@@ -318,7 +308,7 @@ function Text:Elements(ctx, typeId)
 	}
 
 	return {
-		Section("text", L["Text"], { tab = "text", action = useStyle, menu = copyMenu }),
+		Section("text", L["Text"], { tab = "text", menu = copyMenu }),
 		Row({
 			id = "slot",
 			control = "dropdown",

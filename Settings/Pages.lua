@@ -778,7 +778,7 @@ local function TypePage(ctx, id)
 		Add(Row(Color(ctx, "color", L["Bar Color"], "appearance.typeColors." .. id, false)))
 	end
 
-	Open(Section("size", L["Size"], { tab = "bar", action = Pages:SharedSizeAction(id) }))
+	Open(Section("size", L["Size"], { tab = "bar" }))
 	Add(
 		Row(
 			Pages:BarSize(ctx, id, "width", L["Width"], 100, 1600, 1),
@@ -793,7 +793,7 @@ local function TypePage(ctx, id)
 	return elements
 end
 
----A bar's own width or height in Independent layout; the shared size until set.
+---A bar's own width or height in Independent layout; the shared size until set, and again after Use Shared.
 ---@param ctx LBPageContext
 ---@param id string
 ---@param field "width" | "height"
@@ -820,6 +820,24 @@ function Pages:BarSize(ctx, id, field, label, minimum, maximum, step)
 		step = step,
 		format = "integer",
 		blocked = OnlyIndependent,
+		inherit = {
+			custom = function()
+				local entry = LB.Profile:Get("layout.independent")[id]
+
+				return entry ~= nil and entry[field] ~= nil
+			end,
+			clear = function()
+				local independent = LB.Profile:Get("layout.independent")
+				local entry = independent[id]
+
+				if entry and entry[field] ~= nil then
+					entry[field] = nil
+					LB.Profile:Set("layout.independent", independent)
+				end
+
+				return true
+			end,
+		},
 		get = function()
 			local entry = LB.Profile:Get("layout.independent")[id]
 
@@ -832,30 +850,6 @@ function Pages:BarSize(ctx, id, field, label, minimum, maximum, step)
 			entry[field] = value
 			independent[id] = entry
 			LB.Profile:Set("layout.independent", independent)
-		end,
-	}
-end
-
----The Size section's header action: clears the bar's own width and height.
----@param id string
----@return table setting
-function Pages:SharedSizeAction(id)
-	return {
-		id = "sharedSize",
-		control = "action",
-		label = L["Use Shared Size"],
-		verb = L["Use Shared Size"],
-		blocked = OnlyIndependent,
-		set = function()
-			local independent = LB.Profile:Get("layout.independent")
-			local entry = independent[id]
-
-			if entry then
-				entry.width, entry.height = nil, nil
-				LB.Profile:Set("layout.independent", independent)
-			end
-
-			return true
 		end,
 	}
 end
