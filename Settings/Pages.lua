@@ -426,6 +426,13 @@ local function Appearance(ctx)
 		return LB.Border:IsTextured(LB.Profile:Get("appearance.border.style"))
 	end
 
+	---@return string?
+	local function NoBorder()
+		if LB.Profile:Get("appearance.border.style") == "NONE" then
+			return L["Requires a border style."]
+		end
+	end
+
 	local style = Choice(ctx, "borderStyle", L["Border Style"], "appearance.border.style", BorderStyles, {
 		set = SetStyle("appearance.border.style"),
 		rebuild = true,
@@ -443,14 +450,18 @@ local function Appearance(ctx)
 		Row(
 			Check(ctx, "borderCustom", L["Custom Color"], "appearance.border.customColor", {
 				blocked = function()
-					if not Textured() then
+					if NoBorder() then
+						return NoBorder()
+					elseif not Textured() then
 						return L["Pixel borders always use Border Color."]
 					end
 				end,
 			}),
 			Color(ctx, "borderColor", L["Border Color"], "appearance.border.color", true, {
 				blocked = function()
-					if Textured() and LB.Profile:Get("appearance.border.customColor") ~= true then
+					if NoBorder() then
+						return NoBorder()
+					elseif Textured() and LB.Profile:Get("appearance.border.customColor") ~= true then
 						return L["Requires Custom Color to be enabled."]
 					end
 				end,
