@@ -26,8 +26,8 @@ LB.can = {}
 function Capabilities:Resolve()
 	local can = LB.can
 
-	-- Retail keeps GetPetExperience without a pet experience system; only Blizzard's pet bar marks one.
-	can.petXP = GetPetExperience ~= nil and PetExpBarMixin ~= nil
+	-- Retail keeps GetPetExperience without a pet experience system; only Forever has one.
+	can.petXP = WOW_PROJECT_ID == WOW_PROJECT_CAMELOT and GetPetExperience ~= nil
 	can.housingDashboard = HousingFramesUtil ~= nil and HousingFramesUtil.ToggleHousingDashboard ~= nil
 	can.house = can.housingDashboard and C_Housing ~= nil and C_Housing.GetTrackedHouseGuid ~= nil
 	can.endeavor = can.housingDashboard

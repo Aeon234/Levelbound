@@ -5,7 +5,7 @@
   "flavors": ["retail"],
 
   "globals": {
-    "read": ["LibStub", "ChatThrottleLib", "SlashCmdList", "StaticPopupDialogs"],
+    "read": ["LibStub", "ChatThrottleLib", "SlashCmdList", "StaticPopupDialogs", "WOW_PROJECT_CAMELOT"],
     "write": ["Levelbound*", "SlashCmdList"]
   },
 
