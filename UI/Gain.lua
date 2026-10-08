@@ -32,6 +32,7 @@ end
 ---@field stack LBNoticeStack the grouped indicators when detached
 ---@field lines table<string, Frame> the detached line showing each progress type
 ---@field box Frame where the detached indicators sit
+---@field gather LBNoticeAnchor? where the stack sits beside the segmented row, or nil for the box
 ---@field inCombat boolean
 local Gain = {
 	pool = CreateFramePool("Frame", UIParent, nil, Reset),
@@ -48,7 +49,7 @@ end
 
 ---@return LBNoticeAnchor
 local function StackAnchor()
-	return NoticeStack:BoxAnchor(Gain.box, Settings().direction)
+	return Gain.gather or NoticeStack:BoxAnchor(Gain.box, Settings().direction)
 end
 
 Gain.stack = NoticeStack:Create(StackAnchor, function(frame)
@@ -85,20 +86,12 @@ end
 ---@param width number the indicator's own width
 ---@param gap number between the bar and the indicator
 ---@return "RIGHT" | "LEFT" | nil side the side of the bar the indicator sits beside, or nil above it
----@return string mode the `Offset` mode while above the bar
+---@return string mode the `Offset` mode above the bar, also given beside it for callers that cannot use the side
 function Gain:Placement(position, left, right, screenWidth, width, gap)
 	if position == "OUTSIDE_RIGHT" then
-		if right + gap + width <= screenWidth then
-			return "RIGHT", position
-		end
-
-		return nil, "RIGHT_END"
+		return right + gap + width <= screenWidth and "RIGHT" or nil, "RIGHT_END"
 	elseif position == "OUTSIDE_LEFT" then
-		if left - gap - width >= 0 then
-			return "LEFT", position
-		end
-
-		return nil, "LEFT_END"
+		return left - gap - width >= 0 and "LEFT" or nil, "LEFT_END"
 	end
 
 	return nil, position
@@ -233,6 +226,11 @@ local function Anchor(frame, bar, fraction, above)
 	local gap = GAP + LB.TextSlot:BorderReach(bar)
 	local side, mode = Gain:Placement(settings.position, left, right, screenWidth, width, gap)
 
+	-- A segment's sides touch its neighbors; beside the row, its gains gather in the stack instead.
+	if LB.Profile:Get("layout.mode") == "SEGMENTED" then
+		side = nil
+	end
+
 	frame.dx, frame.dy = Gain:Motion(settings, side)
 	frame:ClearAllPoints()
 
@@ -288,6 +286,41 @@ function Gain:PlaceBox()
 	local width, height = self:DetachedSize()
 
 	NoticeStack:PlaceBox(self.box, Settings().screen, width, height, 1)
+end
+
+---Where the stack sits when gains gather beside the segmented row: against the row's side, its first line centered
+---on the row and later lines growing the saved direction. Nil when not segmented, detached or above the bars, or
+---when the screen has no room beside the row.
+---@return LBNoticeAnchor?
+function Gain:GatherAnchor()
+	local settings = Settings()
+	local row = LB.BarGroup.frame
+
+	if settings.detached or not row or LB.Profile:Get("layout.mode") ~= "SEGMENTED" then
+		return nil
+	end
+
+	local screenWidth = UIParent:GetWidth()
+	local width = self:DetachedSize()
+	local gap = GAP + LB.TextSlot:BorderReach(nil)
+	local left, right = row:GetLeft() or screenWidth / 2, row:GetRight() or screenWidth / 2
+	local side = self:Placement(settings.position, left, right, screenWidth, width, gap)
+
+	if not side then
+		return nil
+	end
+
+	local up = settings.direction == "UP"
+	local half = settings.text.size
+
+	return {
+		point = (up and "BOTTOM" or "TOP") .. (side == "RIGHT" and "LEFT" or "RIGHT"),
+		relativeTo = row,
+		relativePoint = side,
+		x = side == "RIGHT" and gap or -gap,
+		y = up and -half or half,
+		sign = up and 1 or -1,
+	}
 end
 
 -- A settings preview's own detached stack, growing from an edge of its target the saved way.
@@ -372,9 +405,15 @@ function Gain:ShowDetached(id, amount, held)
 	self.lines[id] = frame
 
 	Build(frame)
+	-- Beside the row, a line hides and fades with the bars.
+	frame:SetParent(self.gather and LB.BarGroup.frame or UIParent)
 	frame:SetFrameStrata(LB.Profile:Get("layout.strata"))
 	Style(frame, true)
-	self:PlaceBox()
+
+	if not self.gather then
+		self:PlaceBox()
+	end
+
 	self.stack:Push(frame, held)
 end
 
@@ -386,9 +425,9 @@ function Gain:Show(bar, amount, held)
 		return
 	end
 
-	local settings = Settings()
+	self.gather = self:GatherAnchor()
 
-	if settings.detached then
+	if Settings().detached or self.gather then
 		self:ShowDetached(bar.id, amount, held)
 
 		return
@@ -560,12 +599,22 @@ Callbacks:Register("Settings", Gain, function(_, path)
 		return
 	end
 
-	if Settings().detached then
-		for _, frame in ipairs(Gain.stack.active) do
-			Style(frame, true)
-		end
+	Gain.gather = Gain:GatherAnchor()
 
-		Gain:PlaceBox()
-		Gain.stack:Layout()
+	if not Settings().detached and not Gain.gather then
+		Gain.stack:ReleaseAll()
+		wipe(Gain.lines)
+
+		return
 	end
+
+	for _, frame in ipairs(Gain.stack.active) do
+		Style(frame, true)
+	end
+
+	if not Gain.gather then
+		Gain:PlaceBox()
+	end
+
+	Gain.stack:Layout()
 end)
