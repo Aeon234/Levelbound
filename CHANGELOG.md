@@ -1,5 +1,20 @@
 # Levelbound
 
+## 1.2.0
+
+Gain indicator:
+
+- The gain indicator can sit to the right or left of its bar, centered on it. Where there is no room beside the
+  bar, such as in fullscreen, it sits above that end of the bar instead.
+- With segmented bars, gains beside the bar gather in one stack next to the whole row, labeled by type as when
+  detached, and grow in the chosen direction.
+- A new Animate switch, on by default. Turned off, the indicator and the detached stack appear in place and fade
+  without moving.
+- A new Animation Style for indicators beside the bar or detached: Rise, as before, or Slide Outward, away from
+  the bar. With Slide Outward, the segmented and detached stacks line up side by side instead of on top of each
+  other, and the detached stack can grow left or right.
+- The Gain Indicator and progress type previews show the indicator beside the bar when it is set there.
+
 ## 1.1.0
 
 New looks:
