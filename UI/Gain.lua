@@ -22,6 +22,8 @@ local function Reset(_, frame)
 	frame.amount = 0
 	frame.elapsed = 0
 	frame.held = nil
+	frame.dx = 0
+	frame.dy = 0
 end
 
 ---@class LBGain
@@ -62,16 +64,60 @@ Gain.box = NoticeStack:CreateBox("LevelboundGainIndicators")
 ---@param fraction number 0-1
 ---@param barWidth number
 ---@param width number the indicator's own width
----@param mode string "FILL_EDGE" or "RIGHT_END"
+---@param mode string "FILL_EDGE", "RIGHT_END" or "LEFT_END"
 ---@return number x center of the indicator, in bar coordinates
 function Gain:Offset(fraction, barWidth, width, mode)
 	if width >= barWidth then
 		return barWidth / 2
 	end
 
-	local x = mode == "RIGHT_END" and barWidth or fraction * barWidth
+	local x = mode == "RIGHT_END" and barWidth or mode == "LEFT_END" and 0 or fraction * barWidth
 
 	return math.min(math.max(x, width / 2), barWidth - width / 2)
+end
+
+---Resolves a saved position against the screen: beside the bar while the indicator fits between the bar and the
+---screen's edge, otherwise above the bar at that side's end.
+---@param position string the saved `gain.position`
+---@param left number the bar's left edge
+---@param right number the bar's right edge
+---@param screenWidth number
+---@param width number the indicator's own width
+---@param gap number between the bar and the indicator
+---@return "RIGHT" | "LEFT" | nil side the side of the bar the indicator sits beside, or nil above it
+---@return string mode the `Offset` mode while above the bar
+function Gain:Placement(position, left, right, screenWidth, width, gap)
+	if position == "OUTSIDE_RIGHT" then
+		if right + gap + width <= screenWidth then
+			return "RIGHT", position
+		end
+
+		return nil, "RIGHT_END"
+	elseif position == "OUTSIDE_LEFT" then
+		if left - gap - width >= 0 then
+			return "LEFT", position
+		end
+
+		return nil, "LEFT_END"
+	end
+
+	return nil, position
+end
+
+---@param settings LBGainSettings
+---@param side "RIGHT" | "LEFT" | nil the side of the bar the indicator sits beside, or nil above it
+---@return number dx
+---@return number dy the unit direction the indicator travels as it fades; zero while animation is off
+function Gain:Motion(settings, side)
+	if not settings.animate then
+		return 0, 0
+	end
+
+	if side and settings.animation == "SLIDE" then
+		return side == "RIGHT" and 1 or -1, 0
+	end
+
+	return 0, 1
 end
 
 ---@param frame Frame
@@ -155,7 +201,7 @@ local function Paint(frame, elapsed)
 	local rise, alpha = NoticeStack:Keyframe(elapsed)
 
 	frame.content:ClearAllPoints()
-	frame.content:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 0, rise)
+	frame.content:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", rise * frame.dx, rise * frame.dy)
 	frame.content:SetSize(frame:GetSize())
 	frame:SetAlpha(alpha)
 end
@@ -172,17 +218,37 @@ local function OnUpdate(frame, delta)
 	end
 end
 
+---Anchors a styled indicator to its bar for the saved position and sets the direction it travels.
 ---@param frame Frame
 ---@param bar LBBar
----@param height number the indicator's own height
----@param above boolean? always above the bar, never flipped below it near the screen's top
-local function Anchor(frame, bar, x, height, above)
-	local top = bar:GetTop()
-	local screen = UIParent:GetTop()
+---@param fraction number 0-1, the bar's fill
+---@param above boolean? when above the bar, never flipped below it near the screen's top
+local function Anchor(frame, bar, fraction, above)
+	local settings = Settings()
+	local width, height = frame:GetSize()
+	local screenWidth = UIParent:GetWidth()
+	-- An unplaced bar counts as having room on both sides.
+	local left, right = bar:GetLeft() or screenWidth / 2, bar:GetRight() or screenWidth / 2
 	-- Clear of the drawn border, as the outer text is.
 	local gap = GAP + LB.TextSlot:BorderReach(bar)
+	local side, mode = Gain:Placement(settings.position, left, right, screenWidth, width, gap)
 
+	frame.dx, frame.dy = Gain:Motion(settings, side)
 	frame:ClearAllPoints()
+
+	if side == "RIGHT" then
+		frame:SetPoint("LEFT", bar, "RIGHT", gap, 0)
+
+		return
+	elseif side == "LEFT" then
+		frame:SetPoint("RIGHT", bar, "LEFT", -gap, 0)
+
+		return
+	end
+
+	local x = Gain:Offset(fraction, bar:GetWidth(), width, mode)
+	local top = bar:GetTop()
+	local screen = UIParent:GetTop()
 
 	if not above and top and screen and top + gap + height + TRAVEL > screen then
 		frame:SetPoint("BOTTOM", bar, "BOTTOMLEFT", x, -(height + gap))
@@ -349,10 +415,8 @@ function Gain:Show(bar, amount, held)
 	Style(frame, false)
 
 	local snapshot = bar.snapshot or LB.Model:Get(bar.id)
-	local fraction = snapshot and LB.Progress.Fraction(snapshot) or 0
-	local width, height = frame:GetSize()
 
-	Anchor(frame, bar, self:Offset(fraction, bar:GetWidth(), width, settings.position), height)
+	Anchor(frame, bar, snapshot and LB.Progress.Fraction(snapshot) or 0)
 
 	frame:SetScript("OnUpdate", not frame.held and OnUpdate or nil)
 	frame:Show()
@@ -393,10 +457,7 @@ function Gain:Hold(bar, amount, animate)
 	frame:SetFrameLevel(bar:GetFrameLevel() + 20)
 	Style(frame, false)
 
-	local fraction = bar.snapshot and LB.Progress.Fraction(bar.snapshot) or 0
-	local width, height = frame:GetSize()
-
-	Anchor(frame, bar, self:Offset(fraction, bar:GetWidth(), width, Settings().position), height, true)
+	Anchor(frame, bar, bar.snapshot and LB.Progress.Fraction(bar.snapshot) or 0, true)
 
 	frame:SetScript("OnUpdate", animate and OnUpdate or nil)
 	frame:Show()
