@@ -584,9 +584,18 @@ local function Gain(ctx)
 		return LB.Profile:Get("gain.detached") == true
 	end
 
+	local function Beside()
+		local position = LB.Profile:Get("gain.position")
+
+		return not Detached() and (position == "OUTSIDE_RIGHT" or position == "OUTSIDE_LEFT")
+	end
+
 	local elements = {
 		Section("behavior", L["Behavior"], { tab = "behavior" }),
-		Row(Toggle(ctx, "enabled", L["Show Gain Indicator"], "gain.enabled", { pageSwitch = true })),
+		Row(
+			Toggle(ctx, "enabled", L["Show Gain Indicator"], "gain.enabled", { pageSwitch = true }),
+			Toggle(ctx, "animate", L["Animate"], "gain.animate")
+		),
 		Row(
 			Check(ctx, "hideInCombat", L["Hide in Combat"], "gain.hideInCombat"),
 			Check(ctx, "detached", L["Detach from Bar"], "gain.detached", { description = L["Place it in Edit Mode."] })
@@ -596,6 +605,8 @@ local function Gain(ctx)
 			Choice(ctx, "position", L["Position"], "gain.position", {
 				{ value = "FILL_EDGE", label = L["Fill Edge"] },
 				{ value = "RIGHT_END", label = L["Right End"] },
+				{ value = "OUTSIDE_RIGHT", label = L["Right of Bar"] },
+				{ value = "OUTSIDE_LEFT", label = L["Left of Bar"] },
 			}, {
 				blocked = function()
 					if Detached() then
@@ -605,12 +616,23 @@ local function Gain(ctx)
 			}),
 			Choice(ctx, "direction", L["Growth Direction"], "gain.direction", UP_DOWN, {
 				blocked = function()
-					if not Detached() then
-						return L["Only when detached."]
+					if not Detached() and not (Beside() and LB.Profile:Get("layout.mode") == "SEGMENTED") then
+						return L["Only when detached, or beside segmented bars."]
 					end
 				end,
 			})
 		),
+		Row(Choice(ctx, "animation", L["Animation Style"], "gain.animation", {
+			{ value = "RISE", label = L["Rise"] },
+			{ value = "SLIDE", label = L["Slide Outward"] },
+		}, {
+			depends = "animate",
+			blocked = function()
+				if not Beside() then
+					return L["Only beside the bar."]
+				end
+			end,
+		})),
 		Section("amount", L["Amount Text"], { tab = "amount" }),
 		Row(
 			Font(ctx, "font", L["Font"], "gain.text.font"),

@@ -103,7 +103,9 @@ local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 ---@class LBGainSettings
 ---@field enabled boolean
 ---@field hideInCombat boolean
----@field position "FILL_EDGE" | "RIGHT_END"
+---@field animate boolean move each indicator as it fades; off, it fades in place
+---@field animation "RISE" | "SLIDE" how an indicator beside its bar moves
+---@field position "FILL_EDGE" | "RIGHT_END" | "OUTSIDE_RIGHT" | "OUTSIDE_LEFT"
 ---@field detached boolean
 ---@field direction "UP" | "DOWN"
 ---@field screen LBFramePosition? the detached stack's place; nil sits it right of the screen's center
@@ -227,6 +229,8 @@ local defaults = {
 	gain = {
 		enabled = true,
 		hideInCombat = false,
+		animate = true,
+		animation = "RISE",
 		position = "FILL_EDGE",
 		detached = false,
 		direction = "UP",

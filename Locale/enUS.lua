@@ -236,12 +236,19 @@ L["Endeavor"] = "Endeavor"
 -- Settings window: Gain Indicator
 L["Gain Indicator"] = "Gain Indicator"
 L["Show Gain Indicator"] = "Show Gain Indicator"
+L["Animate"] = "Animate"
 L["Behavior"] = "Behavior"
 L["Amount"] = "Amount"
 L["Position"] = "Position"
 L["Fill Edge"] = "Fill Edge"
 L["Right End"] = "Right End"
-L["Only when detached."] = "Only when detached."
+L["Right of Bar"] = "Right of Bar"
+L["Left of Bar"] = "Left of Bar"
+L["Only when detached, or beside segmented bars."] = "Only when detached, or beside segmented bars."
+L["Animation Style"] = "Animation Style"
+L["Rise"] = "Rise"
+L["Slide Outward"] = "Slide Outward"
+L["Only beside the bar."] = "Only beside the bar."
 L["Amount Text"] = "Amount Text"
 L["Text Side"] = "Text Side"
 L["Left of the Arrow"] = "Left of the Arrow"
@@ -415,12 +422,17 @@ L["How visible the other bars are while dimmed."] = "How visible the other bars 
 L["Hides the bars completely while you are in combat."] = "Hides the bars completely while you are in combat."
 L["Shows how much a bar gained, with an arrow, each time it moves forward."] =
 	"Shows how much a bar gained, with an arrow, each time it moves forward."
+L["Moves each indicator as it fades. When off, it appears in place and fades."] =
+	"Moves each indicator as it fades. When off, it appears in place and fades."
 L["Hides the gain indicator while you are in combat."] = "Hides the gain indicator while you are in combat."
 L["Gathers every bar's gains in one stack away from the bars."] =
 	"Gathers every bar's gains in one stack away from the bars."
-L["Where the indicator sits on its bar: at the end of the fill, or at the bar's right end."] =
-	"Where the indicator sits on its bar: at the end of the fill, or at the bar's right end."
-L["Which way the detached stack grows as new gains arrive."] = "Which way the detached stack grows as new gains arrive."
+L["Where the indicator sits: at the end of the fill, at the bar's right end, or beside the bar. Beside segmented bars, every gain stacks next to the row."] =
+	"Where the indicator sits: at the end of the fill, at the bar's right end, or beside the bar. Beside segmented bars, every gain stacks next to the row."
+L["Which way the stack grows as new gains arrive, when detached or beside segmented bars."] =
+	"Which way the stack grows as new gains arrive, when detached or beside segmented bars."
+L["How an indicator beside its bar moves: up, or outward away from the bar."] =
+	"How an indicator beside its bar moves: up, or outward away from the bar."
 L["The font of the gained amount."] = "The font of the gained amount."
 L["The size of the gained amount."] = "The size of the gained amount."
 L["The outline of the gained amount."] = "The outline of the gained amount."
