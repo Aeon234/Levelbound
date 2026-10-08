@@ -108,6 +108,7 @@ local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 ---@field position "FILL_EDGE" | "RIGHT_END" | "OUTSIDE_RIGHT" | "OUTSIDE_LEFT"
 ---@field detached boolean
 ---@field direction "UP" | "DOWN"
+---@field across "RIGHT" | "LEFT" the way the detached stack grows with Slide Outward, its lines side by side
 ---@field screen LBFramePosition? the detached stack's place; nil sits it right of the screen's center
 ---@field colors table<string, LBColor>
 ---@field text LBGainTextStyle
@@ -234,6 +235,7 @@ local defaults = {
 		position = "FILL_EDGE",
 		detached = false,
 		direction = "UP",
+		across = "RIGHT",
 		colors = {
 			xp = GAIN_GREEN,
 			petxp = GAIN_GREEN,

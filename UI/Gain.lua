@@ -33,11 +33,13 @@ end
 ---@field lines table<string, Frame> the detached line showing each progress type
 ---@field box Frame where the detached indicators sit
 ---@field gather LBNoticeAnchor? where the stack sits beside the segmented row, or nil for the box
+---@field boxDirection string the way the stack grows from the box, as of its latest line or settings change
 ---@field inCombat boolean
 local Gain = {
 	pool = CreateFramePool("Frame", UIParent, nil, Reset),
 	active = {},
 	lines = {},
+	boxDirection = "UP",
 	inCombat = false,
 }
 LB.Gain = Gain
@@ -47,9 +49,21 @@ local function Settings()
 	return LB.Profile:Get("gain")
 end
 
+---@param settings LBGainSettings
+---@return boolean sideways a stack's lines sit side by side, growing outward, rather than stacked
+local function Sideways(settings)
+	return settings.animation == "SLIDE"
+end
+
+---@param settings LBGainSettings
+---@return string direction the way the detached stack grows: UP or DOWN, or RIGHT or LEFT side by side
+local function DetachedDirection(settings)
+	return Sideways(settings) and settings.across or settings.direction
+end
+
 ---@return LBNoticeAnchor
 local function StackAnchor()
-	return Gain.gather or NoticeStack:BoxAnchor(Gain.box, Settings().direction)
+	return Gain.gather or NoticeStack:BoxAnchor(Gain.box, Gain.boxDirection)
 end
 
 Gain.stack = NoticeStack:Create(StackAnchor, function(frame)
@@ -288,19 +302,34 @@ function Gain:DetachedSize()
 	return size + GAP + width, NoticeStack:BoxHeight(size)
 end
 
-function Gain:PlaceBox()
+---@return number width
+---@return number height the detached box: a full stack, its lines stacked or side by side
+function Gain:DetachedFootprint()
+	local settings = Settings()
 	local width, height = self:DetachedSize()
+
+	if Sideways(settings) then
+		return NoticeStack:BoxHeight(width), settings.text.size * 2
+	end
+
+	return width, height
+end
+
+function Gain:PlaceBox()
+	local width, height = self:DetachedFootprint()
 
 	NoticeStack:PlaceBox(self.box, Settings().screen, width, height, 1)
 end
 
 ---Where the stack sits when gains gather beside the segmented row: against the row's side, its first line centered
----on the row and later lines growing the saved direction. Nil when not segmented, detached or above the bars, or
----when the screen has no room beside the row.
+---on the row. Later lines grow the saved direction, or with Slide Outward sit side by side growing away from the
+---row. Nil when not segmented, detached or above the bars, or when the screen has no room beside the row for a line.
+---@param row Frame? the frame holding the segments; the bar group when nil
 ---@return LBNoticeAnchor?
-function Gain:GatherAnchor()
+function Gain:GatherAnchor(row)
 	local settings = Settings()
-	local row = LB.BarGroup.frame
+
+	row = row or LB.BarGroup.frame
 
 	if settings.detached or not row or LB.Profile:Get("layout.mode") ~= "SEGMENTED" then
 		return nil
@@ -316,14 +345,29 @@ function Gain:GatherAnchor()
 		return nil
 	end
 
+	local inner = side == "RIGHT" and "LEFT" or "RIGHT"
+	local x = side == "RIGHT" and gap or -gap
+
+	if Sideways(settings) then
+		return {
+			point = inner,
+			relativeTo = row,
+			relativePoint = side,
+			x = x,
+			y = 0,
+			sign = side == "RIGHT" and 1 or -1,
+			across = true,
+		}
+	end
+
 	local up = settings.direction == "UP"
 	local half = settings.text.size
 
 	return {
-		point = (up and "BOTTOM" or "TOP") .. (side == "RIGHT" and "LEFT" or "RIGHT"),
+		point = (up and "BOTTOM" or "TOP") .. inner,
 		relativeTo = row,
 		relativePoint = side,
-		x = side == "RIGHT" and gap or -gap,
+		x = x,
 		y = up and -half or half,
 		sign = up and 1 or -1,
 	}
@@ -338,7 +382,13 @@ local function SampleAnchor()
 		return nil
 	end
 
-	local up = Settings().direction == "UP"
+	local direction = DetachedDirection(Settings())
+
+	if direction == "RIGHT" or direction == "LEFT" then
+		return NoticeStack:BoxAnchor(sampleTarget, direction)
+	end
+
+	local up = direction == "UP"
 	local point = up and "BOTTOMLEFT" or "TOPLEFT"
 
 	return { point = point, relativeTo = sampleTarget, relativePoint = point, x = 0, y = 0, sign = up and 1 or -1 }
@@ -415,7 +465,7 @@ function Gain:ShowDetached(id, amount, held)
 
 	Build(frame)
 	-- Beside the row, a line hides and fades with the bars.
-	frame:SetParent(self.gather and LB.BarGroup.frame or UIParent)
+	frame:SetParent(self.gather and self.gather.relativeTo --[[@as Frame]] or UIParent)
 	frame:SetFrameStrata(LB.Profile:Get("layout.strata"))
 	Style(frame, true)
 
@@ -434,9 +484,12 @@ function Gain:Show(bar, amount, held)
 		return
 	end
 
-	self.gather = self:GatherAnchor()
+	-- A segment's parent is its row.
+	local gather = self:GatherAnchor(bar:GetParent())
 
-	if Settings().detached or self.gather then
+	if Settings().detached or gather then
+		self.gather = gather
+		self.boxDirection = DetachedDirection(Settings())
 		self:ShowDetached(bar.id, amount, held)
 
 		return
@@ -609,6 +662,7 @@ Callbacks:Register("Settings", Gain, function(_, path)
 	end
 
 	Gain.gather = Gain:GatherAnchor()
+	Gain.boxDirection = DetachedDirection(Settings())
 
 	if not Settings().detached and not Gain.gather then
 		Gain.stack:ReleaseAll()

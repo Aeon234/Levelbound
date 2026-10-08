@@ -18,7 +18,8 @@ local CENTER_GAP = 40
 ---@field relativePoint string
 ---@field x number
 ---@field y number
----@field sign integer 1 when the stack grows up, -1 when it grows down
+---@field sign integer 1 when the stack grows up, -1 when it grows down; across, 1 to the right and -1 to the left
+---@field across boolean? the lines stack side by side and fade without rising
 
 ---@class LBNoticeStack
 ---@field pool any
@@ -140,9 +141,17 @@ function NoticeStack:PlaceBox(box, position, width, height, side)
 end
 
 ---@param box Frame
----@param direction string UP or DOWN
+---@param direction string UP or DOWN, or RIGHT or LEFT for lines side by side from the box's matching edge
 ---@return LBNoticeAnchor
 function NoticeStack:BoxAnchor(box, direction)
+	if direction == "RIGHT" or direction == "LEFT" then
+		local right = direction == "RIGHT"
+		local point = right and "LEFT" or "RIGHT"
+
+		return { point = point, relativeTo = box, relativePoint = point, x = 0, y = 0, sign = right and 1 or -1,
+			across = true }
+	end
+
 	local left, _, width = box:GetRect()
 	local align = left and self:Align(left + width / 2, UIParent:GetWidth()) or ""
 	local up = direction == "UP"
@@ -151,8 +160,8 @@ function NoticeStack:BoxAnchor(box, direction)
 	return { point = point, relativeTo = box, relativePoint = point, x = 0, y = 0, sign = up and 1 or -1 }
 end
 
----@param lineHeight number
----@return number height of a full stack of such lines
+---@param lineHeight number a line's extent along the stack
+---@return number height of a full stack of such lines; its width, for lines side by side
 function NoticeStack:BoxHeight(lineHeight)
 	return MAX * lineHeight + (MAX - 1) * SPACING
 end
@@ -271,7 +280,7 @@ function NoticeStackMixin:Paint(frame)
 
 	local rise, alpha = NoticeStack:Keyframe(frame.elapsed)
 
-	if frame.held or self.still then
+	if frame.held or self.still or anchor.across then
 		rise = 0
 	end
 
@@ -279,30 +288,41 @@ function NoticeStackMixin:Paint(frame)
 		alpha = alpha * (1 - math.min(frame.evicted / EVICT, 1))
 	end
 
+	local distance = anchor.sign * (frame.offset + rise)
+
 	frame:ClearAllPoints()
 	frame:SetPoint(
 		anchor.point,
 		anchor.relativeTo,
 		anchor.relativePoint,
-		anchor.x,
-		anchor.y + anchor.sign * (frame.offset + rise)
+		anchor.x + (anchor.across and distance or 0),
+		anchor.y + (anchor.across and 0 or distance)
 	)
 	frame:SetAlpha(alpha)
 end
 
+---@param frame Frame
+---@param across boolean?
+---@return number size the line's extent along the stack
+local function Extent(frame, across)
+	return across and frame:GetWidth() or frame:GetHeight()
+end
+
 function NoticeStackMixin:Layout()
-	local heights = {}
+	local anchor = self.anchor()
+	local across = anchor and anchor.across
+	local sizes = {}
 
 	for index, frame in ipairs(self.active) do
-		heights[index] = frame:GetHeight()
+		sizes[index] = Extent(frame, across)
 	end
 
-	local targets = NoticeStack:Slots(heights)
+	local targets = NoticeStack:Slots(sizes)
 	local beyond = 0
 
 	for index, frame in ipairs(self.active) do
 		frame.target = targets[index]
-		beyond = targets[index] + frame:GetHeight() + SPACING
+		beyond = targets[index] + Extent(frame, across) + SPACING
 
 		if frame.held or self.still then
 			frame.offset = frame.target

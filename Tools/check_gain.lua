@@ -116,6 +116,9 @@ end
 function FrameMethods:SetParent(parent)
 	self.parent = parent
 end
+function FrameMethods:GetParent()
+	return self.parent
+end
 function FrameMethods:SetFrameLevel(level)
 	self.level = level
 end
@@ -192,6 +195,7 @@ local settings = {
 	position = "FILL_EDGE",
 	detached = false,
 	direction = "UP",
+	across = "RIGHT",
 	colors = { xp = { 0, 1, 0 } },
 	text = { font = "Gilroy Bold", size = 12, outline = "SLUG_OUTLINE", color = { 1, 1, 1, 1 }, side = "RIGHT",
 		x = 0, y = 0 },
@@ -264,10 +268,12 @@ end
 
 ---@param left number
 ---@param right number
-local function Bar(left, right)
+---@param id string? the progress type; experience when nil
+local function Bar(left, right, id)
 	local bar = NewFrame("bar")
 
-	bar.id = "xp"
+	bar.id = id or "xp"
+	bar.parent = row
 	bar.snapshot = {}
 	bar.left, bar.right, bar.width, bar.height, bar.top = left, right, right - left, 12, 500
 
@@ -352,6 +358,10 @@ anchor = Gain:GatherAnchor()
 Check("left of the row", anchor.relativePoint == "LEFT" and anchor.point == "TOPRIGHT" and anchor.x == -GAP)
 
 settings.position = "OUTSIDE_RIGHT"
+local other = NewFrame("other row")
+other.left, other.right = 200, 800
+anchor = Gain:GatherAnchor(other)
+Check("beside the row it is given", anchor and anchor.relativeTo == other)
 row.right = 1900
 Equal("no stack without room beside the row", Gain:GatherAnchor(), nil)
 row.right = 1100
@@ -442,6 +452,92 @@ Equal("the line sits with the row", line.parent, row)
 point = line.points[1]
 Check("the line is beside the row", point[2] == row and point[3] == "RIGHT" and point[5] == -12)
 Equal("the stack moves", Gain.stack.still, false)
+layout.mode = "CONNECTED"
+Gain:Show(Bar(400, 1000), 100)
+Check("a bar's own indicator leaves the stack beside the row", Gain.gather and Gain.gather.relativeTo == row)
+
+Equal("the stack is stacked by default", Gain.gather.across, nil)
+
+-- Slide Outward: the lines sit side by side, the newest against the row, growing away from it.
+local SLOT = WIDTH + 2
+
+---Ticks every line in the stack for `seconds`.
+local function Tick(seconds)
+	for _ = 1, seconds * 60 do
+		for _, stacked in ipairs(Gain.stack.active) do
+			stacked.scripts.OnUpdate(stacked, 1 / 60)
+		end
+	end
+end
+
+---@param id string
+---@return number x
+---@return number y the line's offset from its anchor point
+local function Line(id)
+	local found = Gain.lines[id].points[1]
+
+	return found[4], found[5]
+end
+
+for _, still in ipairs({ true, false }) do
+	local label = still and "still: " or "moving: "
+
+	Reset()
+	layout.mode = "SEGMENTED"
+	settings.position, settings.animation, settings.animate = "OUTSIDE_RIGHT", "SLIDE", not still
+	Gain:Show(Bar(500, 600), 100)
+	Gain:Show(Bar(600, 700, "reputation"), 100)
+	Tick(1)
+	point = Gain.lines.reputation.points[1]
+	Check(label .. "a line's left edge against the row's right", point[1] == "LEFT" and point[3] == "RIGHT")
+	x, y = Line("reputation")
+	Check(label .. "the newest against the row, centered", x == GAP and y == 0)
+	x, y = Line("xp")
+	Check(label .. "the older pushed right, level with it", x == GAP + SLOT and y == 0)
+end
+
+Reset()
+layout.mode = "SEGMENTED"
+settings.position, settings.animation = "OUTSIDE_LEFT", "SLIDE"
+Gain:Show(Bar(500, 600), 100)
+Gain:Show(Bar(600, 700, "reputation"), 100)
+Tick(1)
+point = Gain.lines.reputation.points[1]
+Check("left of the row, a line's right edge against it", point[1] == "RIGHT" and point[3] == "LEFT")
+x = Line("reputation")
+Equal("the newest against the row", x, -GAP)
+x = Line("xp")
+Equal("the older pushed left", x, -(GAP + SLOT))
+
+-- Detached with Slide Outward: side by side from the box's edge, the chosen way.
+for _, across in ipairs({ "RIGHT", "LEFT" }) do
+	Reset()
+	settings.detached, settings.animation, settings.across = true, "SLIDE", across
+	Gain:Show(Bar(400, 600), 100)
+	Gain:Show(Bar(600, 700, "reputation"), 100)
+	Tick(1)
+
+	local edge = across == "RIGHT" and "LEFT" or "RIGHT"
+	local sign = across == "RIGHT" and 1 or -1
+
+	point = Gain.lines.reputation.points[1]
+	Check("detached " .. across .. ": from the box's " .. edge .. " edge",
+		point[1] == edge and point[2] == Gain.box and point[3] == edge)
+	x, y = Line("reputation")
+	Check("detached " .. across .. ": the newest at the edge", x == 0 and y == 0)
+	x = Line("xp")
+	Equal("detached " .. across .. ": the older pushed on", x, sign * SLOT)
+end
+settings.across = "RIGHT"
+
+-- The detached box is a full stack's footprint.
+Reset()
+settings.detached = true
+local boxWidth, boxHeight = Gain:DetachedFootprint()
+Check("stacked: one line wide, three tall", boxWidth == WIDTH and boxHeight == 3 * 24 + 2 * 2)
+settings.animation = "SLIDE"
+boxWidth, boxHeight = Gain:DetachedFootprint()
+Check("side by side: three lines wide, one tall", boxWidth == 3 * WIDTH + 2 * 2 and boxHeight == 24)
 
 Reset()
 layout.mode = "SEGMENTED"

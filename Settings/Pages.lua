@@ -229,6 +229,11 @@ local UP_DOWN = {
 	{ value = "DOWN", label = L["Down"] },
 }
 
+local LEFT_RIGHT = {
+	{ value = "LEFT", label = L["Left"] },
+	{ value = "RIGHT", label = L["Right"] },
+}
+
 ---@return { value: string, label: string }[]
 local function Outlines()
 	return LB.Media.outlines
@@ -590,6 +595,13 @@ local function Gain(ctx)
 		return not Detached() and (position == "OUTSIDE_RIGHT" or position == "OUTSIDE_LEFT")
 	end
 
+	-- With Slide Outward, the detached stack's lines sit side by side, growing left or right.
+	local function DirectionPath()
+		return Detached() and LB.Profile:Get("gain.animation") == "SLIDE" and "gain.across" or "gain.direction"
+	end
+
+	Track(ctx, "gain.across")
+
 	local elements = {
 		Section("behavior", L["Behavior"], { tab = "behavior" }),
 		Row(
@@ -614,10 +626,22 @@ local function Gain(ctx)
 					end
 				end,
 			}),
-			Choice(ctx, "direction", L["Growth Direction"], "gain.direction", UP_DOWN, {
+			Choice(ctx, "direction", L["Growth Direction"], "gain.direction", function()
+				return DirectionPath() == "gain.across" and LEFT_RIGHT or UP_DOWN
+			end, {
+				get = function()
+					return LB.Profile:Get(DirectionPath())
+				end,
+				set = function(value)
+					LB.Profile:Set(DirectionPath(), value)
+				end,
 				blocked = function()
-					if not Detached() and not (Beside() and LB.Profile:Get("layout.mode") == "SEGMENTED") then
+					if Detached() then
+						return nil
+					elseif not (Beside() and LB.Profile:Get("layout.mode") == "SEGMENTED") then
 						return L["Only when detached, or beside segmented bars."]
+					elseif LB.Profile:Get("gain.animation") == "SLIDE" then
+						return L["Slide Outward grows the stack away from the bars."]
 					end
 				end,
 			})
@@ -628,8 +652,8 @@ local function Gain(ctx)
 		}, {
 			depends = "animate",
 			blocked = function()
-				if not Beside() then
-					return L["Only beside the bar."]
+				if not Beside() and not Detached() then
+					return L["Only beside the bar, or detached."]
 				end
 			end,
 		})),

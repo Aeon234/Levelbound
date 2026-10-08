@@ -538,7 +538,7 @@ local function GainPreview()
 			local ids = Types()
 
 			if LB.Profile:Get("gain.detached") and LB.Profile:Get("gain.enabled") then
-				local width, height = LB.Gain:DetachedSize()
+				local width, height = LB.Gain:DetachedFootprint()
 
 				LB.Gain:PlayDetachedSample(Previews:Box(width, height), ids)
 				addPart(Previews.box, "direction")
