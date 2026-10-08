@@ -530,6 +530,55 @@ for _, across in ipairs({ "RIGHT", "LEFT" }) do
 end
 settings.across = "RIGHT"
 
+-- A repeat gain makes its line the newest: it returns to the row and the others step out, so the lines end from
+-- the outside in and none moves back toward the row.
+for _, animation in ipairs({ "SLIDE", "RISE" }) do
+	local label = animation == "SLIDE" and "side by side: " or "stacked: "
+
+	Reset()
+	layout.mode = "SEGMENTED"
+	settings.position, settings.animation = "OUTSIDE_RIGHT", animation
+	Gain:Show(Bar(500, 550), 100)
+	Tick(0.3)
+	Gain:Show(Bar(550, 600, "reputation"), 100)
+	Tick(0.3)
+	Gain:Show(Bar(600, 700, "honor"), 100)
+	Tick(0.4)
+	Gain:Show(Bar(500, 550), 50)
+
+	local xp, reputation, honor = Gain.lines.xp, Gain.lines.reputation, Gain.lines.honor
+
+	Check(label .. "the repeat leads", Gain.stack.active[1] == xp and Gain.stack.active[2] == honor
+		and Gain.stack.active[3] == reputation)
+	Equal(label .. "the repeat's line adds up", xp.amount, 150)
+
+	local order, inward = {}, false
+	local last = {}
+
+	for _ = 1, 5 * 60 do
+		for _, stacked in ipairs(Gain.stack.active) do
+			stacked.scripts.OnUpdate(stacked, 1 / 60)
+		end
+
+		for _, stacked in ipairs({ xp, reputation, honor }) do
+			if stacked.id and not last[stacked] then
+				last[stacked] = stacked.offset
+			end
+
+			if stacked.id then
+				inward = inward or stacked.offset < last[stacked] - 1e-9
+				last[stacked] = stacked.offset
+			elseif not order[stacked] then
+				order[stacked] = true
+				order[#order + 1] = stacked
+			end
+		end
+	end
+
+	Check(label .. "ends from the outside in", order[1] == reputation and order[2] == honor and order[3] == xp)
+	Check(label .. "no line moves back toward the row", not inward)
+end
+
 -- The detached box is a full stack's footprint.
 Reset()
 settings.detached = true

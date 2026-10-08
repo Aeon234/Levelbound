@@ -261,10 +261,17 @@ function NoticeStackMixin:Push(frame, held)
 	self:Layout()
 end
 
+---Restarts a line's time and makes it the newest: it fades in again at the anchor while the lines before it step
+---outward, so the lines always end in order from the farthest in.
 ---@param frame Frame
 function NoticeStackMixin:Restart(frame)
 	if not frame.held then
 		frame.elapsed = 0
+	end
+
+	if Remove(self.active, frame) then
+		table.insert(self.active, 1, frame)
+		frame.offset = 0
 	end
 
 	self:Layout()
