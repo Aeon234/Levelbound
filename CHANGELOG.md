@@ -15,6 +15,13 @@ Gain indicator:
   other, and the detached stack can grow left or right.
 - The Gain Indicator and progress type previews show the indicator beside the bar when it is set there.
 
+Fixes:
+
+- When a type gains again while its line is still in the detached stack, that line moves to the front, so the
+  stack's lines fade from the oldest first instead of an older line sliding back before it fades.
+- All new text is translated into German, Spanish, French, Italian, Korean, Brazilian Portuguese, Russian and
+  Chinese.
+
 ## 1.1.0
 
 New looks:
