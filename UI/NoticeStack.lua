@@ -26,6 +26,7 @@ local CENTER_GAP = 40
 ---@field leaving Frame[] pushed out by a newer line, fading while they slide on
 ---@field anchor fun(): LBNoticeAnchor?
 ---@field onRelease fun(frame: Frame)?
+---@field still boolean? lines neither rise nor slide: each takes its slot at once and fades there
 local NoticeStackMixin = {}
 
 ---@class LBNoticeStackFactory
@@ -269,7 +270,7 @@ function NoticeStackMixin:Paint(frame)
 
 	local rise, alpha = NoticeStack:Keyframe(frame.elapsed)
 
-	if frame.held then
+	if frame.held or self.still then
 		rise = 0
 	end
 
@@ -302,13 +303,17 @@ function NoticeStackMixin:Layout()
 		frame.target = targets[index]
 		beyond = targets[index] + frame:GetHeight() + SPACING
 
-		if frame.held then
+		if frame.held or self.still then
 			frame.offset = frame.target
 		end
 	end
 
 	for _, frame in ipairs(self.leaving) do
 		frame.target = math.max(beyond, frame.target)
+
+		if self.still then
+			frame.offset = frame.target
+		end
 	end
 
 	for _, frame in ipairs(self.active) do

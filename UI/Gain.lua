@@ -350,6 +350,7 @@ end)
 function Gain:PlayDetachedSample(target, ids)
 	self:StopDetachedSample()
 	sampleTarget = target
+	self.sampleStack.still = not Settings().animate
 
 	local index = 0
 
@@ -390,6 +391,8 @@ end
 ---@param held boolean?
 function Gain:ShowDetached(id, amount, held)
 	local frame = self.lines[id]
+
+	self.stack.still = not Settings().animate
 
 	if frame and not frame.evicted then
 		frame.amount = frame.amount + amount
@@ -611,6 +614,8 @@ Callbacks:Register("Settings", Gain, function(_, path)
 	for _, frame in ipairs(Gain.stack.active) do
 		Style(frame, true)
 	end
+
+	Gain.stack.still = not Settings().animate
 
 	if not Gain.gather then
 		Gain:PlaceBox()
