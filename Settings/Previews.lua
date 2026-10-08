@@ -13,6 +13,7 @@ local PREVIEW_WIDTH = 480
 local GAIN_WIDTH = 190 -- the Gain Indicator page's bars, up to four to a row
 local GAIN_HEIGHT = 12
 local GAIN_COLUMNS = 4
+local GAIN_SIDE_COLUMNS = 2 -- with the indicators beside the bars
 local GAIN_COLUMN_GAP = 16
 
 -- The largest values the settings allow, from which each page's preview takes a fixed height.
@@ -142,9 +143,10 @@ end
 ---An empty frame placed around part of a sample bar, so a click there finds that part's setting.
 ---@param bar LBBar
 ---@param kind "border" | "spark" | "gain"
----@param reach number? the border ring's width, or the gain area's height
+---@param reach number? the border ring's width, or the gain area's height above the bar or width beside it
+---@param side "RIGHT" | "LEFT" | nil the side of the bar the gain area sits beside, or nil above it
 ---@return Frame area
-function Previews:Area(bar, kind, reach)
+function Previews:Area(bar, kind, reach, side)
 	local areas = self.areas[bar] or {}
 	local area = areas[kind]
 
@@ -168,6 +170,9 @@ function Previews:Area(bar, kind, reach)
 		area:SetPoint("TOPLEFT", bar.clip, "TOPRIGHT", -SPARK_HIT / 2, 0)
 		area:SetPoint("BOTTOMLEFT", bar.clip, "BOTTOMRIGHT", -SPARK_HIT / 2, 0)
 		area:SetWidth(SPARK_HIT)
+	elseif side then
+		area:SetPoint(side == "RIGHT" and "LEFT" or "RIGHT", bar, side)
+		area:SetSize(reach or 0, math.max(bar:GetHeight(), LB.Profile:Get("gain.text.size") * 2))
 	else
 		area:SetPoint("BOTTOMLEFT", bar, "TOPLEFT")
 		area:SetPoint("BOTTOMRIGHT", bar, "TOPRIGHT")
@@ -210,6 +215,24 @@ end
 ---@return number room above a bar for its gain indicator, which keeps clear of the border
 local function GainRoom()
 	return LB.Profile:Get("gain.text.size") * 2 + SLOT_ROOM * 2 + LB.TextSlot:BorderReach(nil)
+end
+
+---@return "RIGHT" | "LEFT" | nil side the side of its bar a sample gain indicator sits beside, or nil above it
+local function GainSide()
+	local position = LB.Profile:Get("gain.position")
+
+	return position == "OUTSIDE_RIGHT" and "RIGHT" or position == "OUTSIDE_LEFT" and "LEFT" or nil
+end
+
+---@return number room beside a bar for its gain indicator and its slide, which keeps clear of the border
+local function GainSideRoom()
+	return LB.Gain:DetachedSize() + LB.NoticeStack.RISE + SLOT_ROOM + LB.TextSlot:BorderReach(nil)
+end
+
+---@param height number the bar's height
+---@return number overhang how far an indicator centered beside the bar stands past its top and bottom
+local function GainOverhang(height)
+	return math.max(0, LB.Profile:Get("gain.text.size") - height / 2)
 end
 
 ---Places bars in a column from `top` down, `gap` apart, and returns the column's width and bottom.
@@ -294,11 +317,14 @@ local function TypePreview(id)
 			local outer = #keys > 3
 			local zone = LB.Profile:Get("text.style.size") + SLOT_ROOM
 			local reach = outer and LB.TextSlot:BorderReach(nil) or 0
-			local above = math.max(outer and zone + reach or 0, GainRoom())
-			local below = outer and zone + reach or 0
+			local side = GainSide()
+			local room = side and GainSideRoom() or 0
+			local overhang = GainOverhang(height)
+			local above = math.max(outer and zone + reach or 0, side and overhang + LB.NoticeStack.RISE or GainRoom())
+			local below = math.max(outer and zone + reach or 0, side and overhang or 0)
 			local bar = Previews:Bar(id, width, height)
 
-			bar:SetPoint("TOPLEFT", sample, "TOPLEFT", PAD, -(PAD + above))
+			bar:SetPoint("TOPLEFT", sample, "TOPLEFT", PAD + (side == "LEFT" and room or 0), -(PAD + above))
 
 			local fill = FillSetting(id)
 
@@ -319,7 +345,7 @@ local function TypePreview(id)
 
 			Previews:Finish()
 
-			return width + PAD * 2, height + above + below + PAD * 2
+			return width + room + PAD * 2, height + above + below + PAD * 2
 		end,
 	}
 end
@@ -521,26 +547,38 @@ local function GainPreview()
 				return width + PAD * 2, height + PAD * 2
 			end
 
-			-- Short bars, up to four to a row: this page is about the arrows, not the bars.
+			-- Short bars, up to four to a row, or two with the arrows beside them: this page is about the arrows, not
+			-- the bars.
 			local width, height = GAIN_WIDTH, LB.Border:HeldHeight() or GAIN_HEIGHT
-			local room = GainRoom()
-			local columns = math.max(math.min(#ids, GAIN_COLUMNS), 1)
+			local side = GainSide()
+			local room = side and GainSideRoom() or GainRoom()
+			local columns = math.max(math.min(#ids, side and GAIN_SIDE_COLUMNS or GAIN_COLUMNS), 1)
 			local bars = {}
 			local rows = math.ceil(#ids / columns)
+			-- Each bar's cell holds the bar and its indicator's room, above it or beside it.
+			local cellWidth, cellHeight, x, y = width, height + room, 0, room
+
+			if side then
+				local overhang = GainOverhang(height)
+
+				cellWidth = width + room
+				cellHeight = height + overhang * 2 + LB.NoticeStack.RISE
+				x, y = side == "LEFT" and room or 0, overhang + LB.NoticeStack.RISE
+			end
 
 			for index, id in ipairs(ids) do
 				local bar = Previews:Bar(id, width, height)
 				local column = (index - 1) % columns
 				local row = math.floor((index - 1) / columns)
 
-				bar:SetPoint("TOPLEFT", sample, "TOPLEFT", PAD + column * (width + GAIN_COLUMN_GAP),
-					-(PAD + room + row * (height + room)))
+				bar:SetPoint("TOPLEFT", sample, "TOPLEFT", PAD + column * (cellWidth + GAIN_COLUMN_GAP) + x,
+					-(PAD + row * cellHeight + y))
 				bars[#bars + 1] = bar
 				addPart(bar, "tint." .. id)
-				addPart(Previews:Area(bar, "gain", room), "tint." .. id)
+				addPart(Previews:Area(bar, "gain", room, side), "tint." .. id)
 			end
 
-			local y = PAD + rows * (height + room)
+			local bottom = PAD + rows * cellHeight
 
 			local function Play()
 				for index, bar in ipairs(bars) do
@@ -552,7 +590,7 @@ local function GainPreview()
 			Previews.gainLoop = C_Timer.NewTicker(LB.NoticeStack.DURATION + GAIN_PAUSE, Play)
 			Previews:Finish()
 
-			return columns * width + (columns - 1) * GAIN_COLUMN_GAP + PAD * 2, y + PAD
+			return columns * cellWidth + (columns - 1) * GAIN_COLUMN_GAP + PAD * 2, bottom + PAD
 		end,
 	}
 end

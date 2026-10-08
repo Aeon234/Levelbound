@@ -215,19 +215,25 @@ end
 ---@param frame Frame
 ---@param bar LBBar
 ---@param fraction number 0-1, the bar's fill
----@param above boolean? when above the bar, never flipped below it near the screen's top
-local function Anchor(frame, bar, fraction, above)
+---@param sample boolean? a settings sample: beside its bar in any layout and wherever it is on screen, and never
+---flipped below the bar near the screen's top
+local function Anchor(frame, bar, fraction, sample)
 	local settings = Settings()
 	local width, height = frame:GetSize()
 	local screenWidth = UIParent:GetWidth()
-	-- An unplaced bar counts as having room on both sides.
-	local left, right = bar:GetLeft() or screenWidth / 2, bar:GetRight() or screenWidth / 2
+	local left, right = bar:GetLeft(), bar:GetRight()
+
+	-- A sample, or an unplaced bar, counts as having room on both sides.
+	if sample or not left or not right then
+		left, right = screenWidth / 2, screenWidth / 2
+	end
+
 	-- Clear of the drawn border, as the outer text is.
 	local gap = GAP + LB.TextSlot:BorderReach(bar)
 	local side, mode = Gain:Placement(settings.position, left, right, screenWidth, width, gap)
 
 	-- A segment's sides touch its neighbors; beside the row, its gains gather in the stack instead.
-	if LB.Profile:Get("layout.mode") == "SEGMENTED" then
+	if not sample and LB.Profile:Get("layout.mode") == "SEGMENTED" then
 		side = nil
 	end
 
@@ -248,7 +254,7 @@ local function Anchor(frame, bar, fraction, above)
 	local top = bar:GetTop()
 	local screen = UIParent:GetTop()
 
-	if not above and top and screen and top + gap + height + TRAVEL > screen then
+	if not sample and top and screen and top + gap + height + TRAVEL > screen then
 		frame:SetPoint("BOTTOM", bar, "BOTTOMLEFT", x, -(height + gap))
 
 		return
@@ -466,9 +472,9 @@ function Gain:Show(bar, amount, held)
 	Paint(frame, frame.elapsed)
 end
 
----Draws an indicator of `amount` on a bar outside the bar group, for a settings preview, whatever the saved
----placement: held at full strength, or with `animate` playing its rise and fade once. Draws nothing while the
----indicator is off.
+---Draws an indicator of `amount` on a bar outside the bar group, for a settings preview, at the saved position
+---even while detached or segmented: held at full strength, or with `animate` playing its motion and fade once.
+---Draws nothing while the indicator is off.
 ---@param bar LBBar
 ---@param amount number
 ---@param animate boolean?

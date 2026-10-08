@@ -33,6 +33,7 @@ local NoticeStackMixin = {}
 local NoticeStack = {
 	MAX = MAX,
 	SPACING = SPACING,
+	RISE = RISE,
 	DURATION = DURATION,
 	HELD = FADE_IN,
 }
