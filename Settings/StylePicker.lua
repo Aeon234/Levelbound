@@ -16,7 +16,9 @@ local TEXT_GAP = 2 -- an outer text slot's gap from the bar
 local FOOTER = 34
 local BLIZZARD_WIDTH = 1020 -- the Blizzard frame's own width
 local TITLE_SIZE = 20
-local CARD_SLICE = 20 -- the card art's corners, in texels, kept unstretched
+-- The card art is UI-HUD-ActionBar-Frame's: Blizzard slices it 48 texels in and draws it at half scale.
+local CARD_SLICE = 48
+local CARD_SCALE = 0.5
 local GOLD = { 1, 0.82, 0 }
 local FRAME_TINT = { 132 / 255, 105 / 255, 82 / 255 } -- the card frame art's own bronze
 
@@ -150,6 +152,7 @@ function StylePicker:Card(frame, style, title, text, profile)
 		local texture = card:CreateTexture(nil, layer)
 
 		texture:SetTexture(path)
+		texture:SetScale(CARD_SCALE)
 		texture:SetTextureSliceMargins(CARD_SLICE, CARD_SLICE, CARD_SLICE, CARD_SLICE)
 		texture:SetTextureSliceMode(Enum.UITextureSliceMode.Stretched)
 		texture:SetAllPoints()
