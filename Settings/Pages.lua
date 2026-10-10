@@ -770,6 +770,23 @@ local function LevelUps(ctx)
 		end
 	end
 
+	local function Beside()
+		local anchor = LB.Profile:Get("party.levelUp.anchor")
+
+		return not Detached() and (anchor == "RIGHT" or anchor == "LEFT")
+	end
+
+	local function Sliding()
+		return LB.Profile:Get("party.levelUp.animation") == "SLIDE"
+	end
+
+	-- With Slide Outward, the detached stack's lines sit side by side, growing left or right.
+	local function DirectionPath()
+		return Detached() and Sliding() and "party.levelUp.across" or "party.levelUp.direction"
+	end
+
+	Track(ctx, "party.levelUp.across")
+
 	local sound = Setting(ctx, "dropdown", "sound", SOUND, "party.levelUp.sound", {
 		depends = "notices",
 		picker = "sound",
@@ -800,16 +817,37 @@ local function LevelUps(ctx)
 				{ value = "BOTTOMLEFT", label = L["Bottom Left"] },
 				{ value = "BOTTOM", label = L["Bottom"] },
 				{ value = "BOTTOMRIGHT", label = L["Bottom Right"] },
+				{ value = "RIGHT", label = L["Right of Bar"] },
+				{ value = "LEFT", label = L["Left of Bar"] },
 			}, { depends = "onScreen", blocked = Detached }),
-			Choice(
-				ctx,
-				"direction",
-				L["Growth Direction"],
-				"party.levelUp.direction",
-				UP_DOWN,
-				{ depends = "onScreen" }
-			)
+			Choice(ctx, "direction", L["Growth Direction"], "party.levelUp.direction", function()
+				return DirectionPath() == "party.levelUp.across" and LEFT_RIGHT or UP_DOWN
+			end, {
+				depends = "onScreen",
+				get = function()
+					return LB.Profile:Get(DirectionPath())
+				end,
+				set = function(value)
+					LB.Profile:Set(DirectionPath(), value)
+				end,
+				blocked = function()
+					if Beside() and Sliding() then
+						return L["Slide Outward grows the stack away from the bars."]
+					end
+				end,
+			})
 		),
+		Row(Choice(ctx, "animation", L["Animation Style"], "party.levelUp.animation", {
+			{ value = "RISE", label = L["Rise"] },
+			{ value = "SLIDE", label = L["Slide Outward"] },
+		}, {
+			depends = "onScreen",
+			blocked = function()
+				if not Beside() and not Detached() then
+					return L["Only beside the bar, or detached."]
+				end
+			end,
+		})),
 		Row(
 			Slider(ctx, "x", L["Horizontal Offset"], "party.levelUp.x", -300, 300, 1, {
 				depends = "onScreen",

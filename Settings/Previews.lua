@@ -732,6 +732,19 @@ end
 ---@return number above
 ---@return number below
 local function NoticeRoom(settings, stack, height)
+	if settings.anchor == "LEFT" or settings.anchor == "RIGHT" then
+		local half = settings.text.size / 2
+		local up = settings.direction == "UP"
+		local top = settings.y + (up and stack - half or half)
+		local bottom = settings.y - (up and half or stack - half)
+
+		if settings.animation == "SLIDE" then
+			top, bottom = settings.y + half, settings.y - half
+		end
+
+		return math.max(0, top - height / 2), math.max(0, -bottom - height / 2)
+	end
+
 	local reach = stack + math.abs(settings.y)
 	local top = settings.anchor:find("^TOP") ~= nil
 	local up = settings.direction == "UP"
@@ -766,6 +779,11 @@ local function LevelUpsPreview()
 
 			if settings.detached then
 				local width = SharedSize()
+
+				if settings.animation == "SLIDE" then
+					width, stack = LB.LevelUpNotice:Footprint()
+				end
+
 				local box = Previews:Box(width, stack)
 
 				if shown then
@@ -780,10 +798,17 @@ local function LevelUpsPreview()
 
 			local width, height = SharedSize()
 			local above, below = NoticeRoom(settings, stack, height)
+			local left, right = math.max(0, -settings.x), math.max(0, settings.x)
 			local bar = Previews:Bar("xp", width, height)
 
+			if settings.anchor == "RIGHT" then
+				left, right = 0, math.max(0, LB.LevelUpNotice:SideReach() + settings.x)
+			elseif settings.anchor == "LEFT" then
+				left, right = math.max(0, LB.LevelUpNotice:SideReach() - settings.x), 0
+			end
+
 			Previews:Bare(bar)
-			bar:SetPoint("TOPLEFT", sample, "TOPLEFT", PAD + math.max(0, -settings.x), -(PAD + above))
+			bar:SetPoint("TOPLEFT", sample, "TOPLEFT", PAD + left, -(PAD + above))
 			addPart(bar, "anchor")
 
 			if shown then
@@ -792,7 +817,7 @@ local function LevelUpsPreview()
 
 			Previews:Finish()
 
-			return width + math.abs(settings.x) + PAD * 2, above + height + below + PAD * 2
+			return width + left + right + PAD * 2, above + height + below + PAD * 2
 		end,
 	}
 end

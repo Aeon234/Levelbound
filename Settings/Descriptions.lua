@@ -124,6 +124,7 @@ LB.SettingsDescriptions = {
 		detached = L["Shows the notices in their own stack away from the bars."],
 		anchor = L["Where the notices appear around the bars."],
 		direction = L["Which way the notices stack as new ones arrive."],
+		animation = L["How the notices move: up, or side by side, sliding outward. Beside the bar they grow away from it."],
 		x = L["Moves the notices sideways."],
 		y = L["Moves the notices up or down."],
 		font = L["The notices' font."],

@@ -18,6 +18,7 @@ local SAMPLE = {
 ---@field box Frame where the notices sit when detached from the bars
 ---@field sampleTicker any? adds a notice to a settings preview's sample
 ---@field sampleIndex integer
+---@field cramped boolean? a side anchor has no room before the screen's edge, so the stack sits above the bar
 local Notice = {
 	sampleIndex = 0,
 }
@@ -39,12 +40,59 @@ local function Target()
 	return group.frame
 end
 
+---@param settings LBLevelUpSettings
+---@return boolean sideways the lines sit side by side, sliding outward, rather than stacked
+local function Sideways(settings)
+	return settings.animation == "SLIDE"
+end
+
+---@param settings LBLevelUpSettings
+---@return string direction the detached stack's growth: UP or DOWN, or RIGHT or LEFT side by side
+local function DetachedDirection(settings)
+	return Sideways(settings) and settings.across or settings.direction
+end
+
+---Places the stack at its saved anchor on a bar: 4 px from a top or bottom point along the growth direction, or
+---beside the bar, clear of the border, with its first line centered on the bar's side. Beside the bar, Slide Outward
+---sets the lines side by side, growing away from the bar.
+---@param target Region
+---@param placement LBLevelUpSettings
+---@param cramped boolean? a side anchor falls back to above the bar at that side's end, growing up
+---@return LBNoticeAnchor
+function Notice:Attach(target, placement, cramped)
+	local anchor, direction = placement.anchor, placement.direction
+	local beside = anchor == "LEFT" or anchor == "RIGHT"
+
+	if beside and cramped then
+		anchor, direction, beside = "TOP" .. anchor, "UP", false
+	end
+
+	local point, sign = NoticeStack:Place(anchor, direction)
+	local x, y = placement.x, placement.y + sign * GAP
+
+	if beside then
+		local gap = GAP + LB.TextSlot:BorderReach(nil)
+		local right = anchor == "RIGHT"
+
+		x = placement.x + (right and gap or -gap)
+
+		if Sideways(placement) then
+			return { point = right and "LEFT" or "RIGHT", relativeTo = target, relativePoint = anchor, x = x,
+				y = placement.y, sign = right and 1 or -1, across = true }
+		end
+
+		y = placement.y - sign * placement.text.size / 2
+	end
+
+	return { point = point, relativeTo = target, relativePoint = anchor, x = x, y = y, sign = sign }
+end
+
 ---@return LBNoticeAnchor?
 local function Anchor()
 	local placement = Settings()
 
 	if placement.detached then
-		return NoticeStack:BoxAnchor(Notice.box, placement.direction)
+		return NoticeStack:BoxAnchor(Notice.box, DetachedDirection(placement))
 	end
 
 	local target = Target()
@@ -53,16 +101,7 @@ local function Anchor()
 		return nil
 	end
 
-	local point, sign = NoticeStack:Place(placement.anchor, placement.direction)
-
-	return {
-		point = point,
-		relativeTo = target,
-		relativePoint = placement.anchor,
-		x = placement.x,
-		y = placement.y + sign * GAP,
-		sign = sign,
-	}
+	return Notice:Attach(target, placement, Notice.cramped)
 end
 
 Notice.stack = NoticeStack:Create(Anchor)
@@ -98,8 +137,8 @@ local function SampleName(entry)
 	return LB.LevelUp:ColoredName({ key = entry.class, name = name, class = entry.class, level = entry.level })
 end
 
-function Notice:PlaceBox()
-	local settings = Settings()
+---@return number width the widest sample notice in the saved font
+function Notice:SampleWidth()
 	local measure = self.box.measure
 	local width = 1
 
@@ -110,7 +149,50 @@ function Notice:PlaceBox()
 		width = math.max(width, measure:GetStringWidth())
 	end
 
-	NoticeStack:PlaceBox(self.box, settings.screen, width, NoticeStack:BoxHeight(LineHeight(measure)), -1)
+	return width
+end
+
+---@return number reach how far the notices beside the bar extend past the bar's side, before the horizontal offset
+function Notice:SideReach()
+	local width = self:SampleWidth()
+
+	return GAP + LB.TextSlot:BorderReach(nil) + (Sideways(Settings()) and NoticeStack:BoxHeight(width) or width)
+end
+
+---Resolves a side anchor against the screen as the gain indicator does: beside the bar while a notice fits between
+---the bar and the screen's edge, otherwise above the bar at that side's end.
+---@return boolean? cramped true when a side anchor has no room beside the bar
+function Notice:Cramped()
+	local anchor = Settings().anchor
+	local target = Target()
+	local left, right = target and target:GetLeft(), target and target:GetRight()
+
+	if (anchor ~= "LEFT" and anchor ~= "RIGHT") or not left or not right then
+		return nil
+	end
+
+	local gap = GAP + LB.TextSlot:BorderReach(nil)
+
+	return LB.Gain:Placement("OUTSIDE_" .. anchor, left, right, UIParent:GetWidth(), self:SampleWidth(), gap) == nil
+end
+
+---@return number width
+---@return number height the detached box: a full stack, its lines stacked or side by side
+function Notice:Footprint()
+	local width = self:SampleWidth()
+	local line = LineHeight(self.box.measure)
+
+	if Sideways(Settings()) then
+		return NoticeStack:BoxHeight(width), line
+	end
+
+	return width, NoticeStack:BoxHeight(line)
+end
+
+function Notice:PlaceBox()
+	local width, height = self:Footprint()
+
+	NoticeStack:PlaceBox(self.box, Settings().screen, width, height, -1)
 end
 
 ---@param name string the member's name, already class-colored
@@ -127,6 +209,8 @@ function Notice:Show(name, level)
 
 	if Settings().detached then
 		self:PlaceBox()
+	else
+		self.cramped = self:Cramped()
 	end
 
 	self.stack:Push(frame)
@@ -146,18 +230,21 @@ local function SampleAnchor()
 	end
 
 	local placement = Settings()
-	local anchor = placement.detached and "TOP" or placement.anchor
-	local point, sign = NoticeStack:Place(anchor, placement.direction)
+
+	if not placement.detached then
+		return Notice:Attach(sampleTarget, placement)
+	end
 
 	-- Detached, the lines grow from the target's own edge, inside it.
-	return {
-		point = point,
-		relativeTo = sampleTarget,
-		relativePoint = placement.detached and point or anchor,
-		x = placement.detached and 0 or placement.x,
-		y = (placement.detached and 0 or placement.y) + sign * GAP,
-		sign = sign,
-	}
+	local direction = DetachedDirection(placement)
+
+	if direction == "RIGHT" or direction == "LEFT" then
+		return NoticeStack:BoxAnchor(sampleTarget, direction)
+	end
+
+	local point, sign = NoticeStack:Place("TOP", direction)
+
+	return { point = point, relativeTo = sampleTarget, relativePoint = point, x = 0, y = sign * GAP, sign = sign }
 end
 
 Notice.sampleStack = NoticeStack:Create(SampleAnchor)
@@ -277,6 +364,8 @@ Callbacks:Register("Settings", Notice, function(_, path)
 
 	if Settings().detached then
 		Notice:PlaceBox()
+	else
+		Notice.cramped = Notice:Cramped()
 	end
 
 	Notice.stack:Layout()

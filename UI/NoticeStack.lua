@@ -84,12 +84,14 @@ function NoticeStack:Slots(heights)
 	return targets
 end
 
----@param anchor string TOPLEFT, TOP, TOPRIGHT, BOTTOMLEFT, BOTTOM or BOTTOMRIGHT, the point on the bar
+---@param anchor string TOPLEFT, TOP, TOPRIGHT, BOTTOMLEFT, BOTTOM or BOTTOMRIGHT, the point on the bar; LEFT or
+---RIGHT, the bar's side, which the line meets with its opposite edge
 ---@param direction string UP or DOWN, the way the stack grows
 ---@return string point the line's own point that attaches to the anchor
 ---@return integer sign 1 when growing up, -1 when growing down
 function NoticeStack:Place(anchor, direction)
-	local side = anchor:match("LEFT") or anchor:match("RIGHT") or ""
+	local side = anchor == "LEFT" and "RIGHT" or anchor == "RIGHT" and "LEFT" or anchor:match("LEFT")
+		or anchor:match("RIGHT") or ""
 
 	if direction == "UP" then
 		return "BOTTOM" .. side, 1

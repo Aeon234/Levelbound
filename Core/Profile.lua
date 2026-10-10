@@ -119,8 +119,10 @@ local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 ---@field chat boolean
 ---@field sound string a LibSharedMedia sound name, or "None"
 ---@field hideInCombat boolean
----@field anchor "TOPLEFT" | "TOP" | "TOPRIGHT" | "BOTTOMLEFT" | "BOTTOM" | "BOTTOMRIGHT" the point on the bar
+---@field anchor "TOPLEFT" | "TOP" | "TOPRIGHT" | "BOTTOMLEFT" | "BOTTOM" | "BOTTOMRIGHT" | "RIGHT" | "LEFT" the bar's point or side
 ---@field direction "UP" | "DOWN" the way the stack grows
+---@field animation "RISE" | "SLIDE" how the notices move: rising, or side by side sliding outward
+---@field across "RIGHT" | "LEFT" the way the detached stack grows with Slide Outward, its lines side by side
 ---@field x number
 ---@field y number
 ---@field detached boolean
@@ -284,6 +286,8 @@ local defaults = {
 			hideInCombat = false,
 			anchor = "BOTTOM",
 			direction = "DOWN",
+			animation = "RISE",
+			across = "RIGHT",
 			x = 0,
 			y = 0,
 			detached = false,
