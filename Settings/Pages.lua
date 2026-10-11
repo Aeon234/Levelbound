@@ -866,7 +866,7 @@ local function LevelUps(ctx)
 		),
 		Row(Choice(ctx, "outline", L["Outline"], "party.levelUp.text.outline", Outlines, { depends = "onScreen" })),
 		Section("announce", L["Level-Ups"], { tab = "announce" }),
-		Row(Check(ctx, "levelUpEmote", L["Emote Level-Up Message"], "party.announce.levelUpEmote")),
+		Row(Check(ctx, "levelUpEmote", L["Print Level-Up Message"], "party.announce.levelUpEmote")),
 		Row(
 			Check(ctx, "levelUpParty", L["Party Level-Up Message"], "party.announce.levelUpParty"),
 			Check(ctx, "levelUpGuild", L["Guild Level-Up Message"], "party.announce.levelUpGuild")

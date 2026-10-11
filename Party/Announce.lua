@@ -60,9 +60,9 @@ function Announce:OnLevelUp(level)
 	local settings = Settings().announce
 	local text = self:LevelUpText(level, LB.TimePlayed.completed)
 
-	-- A public emote to players nearby, only outside a group, where the party message reaches the group.
+	-- Printed for the player alone, outside a group: an EMOTE send needs a hardware event, which a level-up lacks.
 	if settings.levelUpEmote and not IsInGroup() then
-		self:Send(text, "EMOTE")
+		print(C_ChatInfo.ReplaceIconAndGroupExpressions(text))
 	end
 
 	if settings.levelUpParty then
