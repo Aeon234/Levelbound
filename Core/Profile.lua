@@ -168,7 +168,7 @@ local GAIN_GREEN = { 0.226, 1.0, 0.006 }
 ---@type LBProfileData
 local defaults = {
 	layout = {
-		mode = "SEGMENTED",
+		mode = "CONNECTED",
 		fullscreen = "OFF",
 		width = 560,
 		height = 24,
