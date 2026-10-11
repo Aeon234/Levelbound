@@ -15,6 +15,13 @@ Gain indicator:
   other, and the detached stack can grow left or right.
 - The Gain Indicator and progress type previews show the indicator beside the bar when it is set there.
 
+Party level-up notices:
+
+- Two new anchors, Right of Bar and Left of Bar, place the notices beside the bar, the first one centered on it.
+  Where there is no room beside the bar, they sit above that end of the bar instead.
+- The same Animation Style as the gain indicator, for notices beside the bar or detached: Rise, as before, or Slide
+  Outward, with the notices side by side growing away from the bar. Detached, they can grow left or right.
+
 Fixes:
 
 - When a type gains again while its line is still in the detached stack, that line moves to the front, so the
