@@ -1,5 +1,13 @@
 # Levelbound
 
+## 1.2.1
+
+Fixes:
+
+- Leveling up outside a group no longer raises an "AddOn tried to call the protected function" error. The
+  game blocks addons from sending emotes on their own, so Emote Level-Up Message is now Print Level-Up Message and
+  shows the line in your own chat instead.
+
 ## 1.2.0
 
 Gain indicator:
