@@ -128,18 +128,6 @@ function Tooltip:Stop()
 	self.clearance = nil
 end
 
----@class LBTooltipIcons
----@field line boolean icons beside the Rested and completed-quest rows
----@field section boolean icons beside section headers
----@field member boolean the class icon before a party member's name
----@field share boolean the icon before the share hint
-Tooltip.icons = {
-	line = true,
-	section = true,
-	member = true,
-	share = true,
-}
-
 ---@param color number[]
 ---@param text string
 ---@return string
@@ -155,14 +143,13 @@ local function IconSize(scale)
 	return math.floor((height or 12) * (scale or 1) + 2.5)
 end
 
----@param kind string a key of `Tooltip.icons`
 ---@param texture string? a `Media.textures` key
 ---@param text string
----@return string text with the icon before it, while that kind of icon is on
-local function WithIcon(kind, texture, text)
+---@return string text with the icon before it
+local function WithIcon(texture, text)
 	local path = texture and LB.Media.textures[texture]
 
-	if not path or not Tooltip.icons[kind] then
+	if not path then
 		return text
 	end
 
@@ -278,7 +265,7 @@ local function Flush(tip, section)
 	Divider(tip)
 
 	if section.label then
-		local header = WithIcon("section", section.icon, Tooltip.Header(section.label))
+		local header = WithIcon(section.icon, Tooltip.Header(section.label))
 
 		tip:AddLine(header, SECTION_COLOR[1], SECTION_COLOR[2], SECTION_COLOR[3])
 	end
@@ -291,7 +278,7 @@ local function Flush(tip, section)
 		end
 
 		tip:AddDoubleLine(
-			WithIcon("line", line[3], line[1]),
+			WithIcon(line[3], line[1]),
 			value,
 			LABEL_COLOR[1],
 			LABEL_COLOR[2],
@@ -403,7 +390,7 @@ local function ClickHint(tip, source)
 		tip:AddLine(hint, HINT_COLOR[1], HINT_COLOR[2], HINT_COLOR[3])
 	end
 
-	tip:AddLine(WithIcon("share", "tooltipShare", L["Shift-Click to Share"]), HINT_COLOR[1], HINT_COLOR[2],
+	tip:AddLine(WithIcon("tooltipShare", L["Shift-Click to Share"]), HINT_COLOR[1], HINT_COLOR[2],
 		HINT_COLOR[3])
 end
 
@@ -485,14 +472,9 @@ end
 
 ---@param member LBRosterMember
 ---@param nameColor number[]
----@return string name the member's name in `nameColor`, after their class icon while member icons are on
+---@return string name the member's name in `nameColor`, after their class icon
 local function MemberName(member, nameColor)
 	local name = Paint(nameColor, member.name)
-
-	if not Tooltip.icons.member then
-		return name
-	end
-
 	local class = member.class or (member.unit and LB:Readable(select(2, UnitClass(member.unit)), nil))
 	local icon = LB.ClassIcon:Markup(class, IconSize())
 
