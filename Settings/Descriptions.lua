@@ -121,6 +121,13 @@ LB.SettingsDescriptions = {
 		height = L["The party bars' height."],
 		gap = L["The space between party bars."],
 		growth = L["Which way the party bars stack from the first."],
+		compact = L["Stacks the party bars 1 pixel apart and shows only the text inside them."],
+		barsMatch = L["The party bars hide and fade with your bars. Turn off to give them their own visibility."],
+		barsHideInCombat = L["Hides the party bars while you are in combat."],
+		barsFade = L["Fades the party bars until you hover one of them."],
+		barsFadedAlpha = L["How visible the party bars are while faded."],
+		barsFullInCombat = L["Shows faded party bars fully while you are in combat."],
+		barsFullWithTarget = L["Shows faded party bars fully while you have a target."],
 	},
 	levelups = {
 		notices = L["Tells you when a party member reaches a new level."],

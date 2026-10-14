@@ -743,22 +743,75 @@ local function Markers(ctx)
 			end
 		end
 
+		local function Compact()
+			if LB.Profile:Get("party.bars.compact") == true then
+				return L["Compact sets the gap to 1 pixel."]
+			end
+		end
+
+		local function Matched()
+			if LB.Profile:Get("party.bars.matchBar") == true then
+				return L["Uses the bars' Visibility settings."]
+			end
+		end
+
+		local function MatchedOrNoFade()
+			local matched = Matched()
+
+			if matched then
+				return matched
+			end
+
+			if LB.Profile:Get("party.bars.visibility.fadeUntilHovered") ~= true then
+				return L["Needs Fade Until Hovered."]
+			end
+		end
+
 		local elements = {
 			Section("bars", L["Party Bars"], { tab = "bars" }),
 			Row(Toggle(ctx, "markers", L["Show Party Bars"], "party.markers", { pageSwitch = true }), display),
-			Row(Check(ctx, "classColor", L["Class Color Fill"], "party.bars.classColor")),
+			Row(
+				Check(ctx, "classColor", L["Class Color Fill"], "party.bars.classColor"),
+				Check(ctx, "compact", L["Compact"], "party.bars.compact", { rebuild = true })
+			),
 			Row(
 				Slider(ctx, "width", L["Width"], "party.bars.width", LIMITS.barWidth.min, MaxWidth(), 1),
 				Slider(ctx, "height", L["Height"], "party.bars.height", LIMITS.barHeight.min, LIMITS.barHeight.max, 1,
 					{ blocked = HeldHeight })
 			),
 			Row(
-				Slider(ctx, "gap", L["Gap Between Bars"], "party.bars.gap", 0, 10, 1),
+				Slider(ctx, "gap", L["Gap Between Bars"], "party.bars.gap", 0, 10, 1, { blocked = Compact }),
 				Choice(ctx, "growth", L["Growth Direction"], "party.bars.growth", UP_DOWN)
 			),
 		}
 
 		for _, element in ipairs(LB.SettingsText:Elements(ctx, "party")) do
+			elements[#elements + 1] = element
+		end
+
+		local visibility = "party.bars.visibility."
+
+		for _, element in ipairs({
+			Section("partyVisibility", L["Visibility"], { tab = "visibility" }),
+			Row(Check(ctx, "barsMatch", L["Match Bar Visibility"], "party.bars.matchBar")),
+			Row(
+				Check(ctx, "barsHideInCombat", L["Hide in Combat"], visibility .. "hideInCombat", { blocked = Matched })
+			),
+			Row(
+				Check(ctx, "barsFade", L["Fade Until Hovered"], visibility .. "fadeUntilHovered", { blocked = Matched }),
+				Percent(ctx, "barsFadedAlpha", L["Faded Opacity"], visibility .. "fadedAlpha", {
+					blocked = MatchedOrNoFade,
+				})
+			),
+			Row(
+				Check(ctx, "barsFullInCombat", L["Fully Visible in Combat"], visibility .. "fullInCombat", {
+					blocked = MatchedOrNoFade,
+				}),
+				Check(ctx, "barsFullWithTarget", L["Fully Visible with a Target"], visibility .. "fullWithTarget", {
+					blocked = MatchedOrNoFade,
+				})
+			),
+		}) do
 			elements[#elements + 1] = element
 		end
 
@@ -1247,6 +1300,7 @@ function Pages:Categories()
 						{ id = "fading", title = L["Fading"] },
 						{ id = "bars", title = L["Bars"] },
 						{ id = "text", title = L["Text"] },
+						{ id = "visibility", title = L["Visibility"] },
 					},
 				}),
 				Page("levelups", L["Level-Ups"], LevelUps, {

@@ -778,7 +778,7 @@ local function PartyBarsPreview()
 			local width, height = settings.width, FixedHeight() or settings.height
 			local keys = LB.SettingsText:Usable("party")
 			local zone = LB.Profile:Get("text.style.size") + SLOT_ROOM
-			local above = zone + LB.TextSlot:BorderReach(nil)
+			local above = (settings.compact and 0 or zone) + LB.TextSlot:BorderReach(nil)
 			local member = PartySample()
 			local bar = Previews:Bar("party", width, height)
 

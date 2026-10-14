@@ -39,11 +39,16 @@ function Text:Keys(typeId)
 	return typeId == "xp" and LB.TextSlotKeys or INSIDE_KEYS
 end
 
+---@param typeId string
 ---@param key string
 ---@return string? reason the slot cannot be edited now, or nil
-local function Unavailable(key)
+local function Unavailable(typeId, key)
 	if LB.TextSlot:IsInside(key) and LB.TextSlot:InsideHidden() then
 		return L["The Blizzard border leaves no room for text inside the bar."]
+	end
+
+	if typeId == "party" and not LB.TextSlot:IsInside(key) and LB.Profile:Get("party.bars.compact") then
+		return L["Compact shows the text inside the bars only."]
 	end
 end
 
@@ -54,7 +59,7 @@ function Text:Usable(typeId)
 	local keys = {}
 
 	for _, key in ipairs(self:Keys(typeId)) do
-		if not Unavailable(key) then
+		if not Unavailable(typeId, key) then
 			keys[#keys + 1] = key
 		end
 	end
@@ -169,7 +174,7 @@ local function SlotChoices(typeId)
 		choices[index] = {
 			value = key,
 			text = ("%s: %s"):format(L["slot." .. key], text),
-			blocked = Unavailable(key),
+			blocked = Unavailable(typeId, key),
 		}
 	end
 
@@ -486,7 +491,7 @@ function Text:Elements(ctx, typeId)
 	}
 
 	-- With no slot left to edit, every row says why.
-	local reason = Unavailable(key)
+	local reason = Unavailable(typeId, key)
 
 	if reason then
 		for _, element in ipairs(elements) do

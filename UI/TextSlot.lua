@@ -437,7 +437,7 @@ function TextSlot:ApplyBar(bar)
 		if INSIDE[key] then
 			keys[key] = inside or nil
 		elseif bar.member then
-			keys[key] = ABOVE[key]
+			keys[key] = not LB.Profile:Get("party.bars.compact") and ABOVE[key] or nil
 		elseif Independent() then
 			keys[key] = true
 		end
@@ -481,7 +481,7 @@ function TextSlot:ApplySample(bar, hovered)
 
 	for _, key in ipairs(LB.TextSlotKeys) do
 		if bar.member and not INSIDE[key] then
-			keys[key] = ABOVE[key]
+			keys[key] = not LB.Profile:Get("party.bars.compact") and ABOVE[key] or nil
 		else
 			keys[key] = inside or not INSIDE[key] or nil
 		end

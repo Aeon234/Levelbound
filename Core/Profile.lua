@@ -146,6 +146,16 @@ local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 ---@field gap number
 ---@field growth "UP" | "DOWN"
 ---@field screen LBFramePosition? where edit mode placed the stack; nil until then
+---@field compact boolean a 1 px gap and no text above the bars
+---@field matchBar boolean follow the bars' Visibility settings instead of `visibility`
+---@field visibility LBPartyVisibilitySettings
+
+---@class LBPartyVisibilitySettings
+---@field hideInCombat boolean
+---@field fadeUntilHovered boolean
+---@field fadedAlpha number
+---@field fullInCombat boolean
+---@field fullWithTarget boolean
 
 ---@class LBPartySettings
 ---@field markers boolean shows party progress, as markers or as bars
@@ -287,6 +297,15 @@ local defaults = {
 			height = 12,
 			gap = 4,
 			growth = "DOWN",
+			compact = false,
+			matchBar = true,
+			visibility = {
+				hideInCombat = false,
+				fadeUntilHovered = false,
+				fadedAlpha = 0.25,
+				fullInCombat = false,
+				fullWithTarget = false,
+			},
 		},
 		opacity = {
 			matchBar = true,

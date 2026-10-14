@@ -224,6 +224,7 @@ function BarMixin:OnEnter()
 	if self.member then
 		self.hovered = true
 		LB.TextSlot:SetHovered(self, true)
+		LB.PartyBars:SetHovered(true)
 		LB.Tooltip:ShowMember(self, self.member)
 
 		return
@@ -243,6 +244,7 @@ function BarMixin:OnLeave()
 	if self.member then
 		self.hovered = false
 		LB.TextSlot:SetHovered(self, false)
+		LB.PartyBars:SetHovered(false)
 		LB.Tooltip:Hide(self)
 
 		return

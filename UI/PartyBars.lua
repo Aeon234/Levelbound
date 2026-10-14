@@ -3,12 +3,15 @@ local LB = select(2, ...)
 local L = LB.L
 
 local OFFLINE_ALPHA = 0.4
+local COMPACT_GAP = 1
 local DEFAULT_Y = -150 -- the stack's top below the screen's center, until it is placed in edit mode
 
 ---Standalone party bars: one experience bar per party member, stacked in a frame of their own.
 ---@class LBPartyBars
 ---@field frame Frame?
 ---@field bars LBBar[] by place in the stack
+---@field hasBars boolean? the last refresh drew at least one bar
+---@field hovered boolean? the cursor is over one of the bars
 local PartyBars = {
 	bars = {},
 }
@@ -61,6 +64,7 @@ function PartyBars:Create()
 
 	frame:Hide()
 	self.frame = frame
+	self.alphaDriver = CreateFrame("Frame", nil, frame)
 end
 
 ---@param index integer
@@ -132,6 +136,8 @@ end
 ---Draws a bar for each visible member, or hides the stack when the bars are off or nobody has one.
 function PartyBars:Refresh()
 	if not self:Enabled() then
+		self.hasBars = false
+
 		if self.frame then
 			self.frame:Hide()
 		end
@@ -146,14 +152,15 @@ function PartyBars:Refresh()
 	local border = LB.Profile:Get("appearance.border")
 	local members = Members()
 	local height = LB.Border:FixedHeight(border.style) or settings.height
-	-- Above-the-bar text stands between one bar and the next.
-	local spacing = settings.gap + 2 * LB.Border:Outset(border.style, height, border.width)
-		+ LB.TextSlot:AboveRoom("party")
+	-- Above-the-bar text stands between one bar and the next; Compact draws none.
+	local above = settings.compact and 0 or LB.TextSlot:AboveRoom("party")
+	local gap = settings.compact and COMPACT_GAP or settings.gap
+	local spacing = gap + 2 * LB.Border:Outset(border.style, height, border.width) + above
 	local tops, total = LB.Layout.Stack(#members, height, spacing, settings.growth)
 	local color = LB.Border:Color(border.style, border)
 	local mask = LB.Border:EndMask(border.style)
 	-- The frame holds the first bar's above-the-bar text too, so its mover covers everything the stack draws.
-	local top = #members > 0 and LB.TextSlot:AboveRoom("party") or 0
+	local top = #members > 0 and above or 0
 
 	frame:SetFrameStrata(LB.Profile:Get("layout.strata"))
 	LB:SetPixelSize(frame, settings.width, math.max(top + total, 1))
@@ -179,7 +186,46 @@ function PartyBars:Refresh()
 		bar:Hide()
 	end
 
-	frame:SetShown(#members > 0)
+	self.hasBars = #members > 0
+	self:ApplyVisibility(false)
+end
+
+---@return LBVisibilitySettings | LBPartyVisibilitySettings settings the bars' own, or the main bars' when matching them
+local function VisibilitySettings()
+	local settings = LB.Profile:Get("party.bars")
+
+	return settings.matchBar and LB.Profile:Get("visibility") or settings.visibility
+end
+
+---Shows or hides the stack and fades it, as its visibility settings and the game's state ask.
+---@param animated boolean?
+function PartyBars:ApplyVisibility(animated)
+	local frame = self.frame
+
+	if not frame then
+		return
+	end
+
+	local visibility = LB.Visibility
+	local settings = VisibilitySettings()
+	local hidden = visibility:Hidden(settings, visibility.state)
+
+	frame:SetShown(self.hasBars == true and not hidden)
+
+	if not hidden then
+		visibility:SetAlpha(frame, self.alphaDriver, visibility:FadeAlpha(settings, visibility.state, self.hovered == true),
+			animated)
+	end
+end
+
+---@param hovered boolean the cursor entered or left one of the bars
+function PartyBars:SetHovered(hovered)
+	if self.hovered == hovered then
+		return
+	end
+
+	self.hovered = hovered
+	self:ApplyVisibility(true)
 end
 
 ---Saves where the stack is now, anchored at the end it grows from, so its first bar stays put as members come

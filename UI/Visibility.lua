@@ -59,6 +59,14 @@ local function Faded(settings, state, hovered, editing)
 	return not ((settings.fullInCombat and state.inCombat) or (settings.fullWithTarget and state.hasTarget))
 end
 
+---@param settings LBVisibilitySettings | LBPartyVisibilitySettings
+---@param state LBVisibilityState
+---@param hovered boolean
+---@return number alpha fully visible, or the faded opacity while fading until hovered
+function Visibility:FadeAlpha(settings, state, hovered)
+	return Faded(settings, state, hovered, state.editing) and settings.fadedAlpha or 1
+end
+
 ---@param settings LBVisibilitySettings
 ---@param state LBVisibilityState
 ---@param id string the bar being resolved
@@ -137,6 +145,7 @@ function Visibility:Apply(animated)
 	local hidden = self:Hidden(settings, self.state)
 
 	frame:SetShown(group.hasBars == true and not hidden)
+	LB.PartyBars:ApplyVisibility(animated)
 
 	if hidden then
 		return
