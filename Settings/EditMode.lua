@@ -484,7 +484,7 @@ function EditMode:FadeIn()
 	end
 end
 
-local OWNERS = { LB.BarGroup, LB.LevelUpNotice, LB.Gain }
+local OWNERS = { LB.BarGroup, LB.LevelUpNotice, LB.Gain, LB.PartyBars }
 
 ---@return LBEditTarget[]
 function EditMode:Targets()

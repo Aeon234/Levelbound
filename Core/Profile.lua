@@ -145,6 +145,7 @@ local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 ---@field height number
 ---@field gap number
 ---@field growth "UP" | "DOWN"
+---@field screen LBFramePosition? where edit mode placed the stack; nil until then
 
 ---@class LBPartySettings
 ---@field markers boolean shows party progress, as markers or as bars
