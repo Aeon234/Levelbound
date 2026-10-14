@@ -512,6 +512,7 @@ local function Appearance(ctx)
 				depends = "sparkCustom",
 			})
 		),
+		Row(Check(ctx, "glow", L["Edge Glow"], "appearance.glow")),
 	}
 end
 
@@ -934,7 +935,14 @@ local function TypePage(ctx, id)
 		end
 
 		Open(Section("colors", L["Colors"], { tab = "bar" }))
-		Add(Row(Check(ctx, "classColor", L["XP Uses Class Color"], "appearance.xpUseClassColor")))
+		Add(
+			Row(
+				Check(ctx, "classColor", L["XP Uses Class Color"], "appearance.xpUseClassColor"),
+				Check(ctx, "gradientFollows", L["Gradient Follows Fill"], "appearance.xpGradientFollows", {
+					blocked = ClassColor,
+				})
+			)
+		)
 		Add(
 			Row(
 				Color(ctx, "gradientStart", L["Gradient Start"], "appearance.xpGradient", false, Stop(1)),

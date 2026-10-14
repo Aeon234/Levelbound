@@ -68,6 +68,7 @@ LB.SettingsDescriptions = {
 		sparkCustom = L["Gives the spark its own color instead of its bar's."],
 		sparkColor = L["The spark's own color."],
 		shimmer = L["A shine that sweeps across the fill when a bar gains progress."],
+		glow = L["A soft glow and trail at the end of each bar's fill, in the spark's color."],
 
 		-- Text tab
 		font = L["The font of every bar's text, unless a text slot sets its own."],
@@ -141,6 +142,7 @@ LB.SettingsDescriptions = {
 		classColor = L["Colors the experience bar in your class color instead of the gradient."],
 		gradientStart = L["The experience bar's fill blends from Gradient Start to Gradient End."],
 		gradientEnd = L["The experience bar's fill blends from Gradient Start to Gradient End."],
+		gradientFollows = L["Stretches the gradient across the fill, so Gradient End is always at its end."],
 		quest = L["The part of the bar your completed quests will fill."],
 		rested = L["The part of the bar your rested experience covers."],
 		color = L["The bar's fill color."],

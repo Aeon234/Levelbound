@@ -23,6 +23,13 @@ local FLARE_HOT = 1
 local FLARE_REST = 0.35
 local FLARE_COOL = 1
 
+-- Edge Glow: a white trail fading in toward the fill's end, and two soft glows centered on that end that stand past
+-- the bar's top and bottom by their spill, all added to what is beneath them.
+local TRAIL_WIDTH = 48
+local TRAIL_ALPHA = 0.45
+local HALOS = { { spill = 13, alpha = 0.14 }, { spill = 10, alpha = 0.22 } }
+local LEVEL_GLOW = LEVEL_FILL + 1
+
 local SHIMMER = 1.4
 local SHIMMER_WIDTH = 90
 local SHIMMER_ALPHA = 0.55
@@ -55,6 +62,9 @@ local attached = setmetatable({}, { __mode = "k" })
 ---@field spark Texture the flare's core line
 ---@field flare Texture
 ---@field shimmer Texture[] the two halves of the sweeping highlight
+---@field trail Texture
+---@field glow Frame holds the halos, outside the clip so they stand past the fill's end
+---@field halos Texture[]
 ---@field border LBBorderFrame?
 ---@field driver Frame
 ---@field alphaDriver Frame
@@ -157,10 +167,11 @@ function Bar:Create(parent, id)
 		bar.content:CreateTexture(nil, "ARTWORK", nil, 2),
 		bar.content:CreateTexture(nil, "ARTWORK", nil, 2),
 	}
+	bar.trail = bar.content:CreateTexture(nil, "ARTWORK", nil, 3)
 	bar.flare = bar.content:CreateTexture(nil, "OVERLAY")
 	bar.spark = bar.content:CreateTexture(nil, "OVERLAY", nil, 1)
 
-	for _, texture in ipairs({ bar.shimmer[1], bar.shimmer[2], bar.flare, bar.spark }) do
+	for _, texture in ipairs({ bar.shimmer[1], bar.shimmer[2], bar.trail, bar.flare, bar.spark }) do
 		texture:SetTexture(FLAT)
 		texture:SetBlendMode("ADD")
 		texture:Hide()
@@ -174,6 +185,26 @@ function Bar:Create(parent, id)
 	bar.flare:SetPoint("TOPRIGHT", bar.clip, "TOPRIGHT")
 	bar.flare:SetPoint("BOTTOMRIGHT", bar.clip, "BOTTOMRIGHT")
 	bar.flare:SetWidth(FLARE_WIDTH)
+
+	bar.trail:SetPoint("TOPRIGHT", bar.clip, "TOPRIGHT")
+	bar.trail:SetPoint("BOTTOMRIGHT", bar.clip, "BOTTOMRIGHT")
+	bar.trail:SetWidth(TRAIL_WIDTH)
+	bar.trail:SetGradient("HORIZONTAL", CreateColor(1, 1, 1, 0), CreateColor(1, 1, 1, TRAIL_ALPHA))
+
+	bar.glow = CreateFrame("Frame", nil, bar)
+	bar.glow:SetAllPoints(bar)
+	bar.glow:SetFrameLevel(bar:GetFrameLevel() + LEVEL_GLOW)
+	bar.halos = {}
+
+	for index in ipairs(HALOS) do
+		local halo = bar.glow:CreateTexture(nil, "ARTWORK", nil, index)
+
+		halo:SetTexture(LB.Media.textures.softShade)
+		halo:SetBlendMode("ADD")
+		halo:SetPoint("CENTER", bar.clip, "RIGHT")
+		halo:Hide()
+		bar.halos[index] = halo
+	end
 
 	bar.spark:SetPoint("TOPRIGHT", bar.clip, "TOPRIGHT")
 	bar.spark:SetPoint("BOTTOMRIGHT", bar.clip, "BOTTOMRIGHT")
@@ -232,6 +263,17 @@ function BarMixin:SetGeometry(width, height)
 	LB:SetPixelSize(self, width, height)
 	self:PaintFill()
 	self:PlaceDividers()
+	self:SizeHalos()
+end
+
+function BarMixin:SizeHalos()
+	local height = self:GetHeight()
+
+	for index, halo in ipairs(self.halos) do
+		local size = height + HALOS[index].spill * 2
+
+		LB:SetPixelSize(halo, size, size)
+	end
 end
 
 function BarMixin:PaintFill()
@@ -291,6 +333,15 @@ function BarMixin:ApplyAppearance()
 	local fillTexture = self.fillTexture
 
 	fillTexture:SetTexture(texture)
+	fillTexture:ClearAllPoints()
+
+	-- Following the fill, the art spans only the revealed part, so the gradient's end color sits at the fill's end.
+	if second and appearance.xpGradientFollows then
+		fillTexture:SetPoint("TOPLEFT", self.content, "TOPLEFT")
+		fillTexture:SetPoint("BOTTOMRIGHT", self.clip, "BOTTOMRIGHT")
+	else
+		fillTexture:SetAllPoints(self.content)
+	end
 
 	if second then
 		fillTexture:SetVertexColor(1, 1, 1, 1)
@@ -321,6 +372,8 @@ function BarMixin:ApplyAppearance()
 		CreateColor(light[1], light[2], light[3], 0)
 	)
 
+	self.glowEnabled = appearance.glow
+	self:SizeHalos()
 	self:ApplySpark(appearance.spark, tip)
 	self:ApplyDividers()
 	self:RefreshMasks()
@@ -342,7 +395,7 @@ end
 ---@return Texture[] the textures on `frame` that the end masks cut
 function BarMixin:MaskedTextures(frame)
 	if frame == self.content then
-		return { self.fillTexture, self.shimmer[1], self.shimmer[2], self.flare, self.spark }
+		return { self.fillTexture, self.shimmer[1], self.shimmer[2], self.trail, self.flare, self.spark }
 	end
 
 	---@cast frame StatusBar
@@ -515,6 +568,10 @@ function BarMixin:ApplySpark(spark, tip)
 	self.spark:SetVertexColor(r, g, b, a)
 	self.flare:SetGradient("HORIZONTAL", CreateColor(r, g, b, 0), CreateColor(r, g, b, a * FLARE_PEAK))
 
+	for index, halo in ipairs(self.halos) do
+		halo:SetVertexColor(r, g, b, HALOS[index].alpha)
+	end
+
 	self:PaintEffects()
 end
 
@@ -550,6 +607,14 @@ function BarMixin:PaintEffects()
 	self.flare:SetShown(edge)
 	self.spark:SetAlpha(self.heat)
 	self.flare:SetAlpha(self.heat)
+
+	local glow = self.glowEnabled and fill > 0 or false
+
+	self.trail:SetShown(glow)
+
+	for _, halo in ipairs(self.halos) do
+		halo:SetShown(glow)
+	end
 
 	local elapsed = self.shimmerElapsed
 	local shown = elapsed ~= nil and fill > 0

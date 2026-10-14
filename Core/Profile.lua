@@ -74,6 +74,7 @@ local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 ---@field texture string LibSharedMedia statusbar name
 ---@field xpGradient LBColor[] two stops
 ---@field xpUseClassColor boolean
+---@field xpGradientFollows boolean stretch the gradient across the fill instead of the whole bar
 ---@field xpStoredGradient LBColor[]? the gradient in use before the class-color toggle went on
 ---@field questColor LBColor
 ---@field restedColor LBColor
@@ -85,6 +86,7 @@ local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 ---@field dividers { enabled: boolean, spacing: 5|10, customColor: boolean, color: LBColor } marks on the XP and pet XP
 ---bars every `spacing` percent of a level
 ---@field shimmer boolean sweep a highlight across the fill on each gain
+---@field glow boolean a trail and halos at the fill's end
 
 ---@class LBTextSettings
 ---@field compactNumbers boolean
@@ -195,6 +197,7 @@ local defaults = {
 		texture = "Solid",
 		xpGradient = { { 0.335, 0.388, 1.0 }, { 0.773, 0.380, 1.0 } },
 		xpUseClassColor = false,
+		xpGradientFollows = false,
 		questColor = { 1.0, 0.589, 0.0 },
 		restedColor = { 0.309, 0.562, 1.0, 0.5 },
 		background = { 0, 0, 0, 0.5 },
@@ -210,6 +213,7 @@ local defaults = {
 		spark = { enabled = true, customColor = false, color = { 1, 1, 1, 1 } },
 		dividers = { enabled = false, spacing = 10, customColor = false, color = { 1, 1, 1, 1 } },
 		shimmer = true,
+		glow = false,
 	},
 	text = {
 		compactNumbers = true,

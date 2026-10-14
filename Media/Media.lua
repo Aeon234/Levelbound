@@ -17,6 +17,7 @@ Media.textures = {
 	logo = PATH .. [[Levelbound.tga]],
 	gainArrow = PATH .. [[Textures\GainArrowUp-White.tga]],
 	markerDisc = PATH .. [[Textures\MarkerDisc-White.tga]],
+	softShade = PATH .. [[Textures\SoftShade.tga]],
 	markerTriangle = PATH .. [[Textures\MarkerTriangle-White.tga]],
 	markerDiamond = PATH .. [[Textures\MarkerDiamond-White.tga]],
 	markerPip = PATH .. [[Textures\MarkerPip-White.tga]],

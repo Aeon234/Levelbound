@@ -227,6 +227,7 @@ L["Progress Spark"] = "Progress Spark"
 L["Custom Spark Color"] = "Custom Spark Color"
 L["Spark Color"] = "Spark Color"
 L["Gain Shimmer"] = "Gain Shimmer"
+L["Edge Glow"] = "Edge Glow"
 
 -- Settings window: Text
 L["Text Style"] = "Text Style"
@@ -274,6 +275,7 @@ L["XP Uses Class Color"] = "XP Uses Class Color"
 L["Uses your class color."] = "Uses your class color."
 L["Gradient Start"] = "Gradient Start"
 L["Gradient End"] = "Gradient End"
+L["Gradient Follows Fill"] = "Gradient Follows Fill"
 L["Completed-Quest Color"] = "Completed-Quest Color"
 L["Rested Color"] = "Rested Color"
 L["Bar Color"] = "Bar Color"
@@ -415,6 +417,8 @@ L["Gives the spark its own color instead of its bar's."] = "Gives the spark its 
 L["The spark's own color."] = "The spark's own color."
 L["A shine that sweeps across the fill when a bar gains progress."] =
 	"A shine that sweeps across the fill when a bar gains progress."
+L["A soft glow and trail at the end of each bar's fill, in the spark's color."] =
+	"A soft glow and trail at the end of each bar's fill, in the spark's color."
 L["The font of every bar's text, unless a text slot sets its own."] =
 	"The font of every bar's text, unless a text slot sets its own."
 L["The size of every bar's text, unless a text slot sets its own."] =
@@ -492,6 +496,8 @@ L["Colors the experience bar in your class color instead of the gradient."] =
 	"Colors the experience bar in your class color instead of the gradient."
 L["The experience bar's fill blends from Gradient Start to Gradient End."] =
 	"The experience bar's fill blends from Gradient Start to Gradient End."
+L["Stretches the gradient across the fill, so Gradient End is always at its end."] =
+	"Stretches the gradient across the fill, so Gradient End is always at its end."
 L["The part of the bar your completed quests will fill."] = "The part of the bar your completed quests will fill."
 L["The part of the bar your rested experience covers."] = "The part of the bar your rested experience covers."
 L["The bar's fill color."] = "The bar's fill color."
