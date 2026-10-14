@@ -2,12 +2,13 @@ local LB = select(2, ...)
 
 local L = LB.L
 
----@alias LBTagGroup "PROGRESS" | "BONUS" | "TIME"
+---@alias LBTagGroup "CHARACTER" | "PROGRESS" | "BONUS" | "TIME"
 
 ---@class LBTagPart
 ---@field literal string?
 ---@field tag string?
 ---@field color boolean?
+---@field variant string? the lowercased text after the colon, if any
 ---@field raw string?
 
 ---@class LBTagInfo
@@ -54,13 +55,70 @@ local function Overlay(snapshot, key)
 	return overlays and overlays[key] or 0
 end
 
----@type table<string, fun(snapshot: LBSnapshot, source: LBSource?): string>
+---@param name string the first name, or the first name and surname joined by `separator`
+---@param surname string?
+---@param separator string? what joins a first name and surname
+---@param variant string? "first" for the first name, "short" for it and the surname's initial, else the full name
+---@return string
+function Tags.StyleName(name, surname, separator, variant)
+	separator = separator or " "
+
+	if not surname or surname == "" then
+		local at = separator ~= "" and name:find(separator, 1, true)
+
+		if at then
+			name, surname = name:sub(1, at - 1), name:sub(at + #separator)
+		end
+	end
+
+	if not surname or surname == "" or variant == "first" then
+		return name
+	end
+
+	if variant == "short" then
+		return ("%s %s."):format(name, surname:match("^[%z\1-\127\194-\244][\128-\191]*") or surname:sub(1, 1))
+	end
+
+	return name .. separator .. surname
+end
+
+---@param variant string?
+---@return string name the player's name in the variant's style, or "" while it is secret
+local function PlayerName(variant)
+	local name, second = UnitName("player")
+
+	name = LB:Readable(name, nil)
+
+	if type(name) ~= "string" or name == "" then
+		return ""
+	end
+
+	-- Only Forever's second return is a surname; Retail's is the realm.
+	local surname, separator
+
+	if WOW_PROJECT_ID == WOW_PROJECT_CAMELOT then
+		surname = LB:Readable(second, nil)
+		separator = Constants and Constants.CharacterNameSeparatorConsts
+			and Constants.CharacterNameSeparatorConsts.CHARACTERNAME_SURNAME_SEPARATOR
+	end
+
+	return Tags.StyleName(name, type(surname) == "string" and surname or nil, separator, variant)
+end
+
+---@type table<string, fun(snapshot: LBSnapshot, source: LBSource?, variant: string?): string>
 local resolvers = {
 	level = function(snapshot, source)
 		return LB.Format:Value("LEVEL", snapshot, source)
 	end,
-	name = function(snapshot, source)
+	name = function(snapshot, source, variant)
+		if source and source.id == "xp" then
+			return PlayerName(variant)
+		end
+
 		return LB.Format:Value("NAME", snapshot, source)
+	end,
+	classicon = function()
+		return LB.ClassIcon:Markup(LB.ClassIcon:PlayerClass())
 	end,
 	standing = function(snapshot, source)
 		return LB.Format:Value("STANDING", snapshot, source)
@@ -126,9 +184,12 @@ function Tags:Compile(text)
 
 		local name, variant = body:match("^%s*([%w]+)%s*:?%s*(%w*)%s*$")
 
+		variant = variant and variant ~= "" and variant:lower() or nil
+
 		parts[#parts + 1] = {
 			tag = name and name:lower() or nil,
-			color = variant ~= nil and variant:lower() == "color",
+			color = variant == "color",
+			variant = variant,
 			raw = text:sub(start, finish - 1),
 		}
 
@@ -174,7 +235,7 @@ function Tags:Render(parts, snapshot, source)
 			if not resolver then
 				out[index] = part.raw or ""
 			else
-				local value = resolver(snapshot, source)
+				local value = resolver(snapshot, source, part.variant)
 				local colorKey = part.color and part.tag and COLORS[part.tag]
 
 				if colorKey then
@@ -209,6 +270,10 @@ local function Info(tag, group)
 end
 
 local XP_TAGS = {
+	Info("name", "CHARACTER"),
+	Info("name:first", "CHARACTER"),
+	Info("name:short", "CHARACTER"),
+	Info("classicon", "CHARACTER"),
 	Info("level", "PROGRESS"),
 	Info("cur", "PROGRESS"),
 	Info("max", "PROGRESS"),

@@ -8,6 +8,7 @@
 	<Script file="Layout.lua" />
 	<Script file="Format.lua" />
 	<Script file="Editing.lua" />
+	<Script file="ClassIcon.lua" />
 	<Script file="Tags.lua" />
 	<Script file="Share.lua" />
 	<Script file="Placement.lua" />

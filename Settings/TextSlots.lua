@@ -9,6 +9,7 @@ local DEFAULT_SLOT = "INSIDE_LEFT"
 local COPY_WIDTH = 170
 
 local GROUP_LABELS = {
+	CHARACTER = CHARACTER,
 	PROGRESS = L["Progress"],
 	BONUS = L["Rested and Quests"],
 	TIME = L["Time"],
