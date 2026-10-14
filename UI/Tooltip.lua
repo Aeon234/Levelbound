@@ -13,7 +13,7 @@ local BEHIND_COLOR = { 1, 0.3, 0.3 }
 local GAP = 4
 local DIVIDER = "Interface\\Common\\UI-TooltipDivider-Transparent"
 local DIVIDER_HEIGHT = 10
-local ICON_SIZE = 0 -- inline icons take the line's text height
+local ICON_SCALE = { tooltipShare = 1.3 } -- icons whose mark sits small on its square canvas
 
 ---@class LBTooltipClearance
 ---@field top number the highest edge to stay clear of
@@ -30,7 +30,7 @@ local Tooltip = {
 LB.Tooltip = Tooltip
 
 ---@param bar LBBar
----@return LBTooltipClearance? clearance the bars and their text, which the tooltip must not cover
+---@return LBTooltipClearance? clearance the bars, which the tooltip must not cover; their text does not move it
 function Tooltip:Clearance(bar)
 	local group = LB.BarGroup.frame
 	local frames = { bar }
@@ -50,11 +50,10 @@ function Tooltip:Clearance(bar)
 	for _, frame in ipairs(frames) do
 		local scale = frame:GetEffectiveScale()
 		local frameTop, frameBottom = frame:GetTop(), frame:GetBottom()
-		local textTop, textBottom = LB.TextSlot:Extent(frame)
 
 		if frameTop and frameBottom then
-			top = math.max(top or frameTop * scale, frameTop * scale, textTop or 0)
-			bottom = math.min(bottom or frameBottom * scale, frameBottom * scale, textBottom or math.huge)
+			top = math.max(top or frameTop * scale, frameTop * scale)
+			bottom = math.min(bottom or frameBottom * scale, frameBottom * scale)
 		end
 	end
 
@@ -148,6 +147,14 @@ local function Paint(color, text)
 	return CreateColor(color[1], color[2], color[3]):WrapTextInColorCode(text)
 end
 
+---@param scale number?
+---@return number size an inline icon's size: the tooltip body font's height, times `scale`
+local function IconSize(scale)
+	local _, height = GameTooltipText:GetFont()
+
+	return math.floor((height or 12) * (scale or 1) + 2.5)
+end
+
 ---@param kind string a key of `Tooltip.icons`
 ---@param texture string? a `Media.textures` key
 ---@param text string
@@ -159,7 +166,7 @@ local function WithIcon(kind, texture, text)
 		return text
 	end
 
-	return ("|T%s:%d|t %s"):format(path, ICON_SIZE, text)
+	return ("|T%s:%d|t %s"):format(path, IconSize(ICON_SCALE[texture]), text)
 end
 
 ---@param text string
@@ -172,11 +179,58 @@ function Tooltip.Header(text)
 	return text:upper()
 end
 
+---@class LBTooltipShare
+---@field amount string
+---@field share string the share in parentheses, dimmed so the amount reads first
+---@field pad string? spaces between them that line this amount up with the others
+
 ---@param value string
 ---@param fraction number
----@return string value followed by its share, dimmed so the number reads first
+---@return LBTooltipShare
 local function WithShare(value, fraction)
-	return ("%s  %s"):format(value, Paint(DIM_COLOR, ("(%s)"):format(LB.Format:Percent(fraction))))
+	return { amount = value, share = Paint(DIM_COLOR, ("(%s)"):format(LB.Format:Percent(fraction))) }
+end
+
+---@param text string
+---@return number width the text's width in the tooltip's body font
+function Tooltip:Measure(text)
+	local measure = self.measure
+
+	if not measure then
+		measure = self.driver:CreateFontString(nil, "OVERLAY")
+		self.measure = measure
+	end
+
+	measure:SetFontObject(GameTooltipText)
+	measure:SetText(text)
+
+	return measure:GetStringWidth() or 0
+end
+
+---Pads the narrower shares of every row in `sections`, so all their amounts end at the same place.
+---@param sections LBTooltipSection[]
+function Tooltip:AlignShares(sections)
+	local space = self:Measure("0 0") - self:Measure("00")
+	local rows, widest = {}, 0
+
+	for _, section in ipairs(sections) do
+		for _, line in ipairs(section.lines) do
+			local value = line[2]
+
+			if type(value) == "table" then
+				local width = self:Measure(value.share)
+
+				rows[#rows + 1] = { value = value, width = width }
+				widest = math.max(widest, width)
+			end
+		end
+	end
+
+	for _, row in ipairs(rows) do
+		local count = space > 0 and math.floor((widest - row.width) / space + 0.5) or 0
+
+		row.value.pad = (" "):rep(count)
+	end
 end
 
 ---A full-width rule on its own line, as Blizzard's social tooltips draw one.
@@ -196,7 +250,7 @@ end
 ---@class LBTooltipSection
 ---@field label string?
 ---@field icon string? a `Media.textures` key drawn beside the label
----@field lines { [1]: string, [2]: string, [3]: string? }[]
+---@field lines { [1]: string, [2]: string|LBTooltipShare, [3]: string? }[]
 
 ---@param label string?
 ---@param icon string?
@@ -207,7 +261,7 @@ end
 
 ---@param section LBTooltipSection
 ---@param label string
----@param value string
+---@param value string|LBTooltipShare
 ---@param icon string? a `Media.textures` key drawn beside the label
 local function Add(section, label, value, icon)
 	section.lines[#section.lines + 1] = { label, value, icon }
@@ -230,9 +284,15 @@ local function Flush(tip, section)
 	end
 
 	for _, line in ipairs(section.lines) do
+		local value = line[2]
+
+		if type(value) == "table" then
+			value = ("%s  %s%s"):format(value.amount, value.pad or "", value.share)
+		end
+
 		tip:AddDoubleLine(
 			WithIcon("line", line[3], line[1]),
-			line[2],
+			value,
 			LABEL_COLOR[1],
 			LABEL_COLOR[2],
 			LABEL_COLOR[3],
@@ -310,6 +370,7 @@ local function Progress(tip, snapshot, source, experience, compared)
 		Add(progress, L["Compared with You"], compared)
 	end
 
+	Tooltip:AlignShares({ progress, bonus })
 	Flush(tip, progress)
 
 	if bonus ~= progress then
@@ -433,7 +494,7 @@ local function MemberName(member, nameColor)
 	end
 
 	local class = member.class or (member.unit and LB:Readable(select(2, UnitClass(member.unit)), nil))
-	local icon = LB.ClassIcon:Markup(class, ICON_SIZE)
+	local icon = LB.ClassIcon:Markup(class, IconSize())
 
 	return icon ~= "" and ("%s %s"):format(icon, name) or name
 end
