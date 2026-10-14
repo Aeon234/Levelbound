@@ -25,11 +25,17 @@ local Text = {
 LB.SettingsText = Text
 
 local INSIDE_KEYS = { "INSIDE_LEFT", "INSIDE_CENTER", "INSIDE_RIGHT" }
+local PARTY_KEYS = { "ABOVE_LEFT", "ABOVE_CENTER", "ABOVE_RIGHT", "INSIDE_LEFT", "INSIDE_CENTER", "INSIDE_RIGHT" }
 
----The slots a progress type's editor offers: all nine for experience, the three inside the bar for the others.
+---The slots a progress type's editor offers: all nine for experience, above and inside the bar for party bars,
+---the three inside the bar for the others.
 ---@param typeId string
 ---@return string[]
 function Text:Keys(typeId)
+	if typeId == "party" then
+		return PARTY_KEYS
+	end
+
 	return typeId == "xp" and LB.TextSlotKeys or INSIDE_KEYS
 end
 
@@ -175,8 +181,17 @@ end
 ---@param tag string
 ---@return string?
 local function Example(typeId, tag)
-	local ok, text = pcall(LB.Tags.Render, LB.Tags, LB.Tags:Compile("[" .. tag .. "]"), LB.Preview:Snapshot(typeId),
-		LB.Model:Source(typeId))
+	local snapshot, source = nil, nil
+
+	if typeId == "party" then
+		local member = LB.Marker:SampleParty()[1]
+
+		snapshot, source = member.snapshot, LB.Tags.MemberSource(member)
+	else
+		snapshot, source = LB.Preview:Snapshot(typeId), LB.Model:Source(typeId)
+	end
+
+	local ok, text = pcall(LB.Tags.Render, LB.Tags, LB.Tags:Compile("[" .. tag .. "]"), snapshot, source)
 
 	if ok and type(text) == "string" and text ~= "" then
 		return text

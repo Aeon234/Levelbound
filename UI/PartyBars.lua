@@ -113,7 +113,9 @@ function PartyBars:Refresh()
 	local border = LB.Profile:Get("appearance.border")
 	local members = self.Order(LB.Roster:Visible())
 	local height = LB.Border:FixedHeight(border.style) or settings.height
+	-- Above-the-bar text stands between one bar and the next.
 	local spacing = settings.gap + 2 * LB.Border:Outset(border.style, height, border.width)
+		+ LB.TextSlot:AboveRoom("party")
 	local tops, total = LB.Layout.Stack(#members, height, spacing, settings.growth)
 	local color = LB.Border:Color(border.style, border)
 	local mask = LB.Border:EndMask(border.style)

@@ -36,6 +36,7 @@ local ROWS = {
 }
 
 local INSIDE = { INSIDE_LEFT = true, INSIDE_CENTER = true, INSIDE_RIGHT = true }
+local ABOVE = { ABOVE_LEFT = true, ABOVE_CENTER = true, ABOVE_RIGHT = true }
 
 ---@class LBSlotEntry
 ---@field fontString FontString
@@ -106,7 +107,7 @@ end
 function TextSlot:BorderReach(bar)
 	local layout = LB.Profile:Get("layout")
 
-	if LB.Layout.Fullscreen(layout) then
+	if LB.Layout.Fullscreen(layout) and not (bar and bar.member) then
 		return 0
 	end
 
@@ -222,7 +223,7 @@ local function Draw(host, onlyTime)
 		return
 	end
 
-	local source = LB.Model:Source(bar.id)
+	local source = bar.member and LB.Tags.MemberSource(bar.member) or LB.Model:Source(bar.id)
 
 	for _, entry in pairs(host.entries) do
 		if not onlyTime or entry.time then
@@ -435,6 +436,8 @@ function TextSlot:ApplyBar(bar)
 	for _, key in ipairs(LB.TextSlotKeys) do
 		if INSIDE[key] then
 			keys[key] = inside or nil
+		elseif bar.member then
+			keys[key] = ABOVE[key]
 		elseif Independent() then
 			keys[key] = true
 		end
@@ -447,8 +450,26 @@ function TextSlot:ApplyBar(bar)
 	self:UpdateTicker()
 end
 
+---@param typeId string
+---@return number room the height a type's above-the-bar slots stand over the bar, from its border's edge; 0 when
+---none has text
+function TextSlot:AboveRoom(typeId)
+	local slots = LB.Profile:Get("text.slots." .. typeId) or {}
+	local room = 0
+
+	for key in pairs(ABOVE) do
+		local slot = slots[key]
+
+		if slot and slot.text and slot.text ~= "" and slot.visibility ~= "HIDDEN" then
+			room = math.max(room, LB.Profile:ResolveStyle(slot).size + GAP)
+		end
+	end
+
+	return room
+end
+
 ---Draws a bar's slots around it, whatever the layout mode, for a settings preview: all nine, or the six outside it
----while the bars are too short for text inside.
+---while the bars are too short for text inside; a party bar's above and inside slots.
 ---@param bar LBBar a bar outside the bar group
 ---@param hovered boolean
 ---@return table<string, FontString> strings the shown slots' font strings, by slot key
@@ -459,7 +480,11 @@ function TextSlot:ApplySample(bar, hovered)
 	local shown = {}
 
 	for _, key in ipairs(LB.TextSlotKeys) do
-		keys[key] = inside or not INSIDE[key] or nil
+		if bar.member and not INSIDE[key] then
+			keys[key] = ABOVE[key]
+		else
+			keys[key] = inside or not INSIDE[key] or nil
+		end
 	end
 
 	bar.hovered = hovered

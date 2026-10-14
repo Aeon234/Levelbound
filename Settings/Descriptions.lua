@@ -171,3 +171,12 @@ LB.SettingsDescriptions = {
 		{ "tint.", L["The arrow's color for this bar's gains."] },
 	},
 }
+
+-- The Party Progress page carries the same text editor as the progress type pages.
+local EDITOR = {
+	"slot", "visibility", "insertTag", "nudgeX", "nudgeY", "slotFont", "slotSize", "slotOutline", "slotColor", "copyFrom",
+}
+
+for _, id in ipairs(EDITOR) do
+	LB.SettingsDescriptions.markers[id] = LB.SettingsDescriptions.type[id]
+end

@@ -743,7 +743,7 @@ local function Markers(ctx)
 			end
 		end
 
-		return {
+		local elements = {
 			Section("bars", L["Party Bars"], { tab = "bars" }),
 			Row(Toggle(ctx, "markers", L["Show Party Bars"], "party.markers", { pageSwitch = true }), display),
 			Row(Check(ctx, "classColor", L["Class Color Fill"], "party.bars.classColor")),
@@ -757,6 +757,12 @@ local function Markers(ctx)
 				Choice(ctx, "growth", L["Growth Direction"], "party.bars.growth", UP_DOWN)
 			),
 		}
+
+		for _, element in ipairs(LB.SettingsText:Elements(ctx, "party")) do
+			elements[#elements + 1] = element
+		end
+
+		return elements
 	end
 
 	return {
@@ -1240,6 +1246,7 @@ function Pages:Categories()
 						{ id = "markers", title = L["Markers"] },
 						{ id = "fading", title = L["Fading"] },
 						{ id = "bars", title = L["Bars"] },
+						{ id = "text", title = L["Text"] },
 					},
 				}),
 				Page("levelups", L["Level-Ups"], LevelUps, {

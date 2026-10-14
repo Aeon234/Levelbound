@@ -82,6 +82,25 @@ function Tags.StyleName(name, surname, separator, variant)
 	return name .. separator .. surname
 end
 
+---@return string? separator what joins a first name and surname, on Forever only
+function Tags.Separator()
+	if WOW_PROJECT_ID == WOW_PROJECT_CAMELOT then
+		return Constants and Constants.CharacterNameSeparatorConsts
+			and Constants.CharacterNameSeparatorConsts.CHARACTERNAME_SURNAME_SEPARATOR
+	end
+end
+
+---The source a standalone party bar renders its text with: tags that would read the player read this member.
+---@class LBMemberSource
+---@field id "party"
+---@field member LBRosterMember
+
+---@param member LBRosterMember
+---@return LBMemberSource
+function Tags.MemberSource(member)
+	return { id = "party", member = member }
+end
+
 ---@param variant string?
 ---@return string name the player's name in the variant's style, or "" while it is secret
 local function PlayerName(variant)
@@ -98,8 +117,7 @@ local function PlayerName(variant)
 
 	if WOW_PROJECT_ID == WOW_PROJECT_CAMELOT then
 		surname = LB:Readable(second, nil)
-		separator = Constants and Constants.CharacterNameSeparatorConsts
-			and Constants.CharacterNameSeparatorConsts.CHARACTERNAME_SURNAME_SEPARATOR
+		separator = Tags.Separator()
 	end
 
 	return Tags.StyleName(name, type(surname) == "string" and surname or nil, separator, variant)
@@ -111,13 +129,21 @@ local resolvers = {
 		return LB.Format:Value("LEVEL", snapshot, source)
 	end,
 	name = function(snapshot, source, variant)
+		if source and source.member then
+			return Tags.StyleName(source.member.name, nil, Tags.Separator(), variant)
+		end
+
 		if source and source.id == "xp" then
 			return PlayerName(variant)
 		end
 
 		return LB.Format:Value("NAME", snapshot, source)
 	end,
-	classicon = function()
+	classicon = function(_, source)
+		if source and source.member then
+			return LB.ClassIcon:Markup(LB.Roster.ClassOf(source.member))
+		end
+
 		return LB.ClassIcon:Markup(LB.ClassIcon:PlayerClass())
 	end,
 	standing = function(snapshot, source)
@@ -151,9 +177,21 @@ local resolvers = {
 		return LB.Format:PercentNumber(LB.Progress.Part(snapshot, Overlay(snapshot, "quest")))
 	end,
 	xph = function(snapshot, source)
+		if source and source.member then
+			local rate = source.member.state.rate
+
+			return LB.Format:Number(rate and LB.Progress.PerHour(rate))
+		end
+
 		return LB.Format:Value("XP_PER_HOUR", snapshot, source)
 	end,
 	ttl = function(snapshot, source)
+		if source and source.member then
+			local rate = source.member.state.rate
+
+			return LB.Format:Duration(rate and LB.Progress.TimeToLevel(snapshot, rate))
+		end
+
 		return LB.Format:Value("TIME_TO_LEVEL", snapshot, source)
 	end,
 	session = function(snapshot, source)
@@ -313,6 +351,29 @@ local OTHER_TAGS = {
 	Info("percent", "PROGRESS"),
 }
 
+local PARTY_TAGS = {
+	Info("name", "CHARACTER"),
+	Info("name:first", "CHARACTER"),
+	Info("name:short", "CHARACTER"),
+	Info("classicon", "CHARACTER"),
+	Info("level", "PROGRESS"),
+	Info("cur", "PROGRESS"),
+	Info("max", "PROGRESS"),
+	Info("remaining", "PROGRESS"),
+	Info("percent", "PROGRESS"),
+	Info("percentquest", "PROGRESS"),
+	Info("rested", "BONUS"),
+	Info("rested:color", "BONUS"),
+	Info("restedpercent", "BONUS"),
+	Info("restedpercent:color", "BONUS"),
+	Info("quest", "BONUS"),
+	Info("quest:color", "BONUS"),
+	Info("questpercent", "BONUS"),
+	Info("questpercent:color", "BONUS"),
+	Info("xph", "TIME"),
+	Info("ttl", "TIME"),
+}
+
 local HOUSE_TAGS = {
 	Info("name", "PROGRESS"),
 	Info("level", "PROGRESS"),
@@ -332,6 +393,10 @@ function Tags:For(typeId)
 
 	if typeId == "petxp" then
 		return PET_TAGS
+	end
+
+	if typeId == "party" then
+		return PARTY_TAGS
 	end
 
 	if typeId == "house" then

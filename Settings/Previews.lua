@@ -736,6 +736,101 @@ local function MarkersPreview()
 	}
 end
 
+---@return LBRosterMember member the sample member the party bar preview shows, picked at random among those online
+---once each time the page opens
+local function PartySample()
+	local member = Previews.partyMember
+
+	if not member then
+		local online = {}
+
+		for _, candidate in ipairs(LB.Marker:SampleParty()) do
+			if not candidate.offline then
+				online[#online + 1] = candidate
+			end
+		end
+
+		member = #online > 0 and online[math.random(#online)] or LB.Marker:SampleParty()[1]
+		Previews.partyMember = member
+	end
+
+	return member
+end
+
+---A party bar for a sample member with every text slot it offers, its empty slots marked.
+---@return table preview
+local function PartyBarsPreview()
+	return {
+		Stop = function()
+			Previews.partyMember = nil
+		end,
+		Pick = function(key)
+			if SLOT_KEYS[key] and LB.Settings.window then
+				LB.SettingsText:Choose("party", key)
+				LB.Settings.window:SetPreviewChosen(key)
+				LB.Settings.window:RefreshPage()
+			end
+		end,
+		Draw = function(sample, _, addPart)
+			Previews:Begin(sample)
+
+			local settings = LB.Profile:Get("party.bars")
+			local width, height = settings.width, FixedHeight() or settings.height
+			local keys = LB.SettingsText:Usable("party")
+			local zone = LB.Profile:Get("text.style.size") + SLOT_ROOM
+			local above = zone + LB.TextSlot:BorderReach(nil)
+			local member = PartySample()
+			local bar = Previews:Bar("party", width, height)
+
+			bar.member = member
+			bar:SetSnapshot(member.snapshot, false, false)
+			bar:ApplyAppearance()
+			bar:SetPoint("TOPLEFT", sample, "TOPLEFT", PAD, -(PAD + above))
+			addPart(bar, "classColor")
+			LB.TextSlot:ApplySample(bar, true)
+
+			for _, key in ipairs(keys) do
+				addPart(Previews:Zone(bar, key, zone), ("slotText.%s.%s"):format("party", key), false, key)
+			end
+
+			if LB.Settings.window then
+				LB.Settings.window:SetPreviewChosen(LB.SettingsText:Chosen("party"))
+			end
+
+			Previews:Finish()
+
+			return width + PAD * 2, height + above + PAD * 2
+		end,
+	}
+end
+
+---The Party Progress page's preview: the markers on the experience bar, or a party bar, as Display chooses.
+---@return table preview
+local function PartyPreview()
+	local markers, bars = MarkersPreview(), PartyBarsPreview()
+
+	local function Current()
+		return LB.Profile:Get("party.display") == "BARS" and bars or markers
+	end
+
+	return {
+		Stop = function()
+			markers.Stop()
+			bars.Stop()
+		end,
+		Pick = function(key)
+			local current = Current()
+
+			if current.Pick then
+				current.Pick(key)
+			end
+		end,
+		Draw = function(sample, state, addPart)
+			return Current().Draw(sample, state, addPart)
+		end,
+	}
+end
+
 ---How far the notices reach above and below the bar, from where they attach and which way they stack.
 ---@param settings LBLevelUpSettings
 ---@param stack number a full stack's height
@@ -870,6 +965,10 @@ local FIXED = {
 		return PAD * 2 + rows * (GAIN_HEIGHT + GainRoomMax())
 	end,
 	markers = function()
+		if LB.Profile:Get("party.display") == "BARS" then
+			return PAD * 2 + BAR_MAX + TEXT_MAX + SLOT_ROOM + ReachMax()
+		end
+
 		local above = LB.Marker.Reach("DIAMOND", "TOP", MARKER_OFFSET_MAX, MARKER_SIZE_MAX, BAR_MAX)
 
 		return PAD * 2 + BAR_MAX + math.max(above, MARKER_SIZE_MAX) * 2
@@ -929,7 +1028,7 @@ function Previews:For(pageID)
 	elseif pageID == "gain" then
 		return Framed(GainPreview(), FIXED.gain)
 	elseif pageID == "markers" then
-		return Framed(MarkersPreview(), FIXED.markers)
+		return Framed(PartyPreview(), FIXED.markers)
 	elseif pageID == "levelups" then
 		return Framed(LevelUpsPreview(), FIXED.levelups)
 	end

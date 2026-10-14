@@ -21,11 +21,14 @@ local NEUTRAL = { 0.7, 0.7, 0.7 }
 
 local SAMPLE_XP_MAX = 100000
 
+-- Sample members carry a first name and surname, so name styles such as [name:short] show their effect.
 local SAMPLE = {
-	{ class = "MAGE", fraction = 0.18, level = 41, quest = 12500, rested = 42000, rate = 58000 / 3600 },
-	{ class = "WARRIOR", fraction = 0.46, level = 42, quest = 12500, rate = 71000 / 3600 },
-	{ class = "PRIEST", fraction = 0.49, level = 42 },
-	{ class = "DRUID", fraction = 0.81, level = 43, offline = true },
+	{ class = "MAGE", first = "Jaina", last = "Proudmoore", fraction = 0.18, level = 41, quest = 12500, rested = 42000,
+		rate = 58000 / 3600 },
+	{ class = "WARRIOR", first = "Varian", last = "Wrynn", fraction = 0.46, level = 42, quest = 12500,
+		rate = 71000 / 3600 },
+	{ class = "PRIEST", first = "Anduin", last = "Wrynn", fraction = 0.49, level = 42 },
+	{ class = "DRUID", first = "Malfurion", last = "Stormrage", fraction = 0.81, level = 43, offline = true },
 }
 
 ---@class LBMarkerPlacement
@@ -57,7 +60,7 @@ local function SampleMembers()
 		}
 		---@type LBRosterMember
 		local member = {
-			name = LOCALIZED_CLASS_NAMES_MALE and LOCALIZED_CLASS_NAMES_MALE[entry.class] or entry.class,
+			name = entry.first .. (LB.Tags.Separator() or " ") .. entry.last,
 			class = entry.class,
 			state = state,
 			offline = entry.offline == true,

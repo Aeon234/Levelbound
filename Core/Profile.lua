@@ -341,6 +341,13 @@ for _, id in ipairs(LB.TYPE_ORDER) do
 	end
 end
 
+defaults.text.slots.party = {
+	ABOVE_LEFT = Slot("[classicon] [name:short]"),
+	ABOVE_RIGHT = Slot((LEVEL or "Level") .. " [level]"),
+	INSIDE_LEFT = Slot("[percent]% ([percentquest]%)"),
+	INSIDE_RIGHT = Slot("[cur] / [max] ([remaining])"),
+}
+
 defaults.text.slots.house.INSIDE_LEFT = Slot("[standing]")
 defaults.text.slots.travelers.INSIDE_RIGHT = Slot("[cur] / [max]")
 
