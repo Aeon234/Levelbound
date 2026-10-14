@@ -3,6 +3,7 @@
 Usage:
     python Tools/build-borders.py blizzard <source-dir>
     python Tools/build-borders.py card <style-card.png>
+    python Tools/build-borders.py icons <assets-dir>
 
 <source-dir> holds wow.export's 2x PNG exports of interface/hud/uiexperiencebar2xc60:
     ui-hud-experiencebar-frame-c60-2x.png                        frame, 2040 x 26
@@ -199,11 +200,43 @@ def card(path):
     print(f"card: {width} x {height} px; frame default tint {hex_color(tint)}")
 
 
+TOOLTIP_ICONS = {
+    "levelbound-rested-moon-2026-10-13.png": "Media/Textures/TooltipRested.tga",
+    "levelbound-quest-question-mark-2026-10-13.png": "Media/Textures/TooltipQuest.tga",
+    "levelbound-pace-clock-2026-10-13.png": "Media/Textures/TooltipPace.tga",
+    "levelbound-sharing-chat-arrow-2026-10-13.png": "Media/Textures/TooltipShare.tga",
+}
+ICON_SIZE = 64
+ICON_MARGIN = 2  # transparent pixels kept on each side, so filtering never clips the mark
+
+
+def icons(directory):
+    """Scales the tooltip study icons to ICON_SIZE squares for inline tooltip textures.
+
+    <assets-dir> is AeonDocs/design/assets, holding the four 1024 x 1024 study exports named in TOOLTIP_ICONS. Each mark
+    is cropped to its opaque bounds, centered on a square, and resampled with premultiplied alpha so its edges keep
+    their color; colors are kept, not made white.
+    """
+    for name, relative in TOOLTIP_ICONS.items():
+        image = Image.open(Path(directory) / name).convert("RGBA")
+        left, top, right, bottom = image.getchannel("A").getbbox()
+        side = max(right - left, bottom - top)
+        square = Image.new("RGBA", (side, side), (0, 0, 0, 0))
+        square.paste(image.crop((left, top, right, bottom)), ((side - (right - left)) // 2, (side - (bottom - top)) // 2))
+        inner = ICON_SIZE - ICON_MARGIN * 2
+        scaled = square.convert("RGBa").resize((inner, inner), Image.LANCZOS).convert("RGBA")
+        out = Image.new("RGBA", (ICON_SIZE, ICON_SIZE), (0, 0, 0, 0))
+        out.paste(scaled, (ICON_MARGIN, ICON_MARGIN))
+        save(np.asarray(out).astype(np.float64), relative)
+
+
 def main():
     if len(sys.argv) == 3 and sys.argv[1] == "blizzard":
         blizzard(sys.argv[2])
     elif len(sys.argv) == 3 and sys.argv[1] == "card":
         card(sys.argv[2])
+    elif len(sys.argv) == 3 and sys.argv[1] == "icons":
+        icons(sys.argv[2])
     else:
         sys.exit(__doc__)
 

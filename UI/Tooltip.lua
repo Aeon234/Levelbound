@@ -3,13 +3,17 @@ local LB = select(2, ...)
 local L = LB.L
 
 local VALUE_COLOR = { 1, 1, 1 }
-local LABEL_COLOR = { 1, 0.82, 0 }
-local SECTION_COLOR = { 1, 1, 1 }
+local TITLE_COLOR = { 1, 0.82, 0 }
+local LABEL_COLOR = { 1, 1, 1 }
+local SECTION_COLOR = { 0.8, 0.72, 0.58 }
 local DIM_COLOR = { 0.6, 0.6, 0.6 }
 local HINT_COLOR = { 0.1, 1, 0.1 }
 local AHEAD_COLOR = { 0.1, 1, 0.1 }
 local BEHIND_COLOR = { 1, 0.3, 0.3 }
 local GAP = 4
+local DIVIDER = "Interface\\Common\\UI-TooltipDivider-Transparent"
+local DIVIDER_HEIGHT = 10
+local ICON_SIZE = 0 -- inline icons take the line's text height
 
 ---@class LBTooltipClearance
 ---@field top number the highest edge to stay clear of
@@ -125,11 +129,47 @@ function Tooltip:Stop()
 	self.clearance = nil
 end
 
+---@class LBTooltipIcons
+---@field line boolean icons beside the Rested and completed-quest rows
+---@field section boolean icons beside section headers
+---@field member boolean the class icon before a party member's name
+---@field share boolean the icon before the share hint
+Tooltip.icons = {
+	line = true,
+	section = true,
+	member = true,
+	share = true,
+}
+
 ---@param color number[]
 ---@param text string
 ---@return string
 local function Paint(color, text)
 	return CreateColor(color[1], color[2], color[3]):WrapTextInColorCode(text)
+end
+
+---@param kind string a key of `Tooltip.icons`
+---@param texture string? a `Media.textures` key
+---@param text string
+---@return string text with the icon before it, while that kind of icon is on
+local function WithIcon(kind, texture, text)
+	local path = texture and LB.Media.textures[texture]
+
+	if not path or not Tooltip.icons[kind] then
+		return text
+	end
+
+	return ("|T%s:%d|t %s"):format(path, ICON_SIZE, text)
+end
+
+---@param text string
+---@return string text in capitals when it is plain ASCII; other scripts and accented letters stay as written
+function Tooltip.Header(text)
+	if text:find("[\128-\255]") then
+		return text
+	end
+
+	return text:upper()
 end
 
 ---@param value string
@@ -139,26 +179,41 @@ local function WithShare(value, fraction)
 	return ("%s  %s"):format(value, Paint(DIM_COLOR, ("(%s)"):format(LB.Format:Percent(fraction))))
 end
 
-local titleLine = 1
+---A full-width rule on its own line, as Blizzard's social tooltips draw one.
+---@param tip GameTooltip
+local function Divider(tip)
+	tip:AddLine(" ", 0, 0, 0, true)
+
+	if tip.AddTexture and Enum.TooltipTextureAnchor and Enum.TooltipTextureAnchor.All then
+		tip:AddTexture(DIVIDER, {
+			height = DIVIDER_HEIGHT,
+			anchor = Enum.TooltipTextureAnchor.All,
+			margin = { left = 0, right = 0, top = -2, bottom = -2 },
+		})
+	end
+end
 
 ---@class LBTooltipSection
 ---@field label string?
----@field lines { [1]: string, [2]: string, [3]: number[]? }[]
+---@field icon string? a `Media.textures` key drawn beside the label
+---@field lines { [1]: string, [2]: string, [3]: string? }[]
 
 ---@param label string?
+---@param icon string?
 ---@return LBTooltipSection
-local function Section(label)
-	return { label = label, lines = {} }
+local function Section(label, icon)
+	return { label = label, icon = icon, lines = {} }
 end
 
 ---@param section LBTooltipSection
 ---@param label string
 ---@param value string
----@param labelColor number[]? gold by default
-local function Add(section, label, value, labelColor)
-	section.lines[#section.lines + 1] = { label, value, labelColor }
+---@param icon string? a `Media.textures` key drawn beside the label
+local function Add(section, label, value, icon)
+	section.lines[#section.lines + 1] = { label, value, icon }
 end
 
+---Adds a section below a divider; an empty section adds nothing.
 ---@param tip GameTooltip
 ---@param section LBTooltipSection
 local function Flush(tip, section)
@@ -166,23 +221,21 @@ local function Flush(tip, section)
 		return
 	end
 
-	if tip:NumLines() > titleLine then
-		tip:AddLine(" ")
-	end
+	Divider(tip)
 
 	if section.label then
-		tip:AddLine(section.label, SECTION_COLOR[1], SECTION_COLOR[2], SECTION_COLOR[3])
+		local header = WithIcon("section", section.icon, Tooltip.Header(section.label))
+
+		tip:AddLine(header, SECTION_COLOR[1], SECTION_COLOR[2], SECTION_COLOR[3])
 	end
 
 	for _, line in ipairs(section.lines) do
-		local color = line[3] or LABEL_COLOR
-
 		tip:AddDoubleLine(
-			line[1],
+			WithIcon("line", line[3], line[1]),
 			line[2],
-			color[1],
-			color[2],
-			color[3],
+			LABEL_COLOR[1],
+			LABEL_COLOR[2],
+			LABEL_COLOR[3],
 			VALUE_COLOR[1],
 			VALUE_COLOR[2],
 			VALUE_COLOR[3]
@@ -197,8 +250,7 @@ end
 local function Title(tip, left, right, rightColor)
 	local color = rightColor or VALUE_COLOR
 
-	tip:AddDoubleLine(left, right or "", LABEL_COLOR[1], LABEL_COLOR[2], LABEL_COLOR[3], color[1], color[2], color[3])
-	titleLine = tip:NumLines()
+	tip:AddDoubleLine(left, right or "", TITLE_COLOR[1], TITLE_COLOR[2], TITLE_COLOR[3], color[1], color[2], color[3])
 end
 
 ---@param snapshot LBSnapshot
@@ -214,38 +266,43 @@ local function ShareOf(snapshot, amount)
 	return LB.Progress.Part(snapshot, amount) or 0
 end
 
+---Experience tooltips split Progress from Bonus XP; other types keep one Progress section with plain labels.
 ---@param tip GameTooltip
 ---@param snapshot LBSnapshot
 ---@param source LBSource? the player's XP source, for the quests still in the log
+---@param experience boolean? the snapshot is experience, the player's or a party member's
 ---@param compared string? how far ahead or behind the player a party member is
-local function Progress(tip, snapshot, source, compared)
+local function Progress(tip, snapshot, source, experience, compared)
 	local Format = LB.Format
 	local appearance = LB.Profile:Get("appearance")
 	local overlays = snapshot.overlays
 	local share = Share(snapshot)
 	local progress = Section(L["Progress"])
+	local bonus = experience and Section(L["Bonus XP"]) or progress
+
+	Add(progress, experience and L["Current XP"] or L["Current"],
+		WithShare(Format:Value("VALUE", snapshot, source), share))
+	Add(progress, experience and L["XP Remaining"] or L["Remaining"],
+		WithShare(Format:Value("REMAINING", snapshot, source), 1 - share))
 
 	if overlays.rested > 0 then
 		local rested = Paint(appearance.restedColor, Format:Number(overlays.rested))
 
-		Add(progress, L["Rested"], WithShare(rested, ShareOf(snapshot, overlays.rested)), appearance.restedColor)
+		Add(bonus, L["Rested XP"], WithShare(rested, ShareOf(snapshot, overlays.rested)), "tooltipRested")
 	end
-
-	Add(progress, L["Current"], WithShare(Format:Value("VALUE", snapshot, source), share))
-	Add(progress, L["Remaining"], WithShare(Format:Value("REMAINING", snapshot, source), 1 - share))
 
 	if overlays.quest > 0 then
 		local completed = Paint(appearance.questColor, Format:Number(overlays.quest))
 
-		Add(progress, L["Completed"], WithShare(completed, ShareOf(snapshot, overlays.quest)), appearance.questColor)
-		Add(progress, L["After Turn-In"], Format:Value("PERCENT_WITH_QUESTS", snapshot, source))
+		Add(bonus, L["Ready to Turn In"], WithShare(completed, ShareOf(snapshot, overlays.quest)), "tooltipQuest")
+		Add(bonus, L["After Turn-In"], Format:Value("PERCENT_WITH_QUESTS", snapshot, source))
 	end
 
 	if source and source.IncompleteQuestXP then
 		local incomplete = source:IncompleteQuestXP()
 
 		if incomplete > 0 then
-			Add(progress, L["Quests in Log"], WithShare(Format:Number(incomplete), ShareOf(snapshot, incomplete)))
+			Add(bonus, L["Quests in Log"], WithShare(Format:Number(incomplete), ShareOf(snapshot, incomplete)))
 		end
 	end
 
@@ -254,6 +311,10 @@ local function Progress(tip, snapshot, source, compared)
 	end
 
 	Flush(tip, progress)
+
+	if bonus ~= progress then
+		Flush(tip, bonus)
+	end
 end
 
 ---@param pace LBTooltipSection
@@ -263,7 +324,7 @@ local function AddPace(pace, rate, seconds)
 	local Format = LB.Format
 
 	Add(pace, L["XP per Hour"], Format:Number(rate and LB.Progress.PerHour(rate)))
-	Add(pace, L["Time to Level"], Format:Duration(seconds))
+	Add(pace, L["Est. Time to Level"], Format:Duration(seconds))
 end
 
 ---@param tip GameTooltip
@@ -275,13 +336,14 @@ local function ClickHint(tip, source)
 
 	local hint = source and source.ClickHint and source:ClickHint()
 
-	tip:AddLine(" ")
+	Divider(tip)
 
 	if hint then
-		tip:AddLine(("<%s>"):format(hint), HINT_COLOR[1], HINT_COLOR[2], HINT_COLOR[3])
+		tip:AddLine(hint, HINT_COLOR[1], HINT_COLOR[2], HINT_COLOR[3])
 	end
 
-	tip:AddLine(("<%s>"):format(L["Shift-Click to Share"]), HINT_COLOR[1], HINT_COLOR[2], HINT_COLOR[3])
+	tip:AddLine(WithIcon("share", "tooltipShare", L["Shift-Click to Share"]), HINT_COLOR[1], HINT_COLOR[2],
+		HINT_COLOR[3])
 end
 
 ---@param tip GameTooltip
@@ -289,16 +351,21 @@ end
 ---@param source LBSource?
 function Tooltip:XP(tip, snapshot, source)
 	local Format = LB.Format
+	local rate = LB.Session:Rate()
 
 	Title(tip, COMBAT_XP_GAIN, UNIT_LEVEL_TEMPLATE:format(snapshot.level or 0))
-	Progress(tip, snapshot, source)
+	Progress(tip, snapshot, source, true)
 
-	local pace = Section(L["Pace"])
+	local pace = Section(L["Pace"], "tooltipPace")
 
 	Add(pace, L["Time This Level"], Format:Value("LEVEL_TIME", snapshot, source))
-	Add(pace, L["Session"], Format:Value("SESSION_TIME", snapshot, source))
-	AddPace(pace, LB.Session:Rate(), LB.Session:TimeToLevel())
+	Add(pace, L["Session Time"], Format:Value("SESSION_TIME", snapshot, source))
+	AddPace(pace, rate, LB.Session:TimeToLevel())
 	Flush(tip, pace)
+
+	if not rate then
+		tip:AddLine(L["Pace estimates appear after an XP gain."], DIM_COLOR[1], DIM_COLOR[2], DIM_COLOR[3], true)
+	end
 
 	ClickHint(tip, source)
 end
@@ -355,6 +422,22 @@ local function Compared(mine, theirs)
 	return Paint(ahead and AHEAD_COLOR or BEHIND_COLOR, text)
 end
 
+---@param member LBRosterMember
+---@param nameColor number[]
+---@return string name the member's name in `nameColor`, after their class icon while member icons are on
+local function MemberName(member, nameColor)
+	local name = Paint(nameColor, member.name)
+
+	if not Tooltip.icons.member then
+		return name
+	end
+
+	local class = member.class or (member.unit and LB:Readable(select(2, UnitClass(member.unit)), nil))
+	local icon = LB.ClassIcon:Markup(class, ICON_SIZE)
+
+	return icon ~= "" and ("%s %s"):format(icon, name) or name
+end
+
 -- One block per party member; a stack of markers lists each, a blank line apart.
 ---@param tip GameTooltip
 ---@param member LBRosterMember
@@ -368,10 +451,10 @@ function Tooltip:Member(tip, member, nameColor)
 		tip:AddLine(" ")
 	end
 
-	Title(tip, Paint(nameColor, member.name), UNIT_LEVEL_TEMPLATE:format(snapshot.level))
-	Progress(tip, snapshot, nil, Compared(LB.Model:Get("xp"), snapshot))
+	Title(tip, MemberName(member, nameColor), UNIT_LEVEL_TEMPLATE:format(snapshot.level))
+	Progress(tip, snapshot, nil, true, Compared(LB.Model:Get("xp"), snapshot))
 
-	local pace = Section(L["Pace"])
+	local pace = Section(L["Pace"], "tooltipPace")
 
 	if rate then
 		AddPace(pace, rate, LB.Progress.TimeToLevel(snapshot, rate))
