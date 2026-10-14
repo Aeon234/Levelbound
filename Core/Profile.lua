@@ -139,8 +139,17 @@ local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 ---@field fullInCombat boolean
 ---@field fullWithTarget boolean
 
+---@class LBPartyBarSettings
+---@field classColor boolean fill each bar in its member's class color, else the XP gradient
+---@field width number
+---@field height number
+---@field gap number
+---@field growth "UP" | "DOWN"
+
 ---@class LBPartySettings
----@field markers boolean
+---@field markers boolean shows party progress, as markers or as bars
+---@field display "MARKERS" | "BARS"
+---@field bars LBPartyBarSettings
 ---@field opacity LBMarkerOpacitySettings
 ---@field style "DOT" | "TICK" | "NOTCH" | "DIAMOND" | "PIP" | "ICON_CIRCLE" | "ICON_DIAMOND" | "ICON_RING"
 ---@field size number
@@ -270,6 +279,14 @@ local defaults = {
 			runChannel = "SELF",
 		},
 		markers = true,
+		display = "MARKERS",
+		bars = {
+			classColor = true,
+			width = 200,
+			height = 12,
+			gap = 4,
+			growth = "DOWN",
+		},
 		opacity = {
 			matchBar = true,
 			alpha = 1,

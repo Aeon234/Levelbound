@@ -39,7 +39,7 @@ local DIVIDERS_MAX = 19 -- every 5 %
 local DIVIDER_MIN_SEGMENT = 16
 local DIVIDER_EDGE_SLICE = 0.125
 local NOTCH = { 0, 0, 0, 0.5 }
-local DIVIDED = { xp = true, petxp = true }
+local DIVIDED = { xp = true, petxp = true, party = true }
 
 -- End masks, each the bar's full height; past its own width each clamps to white and masks nothing. A texture takes
 -- at most three masks, so one mask cuts both corners of an end.
@@ -53,6 +53,7 @@ local attached = setmetatable({}, { __mode = "k" })
 
 ---@class LBBar : Frame
 ---@field id string
+---@field member LBRosterMember? the party member a standalone party bar shows
 ---@field clip Frame reveals the full-width fill art; only its width changes, so the art never stretches
 ---@field content Frame
 ---@field fillTexture Texture
@@ -220,6 +221,12 @@ function Bar:Create(parent, id)
 end
 
 function BarMixin:OnEnter()
+	if self.member then
+		LB.Tooltip:ShowMember(self, self.member)
+
+		return
+	end
+
 	self.hovered = true
 
 	LB.Visibility:SetHovered(self.id)
@@ -231,6 +238,12 @@ function BarMixin:OnEnter()
 end
 
 function BarMixin:OnLeave()
+	if self.member then
+		LB.Tooltip:Hide(self)
+
+		return
+	end
+
 	self.hovered = false
 
 	LB.Visibility:SetHovered(nil)
@@ -240,7 +253,7 @@ end
 
 ---@param button string
 function BarMixin:OnMouseUp(button)
-	if button ~= "LeftButton" or not LB.Profile:Get("tooltip.clickActions") then
+	if self.member or button ~= "LeftButton" or not LB.Profile:Get("tooltip.clickActions") then
 		return
 	end
 
@@ -304,10 +317,28 @@ local function ClassColor()
 	return { color.r, color.g, color.b, 1 }
 end
 
+---@param class string?
+---@return LBColor?
+local function ColorOf(class)
+	local color = class and C_ClassColor.GetClassColor(class)
+
+	return color and { color.r, color.g, color.b, 1 } or nil
+end
+
 ---@return LBColor first
 ---@return LBColor? second nil when the fill is a flat color rather than a gradient
 function BarMixin:FillColors()
 	local appearance = LB.Profile:Get("appearance")
+
+	if self.member then
+		local class = LB.Profile:Get("party.bars.classColor") and ColorOf(LB.Roster.ClassOf(self.member))
+
+		if class then
+			return class, nil
+		end
+
+		return appearance.xpGradient[1] or WHITE, appearance.xpGradient[2]
+	end
 
 	if self.id == "xp" then
 		if appearance.xpUseClassColor then

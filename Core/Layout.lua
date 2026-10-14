@@ -50,6 +50,26 @@ function Layout.Height(layout, fixed, own)
 	return Layout.HeldHeight(layout, fixed) or own or layout.height
 end
 
+---Stacks `count` bars of one height, `spacing` apart, the first at the top when growing down and at the bottom when
+---growing up.
+---@param count integer
+---@param height number
+---@param spacing number between one bar's bottom and the next one's top
+---@param growth "UP" | "DOWN"
+---@return number[] tops each bar's top, down from the stack's top
+---@return number total the stack's height
+function Layout.Stack(count, height, spacing, growth)
+	local step = height + spacing
+	local total = count > 0 and height * count + spacing * (count - 1) or 0
+	local tops = {}
+
+	for index = 1, count do
+		tops[index] = growth == "UP" and (total - height - (index - 1) * step) or ((index - 1) * step)
+	end
+
+	return tops, total
+end
+
 ---@param layout LBLayoutSettings
 ---@return "UP" | "DOWN" growth away from the screen edge in fullscreen
 function Layout.Growth(layout)

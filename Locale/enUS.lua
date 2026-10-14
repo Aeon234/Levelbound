@@ -314,6 +314,13 @@ L["Party"] = "Party"
 L["Markers"] = "Markers"
 L["Notices"] = "Notices"
 L["Party Markers"] = "Party Markers"
+L["Party Progress"] = "Party Progress"
+L["Display"] = "Display"
+L["Markers on Your Bar"] = "Markers on Your Bar"
+L["Standalone Bars"] = "Standalone Bars"
+L["Party Bars"] = "Party Bars"
+L["Show Party Bars"] = "Show Party Bars"
+L["Class Color Fill"] = "Class Color Fill"
 L["Show Party Markers"] = "Show Party Markers"
 L["Marker Style"] = "Marker Style"
 L["Dot"] = "Dot"
@@ -367,8 +374,8 @@ L["How every bar is arranged, sized, drawn and shown."] = "How every bar is arra
 L["The arrow and amount shown each time a bar gains progress."] =
 	"The arrow and amount shown each time a bar gains progress."
 L["This bar's colors, its own size and its text."] = "This bar's colors, its own size and its text."
-L["Where party members running Levelbound are on your experience bar."] =
-	"Where party members running Levelbound are on your experience bar."
+L["Party members running Levelbound, as markers on your experience bar or as bars of their own."] =
+	"Party members running Levelbound, as markers on your experience bar or as bars of their own."
 L["Party level-up notices, and messages about your own level-ups and runs."] =
 	"Party level-up notices, and messages about your own level-ups and runs."
 L["Per-character or shared settings, with copy, export and import."] =
@@ -460,6 +467,14 @@ L["The color of the gained amount. The arrow takes its bar's arrow tint."] =
 L["Which side of the arrow the amount sits on."] = "Which side of the arrow the amount sits on."
 L["Moves the amount sideways from the arrow."] = "Moves the amount sideways from the arrow."
 L["Moves the amount up or down from the arrow."] = "Moves the amount up or down from the arrow."
+L["Markers on your experience bar, or a bar of its own for each party member."] =
+	"Markers on your experience bar, or a bar of its own for each party member."
+L["Fills each party bar in its member's class color instead of the experience gradient."] =
+	"Fills each party bar in its member's class color instead of the experience gradient."
+L["The party bars' width."] = "The party bars' width."
+L["The party bars' height."] = "The party bars' height."
+L["The space between party bars."] = "The space between party bars."
+L["Which way the party bars stack from the first."] = "Which way the party bars stack from the first."
 L["Shows where each party member is on your experience bar."] =
 	"Shows where each party member is on your experience bar."
 L["The markers' shape, or each member's class icon."] = "The markers' shape, or each member's class icon."

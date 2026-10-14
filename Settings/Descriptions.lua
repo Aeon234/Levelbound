@@ -115,6 +115,12 @@ LB.SettingsDescriptions = {
 		fadedAlpha = L["How visible the markers are while faded."],
 		fullInCombat = L["Shows faded markers fully while you are in combat."],
 		fullWithTarget = L["Shows faded markers fully while you have a target."],
+		display = L["Markers on your experience bar, or a bar of its own for each party member."],
+		classColor = L["Fills each party bar in its member's class color instead of the experience gradient."],
+		width = L["The party bars' width."],
+		height = L["The party bars' height."],
+		gap = L["The space between party bars."],
+		growth = L["Which way the party bars stack from the first."],
 	},
 	levelups = {
 		notices = L["Tells you when a party member reaches a new level."],

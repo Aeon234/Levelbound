@@ -731,9 +731,37 @@ local function Markers(ctx)
 		end
 	end
 
+	local display = Choice(ctx, "display", L["Display"], "party.display", {
+		{ value = "MARKERS", label = L["Markers on Your Bar"] },
+		{ value = "BARS", label = L["Standalone Bars"] },
+	}, { rebuild = true })
+
+	if LB.Profile:Get("party.display") == "BARS" then
+		local function HeldHeight()
+			if LB.Border:FixedHeight(LB.Profile:Get("appearance.border.style")) then
+				return L["Set by the border style."]
+			end
+		end
+
+		return {
+			Section("bars", L["Party Bars"], { tab = "bars" }),
+			Row(Toggle(ctx, "markers", L["Show Party Bars"], "party.markers", { pageSwitch = true }), display),
+			Row(Check(ctx, "classColor", L["Class Color Fill"], "party.bars.classColor")),
+			Row(
+				Slider(ctx, "width", L["Width"], "party.bars.width", LIMITS.barWidth.min, MaxWidth(), 1),
+				Slider(ctx, "height", L["Height"], "party.bars.height", LIMITS.barHeight.min, LIMITS.barHeight.max, 1,
+					{ blocked = HeldHeight })
+			),
+			Row(
+				Slider(ctx, "gap", L["Gap Between Bars"], "party.bars.gap", 0, 10, 1),
+				Choice(ctx, "growth", L["Growth Direction"], "party.bars.growth", UP_DOWN)
+			),
+		}
+	end
+
 	return {
 		Section("markers", L["Party Markers"], { tab = "markers" }),
-		Row(Toggle(ctx, "markers", L["Show Party Markers"], "party.markers", { pageSwitch = true })),
+		Row(Toggle(ctx, "markers", L["Show Party Markers"], "party.markers", { pageSwitch = true }), display),
 		Row(
 			Choice(ctx, "style", L["Marker Style"], "party.style", {
 				{ value = "DOT", label = L["Dot"] },
@@ -1206,11 +1234,12 @@ function Pages:Categories()
 			id = "party",
 			title = L["Party"],
 			pages = {
-				Page("markers", L["Markers"], Markers, {
-					description = L["Where party members running Levelbound are on your experience bar."],
+				Page("markers", L["Party Progress"], Markers, {
+					description = L["Party members running Levelbound, as markers on your experience bar or as bars of their own."],
 					tabs = {
 						{ id = "markers", title = L["Markers"] },
 						{ id = "fading", title = L["Fading"] },
+						{ id = "bars", title = L["Bars"] },
 					},
 				}),
 				Page("levelups", L["Level-Ups"], LevelUps, {

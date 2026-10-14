@@ -211,19 +211,9 @@ function Marker:Positions(members, width, size)
 end
 
 ---@param member LBRosterMember
----@return string? class the member's class file name, or nil while it is secret or unknown
+---@return string?
 local function ClassOf(member)
-	local class = member.class
-
-	if not class and member.unit then
-		class = select(2, UnitClass(member.unit))
-	end
-
-	if issecretvalue(class) or not class then
-		return nil
-	end
-
-	return class
+	return LB.Roster.ClassOf(member)
 end
 
 ---@param member LBRosterMember
@@ -518,7 +508,7 @@ function Marker:Apply(bar, members)
 	local pool, shown = PoolFor(bar)
 	local party = LB.Profile:Get("party")
 
-	if not party.markers then
+	if not party.markers or party.display == "BARS" then
 		pool:ReleaseAll()
 		wipe(shown)
 

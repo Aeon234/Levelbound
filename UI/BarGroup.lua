@@ -114,15 +114,10 @@ function BarGroup:ComputeLayout(ids, screenWidth)
 	end
 
 	if layout.mode == "CONNECTED" then
-		local step = height + spacing
-		local total = height * count + spacing * (count - 1)
-
-		local growth = LB.Layout.Growth(layout)
+		local tops, total = LB.Layout.Stack(count, height, spacing, LB.Layout.Growth(layout))
 
 		for index, id in ipairs(ids) do
-			local y = growth == "UP" and (total - height - (index - 1) * step) or ((index - 1) * step)
-
-			rects[id] = { width = width, height = height, x = 0, y = y }
+			rects[id] = { width = width, height = height, x = 0, y = tops[index] }
 		end
 
 		return rects, width, total

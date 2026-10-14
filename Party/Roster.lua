@@ -156,6 +156,22 @@ function Roster:Reconcile()
 	end
 end
 
+---@param member LBRosterMember
+---@return string? class the member's class file name, or nil while it is secret or unknown
+function Roster.ClassOf(member)
+	local class = member.class
+
+	if not class and member.unit then
+		class = select(2, UnitClass(member.unit))
+	end
+
+	if issecretvalue(class) or not class then
+		return nil
+	end
+
+	return class
+end
+
 ---@return LBRosterMember[] members with a marker to draw, in a stable order
 function Roster:Visible()
 	local list = {}

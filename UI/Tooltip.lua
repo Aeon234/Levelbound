@@ -35,7 +35,9 @@ function Tooltip:Clearance(bar)
 	local group = LB.BarGroup.frame
 	local frames = { bar }
 
-	if not LB.Layout.Independent(LB.Profile:Get("layout")) and group then
+	if bar.member then
+		frames = { LB.PartyBars.frame or bar }
+	elseif not LB.Layout.Independent(LB.Profile:Get("layout")) and group then
 		frames = { group }
 
 		for _, other in pairs(LB.BarGroup.bars) do
@@ -532,6 +534,22 @@ function Tooltip:Show(bar, snapshot)
 		self:Generic(GameTooltip, snapshot, source)
 	end
 
+	self:Follow(bar, self:Clearance(bar))
+end
+
+---@param bar LBBar a standalone party bar
+---@param member LBRosterMember
+function Tooltip:ShowMember(bar, member)
+	if not LB.Profile:Get("tooltip.enabled") then
+		return
+	end
+
+	local class = LB.Roster.ClassOf(member)
+	local color = class and C_ClassColor.GetClassColor(class)
+
+	GameTooltip:SetOwner(bar, "ANCHOR_NONE")
+	GameTooltip:ClearLines()
+	self:Member(GameTooltip, member, color and { color.r, color.g, color.b } or VALUE_COLOR)
 	self:Follow(bar, self:Clearance(bar))
 end
 
