@@ -646,6 +646,10 @@ local function Gain(ctx)
 				end,
 			})
 		),
+		Row(
+			Slider(ctx, "x", L["Horizontal Offset"], "gain.text.x", -40, 40, 1),
+			Slider(ctx, "y", L["Vertical Offset"], "gain.text.y", -40, 40, 1)
+		),
 		Row(Choice(ctx, "animation", L["Animation Style"], "gain.animation", {
 			{ value = "RISE", label = L["Rise"] },
 			{ value = "SLIDE", label = L["Slide Outward"] },
@@ -670,10 +674,6 @@ local function Gain(ctx)
 			{ value = "LEFT", label = L["Left of the Arrow"] },
 			{ value = "RIGHT", label = L["Right of the Arrow"] },
 		})),
-		Row(
-			Slider(ctx, "x", L["Horizontal Offset"], "gain.text.x", -40, 40, 1),
-			Slider(ctx, "y", L["Vertical Offset"], "gain.text.y", -40, 40, 1)
-		),
 		Section("tints", L["Arrow Tints"], { tab = "amount" }),
 	}
 

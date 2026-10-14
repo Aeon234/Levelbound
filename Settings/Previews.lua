@@ -10,7 +10,7 @@ local ZONE_ALPHA = 0.3
 
 -- Preview bars take a fixed width, so a very wide or narrow setting never crowds the sample; their height is real.
 local PREVIEW_WIDTH = 480
-local GAIN_WIDTH = 190 -- the Gain Indicator page's bars, up to four to a row
+local GAIN_WIDTH = 190 -- the Gain Indicator page's bars, up to four columns
 local GAIN_HEIGHT = 12
 local GAIN_COLUMNS = 4
 local GAIN_SIDE_COLUMNS = 2 -- with the indicators beside the bars
@@ -233,6 +233,18 @@ end
 ---@return number overhang how far an indicator centered beside the bar stands past its top and bottom
 local function GainOverhang(height)
 	return math.max(0, LB.Profile:Get("gain.text.size") - height / 2)
+end
+
+---Sizes a grid for `count` bars filled column by column: the fewest rows that fit within `limit` columns, then the
+---fewest columns that hold them.
+---@param count number
+---@param limit number the most columns
+---@return number columns
+---@return number rows
+local function GainGrid(count, limit)
+	local rows = math.max(math.ceil(count / limit), 1)
+
+	return math.max(math.ceil(count / rows), 1), rows
 end
 
 ---Places bars in a column from `top` down, `gap` apart, and returns the column's width and bottom.
@@ -547,14 +559,13 @@ local function GainPreview()
 				return width + PAD * 2, height + PAD * 2
 			end
 
-			-- Short bars, up to four to a row, or two with the arrows beside them: this page is about the arrows, not
+			-- Short bars in up to four columns, or two with the arrows beside them: this page is about the arrows, not
 			-- the bars.
 			local width, height = GAIN_WIDTH, LB.Border:HeldHeight() or GAIN_HEIGHT
 			local side = GainSide()
 			local room = side and GainSideRoom() or GainRoom()
-			local columns = math.max(math.min(#ids, side and GAIN_SIDE_COLUMNS or GAIN_COLUMNS), 1)
+			local columns, rows = GainGrid(#ids, side and GAIN_SIDE_COLUMNS or GAIN_COLUMNS)
 			local bars = {}
-			local rows = math.ceil(#ids / columns)
 			-- Each bar's cell holds the bar and its indicator's room, above it or beside it.
 			local cellWidth, cellHeight, x, y = width, height + room, 0, room
 
@@ -568,8 +579,8 @@ local function GainPreview()
 
 			for index, id in ipairs(ids) do
 				local bar = Previews:Bar(id, width, height)
-				local column = (index - 1) % columns
-				local row = math.floor((index - 1) / columns)
+				local column = math.floor((index - 1) / rows)
+				local row = (index - 1) % rows
 
 				bar:SetPoint("TOPLEFT", sample, "TOPLEFT", PAD + column * (cellWidth + GAIN_COLUMN_GAP) + x,
 					-(PAD + row * cellHeight + y))
@@ -854,7 +865,7 @@ local FIXED = {
 			end
 		end
 
-		local rows = math.max(math.ceil(capable / GAIN_COLUMNS), 1)
+		local _, rows = GainGrid(capable, GAIN_COLUMNS)
 
 		return PAD * 2 + rows * (GAIN_HEIGHT + GainRoomMax())
 	end,
