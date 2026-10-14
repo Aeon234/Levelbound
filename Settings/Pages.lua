@@ -729,6 +729,9 @@ local function Markers(ctx)
 				{ value = "NOTCH", label = L["Notch"] },
 				{ value = "DIAMOND", label = L["Diamond"] },
 				{ value = "PIP", label = L["Pip"] },
+				{ value = "ICON_CIRCLE", label = L["Class Icon (Circle)"] },
+				{ value = "ICON_DIAMOND", label = L["Class Icon (Diamond)"] },
+				{ value = "ICON_RING", label = L["Class Icon (Ring)"] },
 			}, { set = SetStyle("party.style"), rebuild = true }),
 			Slider(ctx, "size", L["Marker Size"], "party.size", LIMITS.markerSize.min, LIMITS.markerSize.max, 1)
 		),

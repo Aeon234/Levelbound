@@ -318,6 +318,9 @@ L["Full-Height Tick"] = "Full-Height Tick"
 L["Notch"] = "Notch"
 L["Diamond"] = "Diamond"
 L["Pip"] = "Pip"
+L["Class Icon (Circle)"] = "Class Icon (Circle)"
+L["Class Icon (Diamond)"] = "Class Icon (Diamond)"
+L["Class Icon (Ring)"] = "Class Icon (Ring)"
 L["Marker Size"] = "Marker Size"
 L["Center"] = "Center"
 L["The full-height tick always spans the bar."] = "The full-height tick always spans the bar."
@@ -453,7 +456,7 @@ L["Moves the amount sideways from the arrow."] = "Moves the amount sideways from
 L["Moves the amount up or down from the arrow."] = "Moves the amount up or down from the arrow."
 L["Shows where each party member is on your experience bar."] =
 	"Shows where each party member is on your experience bar."
-L["The markers' shape."] = "The markers' shape."
+L["The markers' shape, or each member's class icon."] = "The markers' shape, or each member's class icon."
 L["The markers' size."] = "The markers' size."
 L["The line of the bar the markers sit on: its middle, its top edge or its bottom edge."] =
 	"The line of the bar the markers sit on: its middle, its top edge or its bottom edge."

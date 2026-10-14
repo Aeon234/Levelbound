@@ -84,6 +84,27 @@ function ClassIcon:Markup(class, size)
 		math.floor(coords[3] * fileHeight + 0.5), math.floor(coords[4] * fileHeight + 0.5))
 end
 
+---Draws a class icon on a texture region, its art cropped by `inset` on every side.
+---@param texture Texture
+---@param class string?
+---@param inset number? the share of the art's width and height cut from each edge
+---@return boolean drawn false for an unknown class, leaving the texture as it was
+function ClassIcon:Apply(texture, class, inset)
+	local file, _, _, coords = self:Source(class)
+
+	if not file then
+		return false
+	end
+
+	local left, right, top, bottom = coords[1], coords[2], coords[3], coords[4]
+	local x, y = (right - left) * (inset or 0), (bottom - top) * (inset or 0)
+
+	texture:SetTexture(file)
+	texture:SetTexCoord(left + x, right - x, top + y, bottom - y)
+
+	return true
+end
+
 ---@return string? class the player's class file name, or nil while it is secret
 function ClassIcon:PlayerClass()
 	return LB:Readable(select(2, UnitClass("player")), nil)

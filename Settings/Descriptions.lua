@@ -104,7 +104,7 @@ LB.SettingsDescriptions = {
 	},
 	markers = {
 		markers = L["Shows where each party member is on your experience bar."],
-		style = L["The markers' shape."],
+		style = L["The markers' shape, or each member's class icon."],
 		size = L["The markers' size."],
 		anchor = L["The line of the bar the markers sit on: its middle, its top edge or its bottom edge."],
 		y = L["Moves the markers up or down from their anchor."],

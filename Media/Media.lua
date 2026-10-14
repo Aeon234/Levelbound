@@ -46,6 +46,9 @@ Media.markerShapes = {
 	NOTCH = Media.textures.markerTriangle,
 	DIAMOND = Media.textures.markerDiamond,
 	PIP = Media.textures.markerPip,
+	ICON_CIRCLE = Media.textures.markerDisc,
+	ICON_DIAMOND = Media.textures.markerDiamond,
+	ICON_RING = Media.textures.markerDisc,
 }
 
 Media.outlines = {

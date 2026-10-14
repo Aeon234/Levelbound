@@ -7,6 +7,14 @@ local OUTLINE = 1
 local PIP_ASPECT = 10 / 14
 local PIP_COORDS = { 0, 20 / 32, 0, 28 / 32 }
 local PIP_HIGHLIGHT_COORDS = { 0, 24 / 32, 0, 28 / 32 }
+-- Class icon markers: the icon's art is cropped past its dark edge and masked by the marker's shape. The ring is
+-- the minimap button border, drawn from its file's top-left at the size LibDBIcon gives it for its button, the
+-- icon centered inside.
+local ICON_CROP = 0.08
+local RING = [[Interface\Minimap\MiniMap-TrackingBorder]]
+local RING_SCALE = 53 / 31
+local RING_ICON = 0.6
+local MASK_WRAP = "CLAMPTOBLACKADDITIVE"
 local FADE = 0.5
 local OFFLINE_ALPHA = 0.4
 local NEUTRAL = { 0.7, 0.7, 0.7 }
@@ -60,6 +68,12 @@ local function SampleMembers()
 	end
 
 	return members
+end
+
+---@param style string
+---@return boolean icon the style draws the member's class icon
+function Marker.IsIcon(style)
+	return style == "ICON_CIRCLE" or style == "ICON_DIAMOND" or style == "ICON_RING"
 end
 
 ---Returns where a marker attaches: its own point, the bar point it sits on, and whether its shape is drawn upside
@@ -139,7 +153,7 @@ function Marker.Reach(style, anchor, y, size, height)
 		end
 	end
 
-	if style ~= "PIP" then
+	if style ~= "PIP" and style ~= "ICON_RING" then
 		half = half + OUTLINE
 	end
 
@@ -197,8 +211,8 @@ function Marker:Positions(members, width, size)
 end
 
 ---@param member LBRosterMember
----@return LBColor
-local function ClassColor(member)
+---@return string? class the member's class file name, or nil while it is secret or unknown
+local function ClassOf(member)
 	local class = member.class
 
 	if not class and member.unit then
@@ -206,6 +220,18 @@ local function ClassColor(member)
 	end
 
 	if issecretvalue(class) or not class then
+		return nil
+	end
+
+	return class
+end
+
+---@param member LBRosterMember
+---@return LBColor
+local function ClassColor(member)
+	local class = ClassOf(member)
+
+	if not class then
 		return NEUTRAL
 	end
 
@@ -269,6 +295,11 @@ local function Build(frame)
 
 	frame.outline = frame:CreateTexture(nil, "BORDER")
 	frame.shape = frame:CreateTexture(nil, "ARTWORK")
+	frame.icon = frame:CreateTexture(nil, "ARTWORK")
+	frame.mask = frame:CreateMaskTexture()
+	frame.icon:AddMaskTexture(frame.mask)
+	frame.ring = frame:CreateTexture(nil, "OVERLAY")
+	frame.ring:SetTexture(RING)
 	frame.highlight = frame:CreateTexture(nil, "HIGHLIGHT")
 	frame.highlight:SetTexture(LB.Media.textures.markerPipHighlight)
 	frame.highlight:SetTexCoord(unpack(PIP_HIGHLIGHT_COORDS))
@@ -367,6 +398,14 @@ local function Draw(frame, bar, placement, placements)
 	local height = bar:GetHeight()
 	local color = ClassColor(member)
 	local style = party.style
+	local class = ClassOf(member)
+
+	-- A class icon marker without a readable class is drawn as a gray dot.
+	if Marker.IsIcon(style) and not class then
+		style = "DOT"
+	end
+
+	local icon = Marker.IsIcon(style)
 
 	Build(frame)
 
@@ -412,10 +451,35 @@ local function Draw(frame, bar, placement, placements)
 	end
 
 	frame.outline:SetTexCoord(0, 1, top, bottom)
-	frame.outline:SetShown(not pip)
+	frame.outline:SetShown(not pip and style ~= "ICON_RING")
 	frame.highlight:SetShown(pip)
+	frame.shape:SetShown(not icon)
 	frame.shape:SetVertexColor(color[1], color[2], color[3], 1)
 	frame.outline:SetVertexColor(0, 0, 0, 1)
+	frame.icon:SetShown(icon)
+	frame.ring:SetShown(style == "ICON_RING")
+
+	if icon then
+		local ring = style == "ICON_RING"
+
+		LB.ClassIcon:Apply(frame.icon, class, ICON_CROP)
+		frame.icon:SetDesaturated(member.offline == true)
+		frame.icon:ClearAllPoints()
+
+		if ring then
+			frame.icon:SetPoint("CENTER", frame, "CENTER")
+			LB:SetPixelSize(frame.icon, metrics.width * RING_ICON, metrics.width * RING_ICON)
+			frame.ring:ClearAllPoints()
+			frame.ring:SetPoint("TOPLEFT", frame, "TOPLEFT")
+			LB:SetPixelSize(frame.ring, metrics.width * RING_SCALE, metrics.width * RING_SCALE)
+		else
+			frame.icon:SetAllPoints(frame)
+		end
+
+		frame.mask:SetTexture(texture, MASK_WRAP, MASK_WRAP)
+		frame.mask:ClearAllPoints()
+		frame.mask:SetAllPoints(frame.icon)
+	end
 
 	frame:SetAlpha(member.offline and OFFLINE_ALPHA or 1)
 
