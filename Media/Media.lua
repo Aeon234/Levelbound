@@ -32,6 +32,10 @@ Media.textures = {
 	blizzardDivider = PATH .. [[Borders\BlizzardDividerWhite.tga]],
 	maskLeft = PATH .. [[Textures\BlizzardMaskLeft.tga]],
 	maskRight = PATH .. [[Textures\BlizzardMaskRight.tga]],
+	pillLeft = PATH .. [[Textures\PillMaskLeft.tga]],
+	pillRight = PATH .. [[Textures\PillMaskRight.tga]],
+	pillHoleLeft = PATH .. [[Textures\PillHoleLeft.tga]],
+	pillHoleRight = PATH .. [[Textures\PillHoleRight.tga]],
 }
 
 Media.icons = {

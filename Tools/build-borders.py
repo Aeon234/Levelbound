@@ -4,6 +4,7 @@ Usage:
     python Tools/build-borders.py blizzard <source-dir>
     python Tools/build-borders.py card <style-card.png>
     python Tools/build-borders.py icons <assets-dir>
+    python Tools/build-borders.py pill
 
 <source-dir> holds wow.export's 2x PNG exports of interface/hud/uiexperiencebar2xc60:
     ui-hud-experiencebar-frame-c60-2x.png                        frame, 2040 x 26
@@ -230,6 +231,39 @@ def icons(directory):
         save(np.asarray(out).astype(np.float64), relative)
 
 
+PILL_RADIUS = 64
+PILL_SAMPLES = 4  # per axis, for each pixel's coverage of the disc
+
+
+def pill():
+    """Draws the Pill border style's end masks: each a white half disc filling a PILL_RADIUS x 2*PILL_RADIUS canvas,
+    its flat side on the bar's side of the canvas, its edge antialiased by sampling each pixel's coverage, and the
+    same half disc inverted, which hollows the outline's end caps.
+
+    Writes Media/Textures/PillMaskLeft.tga (the disc's center on the canvas's right edge), PillMaskRight.tga (on its
+    left edge), and PillHoleLeft.tga and PillHoleRight.tga, opaque outside the half disc. Drawn at half the bar's
+    height wide and the bar's full height, each rounds one end.
+    """
+    width, height = PILL_RADIUS, PILL_RADIUS * 2
+    offsets = (np.arange(PILL_SAMPLES) + 0.5) / PILL_SAMPLES
+    xs = (np.arange(width)[:, np.newaxis] + offsets).reshape(-1)
+    ys = (np.arange(height)[:, np.newaxis] + offsets).reshape(-1)
+    inside = ((xs[np.newaxis, :] - width) ** 2 + (ys[:, np.newaxis] - PILL_RADIUS) ** 2) <= PILL_RADIUS ** 2
+    coverage = inside.reshape(height, PILL_SAMPLES, width, PILL_SAMPLES).mean(axis=(1, 3))
+
+    left = canvas(width, height)
+    left[:, :, :3] = 255
+    left[:, :, 3] = coverage * 255
+
+    hole = left.copy()
+    hole[:, :, 3] = 255 - left[:, :, 3]
+
+    save(left, "Media/Textures/PillMaskLeft.tga")
+    save(left[:, ::-1], "Media/Textures/PillMaskRight.tga")
+    save(hole, "Media/Textures/PillHoleLeft.tga")
+    save(hole[:, ::-1], "Media/Textures/PillHoleRight.tga")
+
+
 def main():
     if len(sys.argv) == 3 and sys.argv[1] == "blizzard":
         blizzard(sys.argv[2])
@@ -237,6 +271,8 @@ def main():
         card(sys.argv[2])
     elif len(sys.argv) == 3 and sys.argv[1] == "icons":
         icons(sys.argv[2])
+    elif len(sys.argv) == 2 and sys.argv[1] == "pill":
+        pill()
     else:
         sys.exit(__doc__)
 

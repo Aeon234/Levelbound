@@ -258,6 +258,7 @@ local function BorderStyles()
 	local options = {
 		{ value = "NONE", label = NONE },
 		{ value = "PIXEL", label = L["Pixel"] },
+		{ value = "PILL", label = L["Pill"] },
 	}
 
 	for _, option in ipairs(textured) do
@@ -268,8 +269,9 @@ local function BorderStyles()
 end
 
 ---Saves a choice of marker style or border style; when it puts the pip on the Blizzard border, the pip starts at
----Blizzard's rested tick's size and place, which the player can change afterwards. Settings using it rebuild the
----page, so the rows show the values it set.
+---Blizzard's rested tick's size and place, which the player can change afterwards. Choosing Pill starts its outline
+---at 0, and choosing Pixel after it raises a 0 width to Pixel's least. Settings using it rebuild the page, so the
+---rows show the values it set.
 ---@param path string
 ---@return fun(value: any)
 local function SetStyle(path)
@@ -281,6 +283,14 @@ local function SetStyle(path)
 		local wasPaired = Paired()
 
 		LB.Profile:Set(path, value)
+
+		if path == "appearance.border.style" and value == "PILL" then
+			LB.Profile:Set("appearance.border.width", 0)
+		elseif path == "appearance.border.style" and value == "PIXEL" then
+			local width = LB.Profile:Get("appearance.border.width")
+
+			LB.Profile:Set("appearance.border.width", math.max(width, LB.LIMITS.borderWidth.min))
+		end
 
 		if not wasPaired and Paired() then
 			LB.Marker.WriteBlizzardPip(function(key, value)
@@ -450,10 +460,11 @@ local function Appearance(ctx)
 		set = SetStyle("appearance.border.style"),
 		rebuild = true,
 	})
-	-- Built either way, so Defaults resets it; shown only beside the Pixel style.
-	local width = Slider(ctx, "borderWidth", L["Border Width"], "appearance.border.width", LIMITS.borderWidth.min,
-		LIMITS.borderWidth.max, 1)
-	local pixel = LB.Profile:Get("appearance.border.style") == "PIXEL"
+	local current = LB.Profile:Get("appearance.border.style")
+	-- Built either way, so Defaults resets it; shown only beside the Pixel and Pill styles, Pill's from 0.
+	local width = Slider(ctx, "borderWidth", L["Border Width"], "appearance.border.width",
+		current == "PILL" and 0 or LIMITS.borderWidth.min, LIMITS.borderWidth.max, 1)
+	local sized = current == "PIXEL" or current == "PILL"
 
 	return {
 		Section("bars", L["Bars"], { tab = "appearance" }),
@@ -462,14 +473,14 @@ local function Appearance(ctx)
 			Color(ctx, "background", BACKGROUND, "appearance.background", true)
 		),
 		Section("border", L["Border"], { tab = "appearance" }),
-		Row(style, pixel and width or nil),
+		Row(style, sized and width or nil),
 		Row(
 			Check(ctx, "borderCustom", L["Custom Color"], "appearance.border.customColor", {
 				blocked = function()
 					if NoBorder() then
 						return NoBorder()
 					elseif not Textured() then
-						return L["Pixel borders always use Border Color."]
+						return L["This border always uses Border Color."]
 					end
 				end,
 			}),

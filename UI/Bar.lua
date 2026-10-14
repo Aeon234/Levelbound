@@ -44,8 +44,8 @@ local DIVIDED = { xp = true, petxp = true }
 -- End masks, each the bar's full height; past its own width each clamps to white and masks nothing. A texture takes
 -- at most three masks, so one mask cuts both corners of an end.
 local ENDS = {
-	{ side = "LEFT", texture = "maskLeft", left = true },
-	{ side = "RIGHT", texture = "maskRight", left = false },
+	{ side = "LEFT", texture = "maskLeft", pill = "pillLeft", left = true },
+	{ side = "RIGHT", texture = "maskRight", pill = "pillRight", left = false },
 }
 
 ---@type table<Texture, table<Texture, true>> the end masks attached to each texture
@@ -264,6 +264,10 @@ function BarMixin:SetGeometry(width, height)
 	self:PaintFill()
 	self:PlaceDividers()
 	self:SizeHalos()
+
+	if self.maskWidth == "PILL" then
+		self:RefreshMasks()
+	end
 end
 
 function BarMixin:SizeHalos()
@@ -380,9 +384,10 @@ function BarMixin:ApplyAppearance()
 	LB.TextSlot:ApplyBar(self)
 end
 
----Cuts the ends of the fill, its overlays, effects and background to a border's bevel, at the left end, the right
----end or both.
----@param width number? the masks' width, from `Border:EndMask`; nil cuts neither end
+---Cuts the ends of the fill, its overlays, effects and background to a border's bevel, or rounds them for the Pill
+---shape, at the left end, the right end or both.
+---@param width number|"PILL"|nil the masks' width, from `Border:EndMask`: "PILL" rounds the ends at half the bar's
+---height; nil cuts neither end
 ---@param left boolean
 ---@param right boolean
 function BarMixin:SetEndMasks(width, left, right)
@@ -418,10 +423,9 @@ function BarMixin:RefreshMasks()
 			for _, entry in ipairs(ENDS) do
 				local mask = frame:CreateMaskTexture()
 
-				mask:SetTexture(LB.Media.textures[entry.texture], "CLAMPTOWHITE", "CLAMPTOWHITE")
 				mask:SetPoint("TOP" .. entry.side, frame, "TOP" .. entry.side)
 				mask:SetPoint("BOTTOM" .. entry.side, frame, "BOTTOM" .. entry.side)
-				set[#set + 1] = { mask = mask, left = entry.left }
+				set[#set + 1] = { mask = mask, left = entry.left, texture = entry.texture, pill = entry.pill }
 			end
 
 			self.masks[frame] = set
@@ -434,7 +438,11 @@ function BarMixin:RefreshMasks()
 		for _, entry in ipairs(set) do
 			local wanted = (entry.left and self.maskLeft) or (not entry.left and self.maskRight)
 
-			if self.maskWidth then
+			if self.maskWidth == "PILL" then
+				entry.mask:SetTexture(LB.Media.textures[entry.pill], "CLAMPTOWHITE", "CLAMPTOWHITE")
+				entry.mask:SetWidth(self:GetHeight() / 2)
+			elseif self.maskWidth then
+				entry.mask:SetTexture(LB.Media.textures[entry.texture], "CLAMPTOWHITE", "CLAMPTOWHITE")
 				entry.mask:SetWidth(self.maskWidth)
 			end
 
@@ -475,7 +483,7 @@ function BarMixin:ApplyDividers()
 		color = settings.color
 	elseif art and not border.customColor then
 		color = art.tint
-	elseif not pixels and not path and not art then
+	elseif (not pixels or pixels == 0) and not path and not art then
 		color = NOTCH
 	end
 
@@ -492,7 +500,8 @@ function BarMixin:ApplyDividers()
 	self.dividers:SetFrameLevel(self:GetFrameLevel() + LEVEL_DIVIDERS)
 	self.dividers.enabled = settings.enabled
 	self.dividers.segments = math.min(math.floor(100 / settings.spacing), DIVIDERS_MAX + 1)
-	self.dividers.pixels = pixels or 1
+	-- Pill dividers stand one pixel thicker than the outline, so they read against the rounded bar.
+	self.dividers.pixels = border.style == "PILL" and math.max(pixels or 0, 1) + 1 or pixels or 1
 	self.dividers.textured = path ~= nil
 	self.dividers.art = art
 

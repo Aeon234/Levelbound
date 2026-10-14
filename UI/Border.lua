@@ -5,19 +5,22 @@ local EDGE_SIZE = 16
 local LEVEL = 8
 
 local PIXEL = "PIXEL"
+local PILL = "PILL"
 local PIXEL_MIN, PIXEL_MAX = LB.LIMITS.borderWidth.min, LB.LIMITS.borderWidth.max
 
 ---@param style string
 ---@param width number? the saved Border Width
----@return integer? pixels the flat style's line width in physical pixels, or nil for any other style
+---@return integer? pixels the flat or Pill style's line width in physical pixels, 0 for a Pill without an outline,
+---or nil for any other style
 local function PixelWidth(style, width)
-	if style ~= PIXEL then
+	if style ~= PIXEL and style ~= PILL then
 		return nil
 	end
 
-	local pixels = math.floor(tonumber(width) or PIXEL_MIN)
+	local least = style == PILL and 0 or PIXEL_MIN
+	local pixels = math.floor(tonumber(width) or least)
 
-	return math.min(math.max(pixels, PIXEL_MIN), PIXEL_MAX)
+	return math.min(math.max(pixels, least), PIXEL_MAX)
 end
 
 local EDGES = {
@@ -67,6 +70,7 @@ local DIVIDER_COORDS = { 0, 1, 1 / 16, 15 / 16 }
 ---@class LBBorderFrame : Frame, BackdropTemplate
 ---@field edges Texture[] top, bottom, left, right
 ---@field strip Texture[]? left cap, middle, right cap of the Blizzard frame
+---@field caps Texture[]? the Pill outline's left and right ends
 local BorderMixin = {}
 
 ---@class LBBorder
@@ -91,8 +95,13 @@ function Border:HeldHeight()
 end
 
 ---@param style string
----@return number? width the end masks' width that cuts the fill to the style's bevel, or nil for square ends
+---@return number|"PILL"|nil width the end masks' width that cuts the fill to the style's bevel, "PILL" for the Pill
+---style's round ends, or nil for square ends
 function Border:EndMask(style)
+	if style == PILL then
+		return PILL
+	end
+
 	return style == STRIP and MASK_WIDTH or nil
 end
 
@@ -273,6 +282,72 @@ function BorderMixin:PlaceStrip(r, g, b, a)
 	middle:SetPoint("BOTTOMRIGHT", right, "BOTTOMLEFT")
 end
 
+---Draws the Pill outline: flat top and bottom edges between two end caps, each cap a half disc of the outline's
+---height hollowed by a half disc of the host's height.
+---@param pixels number
+---@param height number the host's height
+---@param r number
+---@param g number
+---@param b number
+---@param a number
+function BorderMixin:PlacePill(pixels, height, r, g, b, a)
+	local thickness = pixels * PixelUtil.GetPixelToUIUnitFactor() / self:GetEffectiveScale()
+	local radius = height / 2 + thickness
+
+	if not self.caps then
+		self.caps = {}
+
+		for index, side in ipairs({ "Left", "Right" }) do
+			local cap = self:CreateTexture(nil, "OVERLAY")
+			local outer = self:CreateMaskTexture()
+			local hole = self:CreateMaskTexture()
+
+			cap:SetTexture(FLAT)
+			outer:SetTexture(LB.Media.textures["pill" .. side], "CLAMPTOWHITE", "CLAMPTOWHITE")
+			outer:SetAllPoints(cap)
+			hole:SetTexture(LB.Media.textures["pillHole" .. side], "CLAMPTOWHITE", "CLAMPTOWHITE")
+			cap:AddMaskTexture(outer)
+			cap:AddMaskTexture(hole)
+			cap.hole = hole
+			self.caps[index] = cap
+		end
+	end
+
+	local left, right = self.caps[1], self.caps[2]
+	local top, bottom = self.edges[1], self.edges[2]
+
+	self.edges[3]:Hide()
+	self.edges[4]:Hide()
+
+	for _, texture in ipairs({ left, right, top, bottom }) do
+		texture:ClearAllPoints()
+		texture:SetVertexColor(r, g, b, a)
+		texture:Show()
+	end
+
+	left:SetPoint("TOPLEFT")
+	left:SetPoint("BOTTOMLEFT")
+	left:SetWidth(radius)
+	left.hole:ClearAllPoints()
+	left.hole:SetPoint("TOPLEFT", left, "TOPLEFT", thickness, -thickness)
+	left.hole:SetPoint("BOTTOMRIGHT", left, "BOTTOMRIGHT", 0, thickness)
+
+	right:SetPoint("TOPRIGHT")
+	right:SetPoint("BOTTOMRIGHT")
+	right:SetWidth(radius)
+	right.hole:ClearAllPoints()
+	right.hole:SetPoint("TOPLEFT", right, "TOPLEFT", 0, -thickness)
+	right.hole:SetPoint("BOTTOMRIGHT", right, "BOTTOMRIGHT", -thickness, thickness)
+
+	top:SetPoint("TOPLEFT", left, "TOPRIGHT")
+	top:SetPoint("TOPRIGHT", right, "TOPLEFT")
+	top:SetHeight(thickness)
+
+	bottom:SetPoint("BOTTOMLEFT", left, "BOTTOMRIGHT")
+	bottom:SetPoint("BOTTOMRIGHT", right, "BOTTOMLEFT")
+	bottom:SetHeight(thickness)
+end
+
 ---@param style string
 ---@param color LBColor
 ---@param height number the host's height once its layout settles
@@ -290,7 +365,13 @@ function BorderMixin:Apply(style, color, height, width)
 		end
 	end
 
-	if not host or (not pixels and not path and not strip) then
+	if self.caps and style ~= PILL then
+		for _, cap in ipairs(self.caps) do
+			cap:Hide()
+		end
+	end
+
+	if not host or (not pixels and not path and not strip) or pixels == 0 then
 		self:Hide()
 
 		return
@@ -309,6 +390,13 @@ function BorderMixin:Apply(style, color, height, width)
 		self:SetPoint("TOPLEFT", host, "TOPLEFT", -STRIP_OUTSET, STRIP_OUTSET)
 		self:SetPoint("BOTTOMRIGHT", host, "BOTTOMRIGHT", STRIP_OUTSET, -STRIP_OUTSET)
 		self:PlaceStrip(r, g, b, a)
+	elseif style == PILL then
+		local outset = pixels * PixelUtil.GetPixelToUIUnitFactor() / self:GetEffectiveScale()
+
+		self:ClearBackdrop()
+		self:SetPoint("TOPLEFT", host, "TOPLEFT", -outset, outset)
+		self:SetPoint("BOTTOMRIGHT", host, "BOTTOMRIGHT", outset, -outset)
+		self:PlacePill(pixels, height, r, g, b, a)
 	elseif pixels then
 		local outset = pixels * PixelUtil.GetPixelToUIUnitFactor() / self:GetEffectiveScale()
 
