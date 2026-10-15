@@ -45,6 +45,7 @@ function Settings:Window()
 	self:DeclareBars(window)
 	self:DeclareTypes(window)
 	self:DeclareParty(window)
+	LB.SettingsProfiles:Declare(window)
 
 	return window
 end

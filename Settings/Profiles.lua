@@ -72,3 +72,22 @@ function Profiles:Page()
 
 	return self.page
 end
+
+---The Profiles page on LibAeonSettings, over the same adapter. Profile actions empty the window's Undo history and
+---read every value again; the bars follow the swap through the profile's own "Settings" callback.
+---@param window table
+function Profiles:Declare(window)
+	local shared = {}
+
+	for name, value in pairs(adapter) do
+		if name ~= "builtin" then
+			shared[name] = value
+		end
+	end
+
+	window:ProfilesPage("profiles", {
+		title = L["Profiles"],
+		description = L["Per-character or shared settings, with copy, export and import."],
+		adapter = shared,
+	})
+end
