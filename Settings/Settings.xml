@@ -9,6 +9,7 @@
 	<Script file="General.lua" />
 	<Script file="Bars.lua" />
 	<Script file="Types.lua" />
+	<Script file="Party.lua" />
 	<Script file="StylePicker.lua" />
 	<Script file="Mover.lua" />
 	<Script file="EditMode.lua" />

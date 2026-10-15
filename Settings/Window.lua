@@ -44,6 +44,7 @@ function Settings:Window()
 	self:DeclareGeneral(window)
 	self:DeclareBars(window)
 	self:DeclareTypes(window)
+	self:DeclareParty(window)
 
 	return window
 end
@@ -114,12 +115,17 @@ end
 ---@param key string the descriptions' page key in `LB.SettingsDescriptions`
 ---@param id string the setting's id
 ---@param note string? a scope or per-slot note that follows the description
----@return string? tooltip
+---@return (string | fun(): string)? tooltip
 function Settings:Tooltip(key, id, note)
 	local descriptions = LB.SettingsDescriptions
 	local base = (descriptions[key] or {})[id]
 
+	-- A description built on each hover stays a function, which the library calls then.
 	if type(base) == "function" then
+		if not note then
+			return base
+		end
+
 		base = base()
 	end
 

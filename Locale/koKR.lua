@@ -316,6 +316,7 @@ L["Compact shows the text inside the bars only."] = "간소화는 바 안의 텍
 L["Match Bar Visibility"] = "바 표시 설정 따르기"
 L["Uses the bars' Visibility settings."] = "바의 표시 설정을 사용합니다."
 L["Show Party Markers"] = "파티원 표시 사용"
+L["Show Party Progress"] = "파티 진행도 표시"
 L["Marker Style"] = "표시 모양"
 L["Dot"] = "점"
 L["Full-Height Tick"] = "전체 높이 눈금"

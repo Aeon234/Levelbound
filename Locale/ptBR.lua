@@ -316,6 +316,7 @@ L["Compact shows the text inside the bars only."] = "Compacto mostra apenas o te
 L["Match Bar Visibility"] = "Seguir visibilidade das barras"
 L["Uses the bars' Visibility settings."] = "Usa as configurações de visibilidade das barras."
 L["Show Party Markers"] = "Mostrar marcadores do grupo"
+L["Show Party Progress"] = "Mostrar progresso do grupo"
 L["Marker Style"] = "Estilo do marcador"
 L["Dot"] = "Ponto"
 L["Full-Height Tick"] = "Traço de altura total"

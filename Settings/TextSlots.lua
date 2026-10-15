@@ -510,8 +510,9 @@ end
 ---section of `container` (a page or a tab) with Copy Settings From on its title line.
 ---@param container table a page or a tab
 ---@param typeId string
+---@param show (fun(): boolean)? hides the whole section while it returns false
 ---@return table section
-function Text:Declare(container, typeId)
+function Text:Declare(container, typeId, show)
 	local Settings = LB.Settings
 	local KEY = typeId == "party" and "markers" or "type"
 
@@ -561,7 +562,7 @@ function Text:Declare(container, typeId)
 		end
 	end
 
-	local section = container:Section("text", L["Text"])
+	local section = container:Section("text", L["Text"], show and { show = show } or nil)
 	local copyChoices = CopyChoices(typeId)
 
 	section:Menu({

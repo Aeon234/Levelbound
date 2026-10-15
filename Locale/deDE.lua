@@ -316,6 +316,7 @@ L["Compact shows the text inside the bars only."] = "Kompakt zeigt nur den Text 
 L["Match Bar Visibility"] = "Leistensichtbarkeit übernehmen"
 L["Uses the bars' Visibility settings."] = "Verwendet die Sichtbarkeitseinstellungen der Leisten."
 L["Show Party Markers"] = "Gruppenmarkierungen anzeigen"
+L["Show Party Progress"] = "Gruppenfortschritt anzeigen"
 L["Marker Style"] = "Markierungsstil"
 L["Dot"] = "Punkt"
 L["Full-Height Tick"] = "Strich in voller Höhe"

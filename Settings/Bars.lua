@@ -50,21 +50,23 @@ local function BorderStyles()
 	return options
 end
 
----Saves a border style. Choosing Pill starts its outline at 0; choosing Pixel after it raises a 0 width to Pixel's
----least; putting the Blizzard border under the Pip marker starts the pip at Blizzard's rested tick's size and place.
+---Saves a border style or marker style. Choosing Pill starts its outline at 0; choosing Pixel after it raises a 0
+---width to Pixel's least; putting the Pip marker on the Blizzard border starts the pip at Blizzard's rested tick's
+---size and place.
+---@param path "appearance.border.style" | "party.style"
 ---@param value string
-local function SetBorderStyle(value)
+function Settings:SetStyle(path, value)
 	local function Paired()
 		return LB.Profile:Get("party.style") == "PIP" and LB.Profile:Get("appearance.border.style") == "BLIZZARD"
 	end
 
 	local wasPaired = Paired()
 
-	LB.Profile:Set("appearance.border.style", value)
+	LB.Profile:Set(path, value)
 
-	if value == "PILL" then
+	if path == "appearance.border.style" and value == "PILL" then
 		LB.Profile:Set("appearance.border.width", 0)
-	elseif value == "PIXEL" then
+	elseif path == "appearance.border.style" and value == "PIXEL" then
 		local width = LB.Profile:Get("appearance.border.width")
 
 		LB.Profile:Set("appearance.border.width", math.max(width, LIMITS.borderWidth.min))
@@ -234,7 +236,9 @@ function Settings:DeclareAppearance(page)
 		options = self:Choices(BorderStyles),
 		redraws = true,
 		get = Style,
-		set = SetBorderStyle,
+		set = function(value)
+			self:SetStyle("appearance.border.style", value)
+		end,
 	})
 	self:Add(border, "Slider", KEY, {
 		id = "borderWidth",

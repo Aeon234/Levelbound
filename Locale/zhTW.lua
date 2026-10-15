@@ -316,6 +316,7 @@ L["Compact shows the text inside the bars only."] = "緊湊模式只顯示進度
 L["Match Bar Visibility"] = "跟隨進度條可見性"
 L["Uses the bars' Visibility settings."] = "使用進度條的可見性設定。"
 L["Show Party Markers"] = "顯示隊伍標記"
+L["Show Party Progress"] = "顯示隊伍進度"
 L["Marker Style"] = "標記樣式"
 L["Dot"] = "圓點"
 L["Full-Height Tick"] = "全高刻線"

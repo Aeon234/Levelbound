@@ -316,6 +316,7 @@ L["Compact shows the text inside the bars only."] = "Компактный реж
 L["Match Bar Visibility"] = "Как у основных полос"
 L["Uses the bars' Visibility settings."] = "Использует настройки видимости основных полос."
 L["Show Party Markers"] = "Показывать метки группы"
+L["Show Party Progress"] = "Показывать прогресс группы"
 L["Marker Style"] = "Стиль меток"
 L["Dot"] = "Точка"
 L["Full-Height Tick"] = "Черта во всю высоту"
