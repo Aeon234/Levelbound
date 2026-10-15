@@ -19,11 +19,7 @@ local addonName = ...
 ---@field Source LBSourceFactory
 ---@field Preview LBPreview
 ---@field Placement LBPlacement
----@field EditMode LBEditMode
 ---@field EditTargets LBEditTargets
----@field EditPanel LBEditPanel
----@field Mover LBMoverFactory
----@field MoverMixin LBMover
 ---@field Broker LBBroker
 ---@field BarGroup LBBarGroup
 ---@field BlizzardBar LBBlizzardBar
@@ -44,8 +40,6 @@ local addonName = ...
 ---@field TimePlayed LBTimePlayed
 ---@field failed boolean?
 ---@field Settings LBSettings
----@field LegacySettings LBLegacySettings
----@field SettingsPages LBSettingsPages
 ---@field SettingsText LBSettingsText
 ---@field SettingsProfiles LBSettingsProfiles
 local LB = select(2, ...)
@@ -240,13 +234,6 @@ end
 
 ---@param section string? section to open at
 function LB:OpenSettings(section)
-	-- The edit session still returns to the AeonSettings window until edit mode moves to the library.
-	if self.EditMode and self.EditMode:IsActive() and self.LegacySettings then
-		self.LegacySettings:Open(section)
-
-		return
-	end
-
 	if self.Settings then
 		self.Settings:Open(section)
 
@@ -356,12 +343,6 @@ SlashCmdList.LEVELBOUND = function(message)
 
 	if command == "edit" then
 		LB.EditTargets:Toggle()
-
-		return
-	end
-
-	if command == "old" then
-		LB.LegacySettings:Open(argument ~= "" and argument or nil)
 
 		return
 	end

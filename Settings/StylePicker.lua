@@ -1,6 +1,7 @@
 local LB = select(2, ...)
 
 local L = LB.L
+local lib = LibStub("LibAeonSettings-1.0")
 
 local FRAME_NAME = "LevelboundStylePicker"
 local WIDTH = 560
@@ -21,6 +22,9 @@ local CARD_SLICE = 48
 local CARD_SCALE = 0.5
 local GOLD = { 1, 0.82, 0 }
 local FRAME_TINT = { 132 / 255, 105 / 255, 82 / 255 } -- the card frame art's own bronze
+local TEXT_SIZE = 14
+local FOOTER_SIZE = 12
+local FOOTER_ALPHA = 0.65
 
 ---@alias LBStyle "BLIZZARD" | "MODERN"
 
@@ -142,7 +146,6 @@ end
 ---@param profile LBProfileData
 ---@return Button card its `needed` field is the height its content takes, for sizing both cards alike
 function StylePicker:Card(frame, style, title, text, profile)
-	local AS = LB.AeonSettings
 	local card = CreateFrame("Button", nil, frame)
 
 	---@param layer DrawLayer
@@ -165,13 +168,13 @@ function StylePicker:Card(frame, style, title, text, profile)
 	card.frame:SetVertexColor(unpack(FRAME_TINT))
 
 	card.title = card:CreateFontString(nil, "ARTWORK")
-	AS:SetFont(card.title, "header", TITLE_SIZE)
+	lib:SetFont(card.title, "header", TITLE_SIZE)
 	card.title:SetTextColor(unpack(GOLD))
 	card.title:SetPoint("TOP", 0, -CARD_PAD)
 	card.title:SetText(title)
 
 	card.text = card:CreateFontString(nil, "ARTWORK")
-	AS:SetFont(card.text, "body")
+	lib:SetFont(card.text, "body", TEXT_SIZE)
 	card.text:SetTextColor(1, 1, 1, 1)
 	card.text:SetPoint("TOP", card.title, "BOTTOM", 0, -TITLE_TO_TEXT)
 	card.text:SetPoint("LEFT", CARD_PAD, 0)
@@ -215,8 +218,6 @@ function StylePicker:Create()
 		return self.frame
 	end
 
-	local AS = LB.AeonSettings
-	local tokens = AS.tokens
 	local frame = CreateFrame("Frame", FRAME_NAME, UIParent, "SettingsFrameTemplate")
 
 	frame:SetFrameStrata("DIALOG")
@@ -252,8 +253,8 @@ function StylePicker:Create()
 
 	local footer = frame:CreateFontString(nil, "ARTWORK")
 
-	AS:SetFont(footer, "body", tokens.font.hintSize + 1)
-	footer:SetTextColor(1, 1, 1, tokens.alpha.description)
+	lib:SetFont(footer, "body", FOOTER_SIZE)
+	footer:SetTextColor(1, 1, 1, FOOTER_ALPHA)
 	footer:SetPoint("TOP", second, "BOTTOM", 0, -CARD_GAP)
 	footer:SetText(L["You can change everything later with /lb."])
 

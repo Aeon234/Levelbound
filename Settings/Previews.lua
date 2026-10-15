@@ -42,7 +42,6 @@ end
 ---@field glint any? the ticker replaying the gain effect
 ---@field hover Frame? the mouse area over the markers sample's bar
 ---@field hovered boolean? the cursor is over the markers sample's bar
----@field inner Frame? the frame each preview draws into, centered in the panel's sample and scaled to fit
 ---@field areas table<LBBar, table<string, Frame>> click areas around each sample bar, by kind
 local Previews = {
 	areas = {},
@@ -314,13 +313,6 @@ end
 ---@return table preview
 local function TypePreview(id)
 	return {
-		Pick = function(key)
-			if SLOT_KEYS[key] and LB.LegacySettings.window then
-				LB.SettingsText:Choose(id, key)
-				LB.LegacySettings.window:SetPreviewChosen(key)
-				LB.LegacySettings.window:RefreshPage()
-			end
-		end,
 		Draw = function(sample, _, addPart)
 			Previews:Begin(sample)
 
@@ -348,11 +340,7 @@ local function TypePreview(id)
 			LB.TextSlot:ApplySample(bar, true)
 
 			for _, key in ipairs(keys) do
-				addPart(Previews:Zone(bar, key, zone), ("slotText.%s.%s"):format(id, key), false, key)
-			end
-
-			if LB.LegacySettings.window then
-				LB.LegacySettings.window:SetPreviewChosen(LB.SettingsText:Chosen(id))
+				addPart(Previews:Zone(bar, key, zone), "slotText." .. id, false, key)
 			end
 
 			Previews:Finish()
@@ -764,13 +752,6 @@ local function PartyBarsPreview()
 		Stop = function()
 			Previews.partyMember = nil
 		end,
-		Pick = function(key)
-			if SLOT_KEYS[key] and LB.LegacySettings.window then
-				LB.SettingsText:Choose("party", key)
-				LB.LegacySettings.window:SetPreviewChosen(key)
-				LB.LegacySettings.window:RefreshPage()
-			end
-		end,
 		Draw = function(sample, _, addPart)
 			Previews:Begin(sample)
 
@@ -790,11 +771,7 @@ local function PartyBarsPreview()
 			LB.TextSlot:ApplySample(bar, true)
 
 			for _, key in ipairs(keys) do
-				addPart(Previews:Zone(bar, key, zone), ("slotText.%s.%s"):format("party", key), false, key)
-			end
-
-			if LB.LegacySettings.window then
-				LB.LegacySettings.window:SetPreviewChosen(LB.SettingsText:Chosen("party"))
+				addPart(Previews:Zone(bar, key, zone), "slotText.party", false, key)
 			end
 
 			Previews:Finish()
@@ -817,13 +794,6 @@ local function PartyPreview()
 		Stop = function()
 			markers.Stop()
 			bars.Stop()
-		end,
-		Pick = function(key)
-			local current = Current()
-
-			if current.Pick then
-				current.Pick(key)
-			end
 		end,
 		Draw = function(sample, state, addPart)
 			return Current().Draw(sample, state, addPart)
@@ -977,70 +947,11 @@ local FIXED = {
 	end,
 }
 
----Holds a preview at its page's fixed height: the drawing is centered in it, and shrinks only when its settings
----carry it past that height, so the panel never changes size.
----@param preview table
----@param height fun(): number
----@return table preview
-local function Framed(preview, height)
-	local draw = preview.Draw
-
-	preview.Draw = function(sample, state, addPart)
-		local inner = Previews.inner
-
-		if not inner then
-			inner = CreateFrame("Frame", nil, sample)
-			Previews.inner = inner
-		end
-
-		if inner:GetParent() ~= sample then
-			inner:SetParent(sample)
-		end
-
-		inner:SetScale(1)
-		inner:Show()
-
-		local width, drawn = draw(inner, state, addPart)
-		local fixed = height()
-		local scale = drawn > fixed and fixed / drawn or 1
-
-		inner:SetScale(scale)
-		inner:SetSize(width, drawn)
-		inner:ClearAllPoints()
-		inner:SetPoint("CENTER", sample, "CENTER")
-
-		return width * scale, fixed
-	end
-
-	return preview
-end
-
----@param pageID string
----@return table? preview the page's preview, or nil for a page without one
-function Previews:For(pageID)
-	local typeID = pageID:match("^type%.(.+)$")
-
-	if typeID then
-		return Framed(TypePreview(typeID), FIXED.type)
-	elseif pageID == "layout" then
-		return Framed(AppearancePreview(), FIXED.layout)
-	elseif pageID == "gain" then
-		return Framed(GainPreview(), FIXED.gain)
-	elseif pageID == "markers" then
-		return Framed(PartyPreview(), function()
-			return LB.Profile:Get("party.display") == "BARS" and FIXED.partyBars() or FIXED.partyMarkers()
-		end)
-	elseif pageID == "levelups" then
-		return Framed(LevelUpsPreview(), FIXED.levelups)
-	end
-end
-
--- LibAeonSettings ------------------------------------------------------------------------------------------
+-- Pages ----------------------------------------------------------------------------------------------------
 
 local STAGE_ROOM = 8 -- the height the library's preview stage keeps free around the sample
 
----Gives a LibAeonSettings page its preview, drawn by the same builders as the AeonSettings window's. The stage
----holds the page's sample with every setting at its largest; the library shrinks a larger drawing to fit.
+---Gives a settings page its preview. The stage holds the page's sample with every setting at its largest; the library shrinks a larger drawing to fit.
 ---@param page table
 ---@param pageID string
 function Previews:Declare(page, pageID)
@@ -1074,11 +985,6 @@ function Previews:Declare(page, pageID)
 		height = height + STAGE_ROOM,
 		refresh = function(canvas, state, handle)
 			local width, drawn = preview.Draw(canvas, state, function(region, target, isText, key)
-				-- One Text box edits the chosen slot, so every slot finds it.
-				if target then
-					target = (target:gsub("^(slotText%.[^.]+)%..+$", "%1"))
-				end
-
 				handle:Part(region, target, { text = isText or nil, key = key })
 			end)
 			local slotType = SlotType()

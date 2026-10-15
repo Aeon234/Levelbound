@@ -274,7 +274,6 @@ function PartyBars:EditTargets()
 			key = "partyBars",
 			label = L["Party Bars"],
 			frame = self.frame,
-			fixed = false,
 			fixedEdge = LB.Placement:StackLock(growth),
 			default = DefaultPosition(frame, growth),
 			settings = { page = "markers", section = "bars" },
@@ -286,9 +285,6 @@ function PartyBars:EditTargets()
 			end,
 			place = function(position)
 				Place(frame, position, growth)
-			end,
-			save = function(left, bottom, width, height)
-				Save(left, bottom, width, height, LB.Profile:Get("party.bars.growth"))
 			end,
 		},
 	}

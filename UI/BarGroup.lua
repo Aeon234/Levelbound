@@ -384,16 +384,6 @@ function BarGroup:ApplyLayout(animated)
 	end)
 end
 
----@param left number
----@param bottom number
----@param width number
----@param height number
----@param lock LBVerticalLock?
----@return LBFramePosition
-local function Anchor(left, bottom, width, height, lock)
-	return LB.Placement:Anchor(left, bottom, width, height, UIParent:GetWidth(), UIParent:GetHeight(), lock)
-end
-
 ---@return LBEditTarget[] targets the group, or each shown bar in Independent mode
 function BarGroup:EditTargets()
 	local layout = LB.Profile:Get("layout")
@@ -415,7 +405,6 @@ function BarGroup:EditTargets()
 					key = id,
 					typeId = id,
 					frame = bar,
-					fixed = false,
 					outline = bar.border,
 					default = rect and rect.default or LB:CopyTable(layout.positions.INDEPENDENT),
 					settings = { page = "type." .. id, section = "size" },
@@ -437,15 +426,6 @@ function BarGroup:EditTargets()
 						bar:ClearAllPoints()
 						PlaceOnScreen(bar, position)
 					end,
-					save = function(left, bottom, width, height)
-						local independent = LB.Profile:Get("layout.independent")
-						local entry = independent[id] or {}
-
-						entry.position = Anchor(left, bottom, width, height)
-						independent[id] = entry
-
-						LB.Profile:Set("layout.independent", independent)
-					end,
 				}
 			end
 		end
@@ -460,7 +440,6 @@ function BarGroup:EditTargets()
 		key = "group",
 		label = mode == "CONNECTED" and L["Bar Stack"] or L["Progress Bars"],
 		frame = frame,
-		fixed = fullscreen ~= nil,
 		pinned = fullscreen and (fullscreen == "TOP" and L["Pinned to Top Edge"] or L["Pinned to Bottom Edge"]) or nil,
 		fixedEdge = mode == "CONNECTED" and LB.Placement:StackLock(layout.growth) or nil,
 		outline = self.border,
@@ -480,12 +459,6 @@ function BarGroup:EditTargets()
 				frame:ClearAllPoints()
 				PlaceOnScreen(frame, position)
 			end
-		end,
-		save = function(left, bottom, width, height)
-			local current = LB.Profile:Get("layout")
-			local lock = current.mode == "CONNECTED" and LB.Placement:StackLock(current.growth) or nil
-
-			LB.Profile:Set("layout.positions." .. current.mode, Anchor(left, bottom, width, height, lock))
 		end,
 	}
 

@@ -30,12 +30,6 @@ local function Join(horizontal, vertical)
 end
 
 ---@param value number
----@return number
-function Placement:Round(value)
-	return math.floor(value + 0.5)
-end
-
----@param value number
 ---@param pixel number
 ---@return number value moved onto the nearest physical pixel boundary
 function Placement:ToPixel(value, pixel)
@@ -122,30 +116,6 @@ function Placement:Anchor(left, bottom, width, height, screenWidth, screenHeight
 	return { point = Join(horizontal, vertical), x = Trim(x), y = Trim(y) }
 end
 
----@param left number
----@param bottom number
----@param width number
----@param height number
----@param screenWidth number
----@param screenHeight number
----@return number x offset of the rectangle's center from the screen's center
----@return number y
-function Placement:Center(left, bottom, width, height, screenWidth, screenHeight)
-	return self:Round(left + width / 2 - screenWidth / 2), self:Round(bottom + height / 2 - screenHeight / 2)
-end
-
----@param x number offset of the center from the screen's center
----@param y number
----@param width number
----@param height number
----@param screenWidth number
----@param screenHeight number
----@return number left
----@return number bottom
-function Placement:FromCenter(x, y, width, height, screenWidth, screenHeight)
-	return screenWidth / 2 + x - width / 2, screenHeight / 2 + y - height / 2
-end
-
 ---@param growth "UP" | "DOWN"
 ---@return LBVerticalLock lock the stack's anchor sits at the end the experience bar is on
 function Placement:StackLock(growth)
@@ -166,64 +136,4 @@ function Placement:Stack(left, leadBottom, width, barHeight, total, growth, scre
 	local bottom = growth == "DOWN" and (leadBottom + barHeight - total) or leadBottom
 
 	return self:Anchor(left, bottom, width, total, screenWidth, screenHeight, self:StackLock(growth))
-end
-
----@param left number
----@param bottom number
----@param width number
----@param height number
----@param otherLeft number
----@param otherBottom number
----@param otherWidth number
----@param otherHeight number
----@return boolean overlaps the two rectangles share some area; touching edges do not count
-function Placement:Overlaps(left, bottom, width, height, otherLeft, otherBottom, otherWidth, otherHeight)
-	return left < otherLeft + otherWidth
-		and otherLeft < left + width
-		and bottom < otherBottom + otherHeight
-		and otherBottom < bottom + height
-end
-
----@class LBSnapLines
----@field x number[]
----@field y number[]
-
----@param start number
----@param size number
----@param lines number[]
----@param threshold number
----@return number shift
----@return number? line the line snapped to, or nil when none was close enough
-local function Nearest(start, size, lines, threshold)
-	local best, bestLine = nil, nil
-
-	for _, line in ipairs(lines) do
-		for _, edge in ipairs({ start, start + size / 2, start + size }) do
-			local shift = line - edge
-
-			if math.abs(shift) <= threshold and (not best or math.abs(shift) < math.abs(best)) then
-				best, bestLine = shift, line
-			end
-		end
-	end
-
-	return best or 0, bestLine
-end
-
----Moves a rectangle so its nearest edge or center meets a line within `threshold` on each axis.
----@param left number
----@param bottom number
----@param width number
----@param height number
----@param lines LBSnapLines
----@param threshold number
----@return number left
----@return number bottom
----@return number? guideX
----@return number? guideY
-function Placement:Snap(left, bottom, width, height, lines, threshold)
-	local shiftX, guideX = Nearest(left, width, lines.x, threshold)
-	local shiftY, guideY = Nearest(bottom, height, lines.y, threshold)
-
-	return left + shiftX, bottom + shiftY, guideX, guideY
 end

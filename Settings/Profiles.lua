@@ -1,40 +1,48 @@
 local LB = select(2, ...)
 
 local L = LB.L
-local AS = LB.AeonSettings
 
----The Profiles page: the settings library's profiles page over `LB.Profile`.
+---The Profiles page: the settings library's profiles page over `LB.Profile`. Profile actions empty the window's
+---Undo history and read every value again; the bars follow the swap through the profile's own "Settings" callback,
+---and edit mode's targets are placed again.
 ---@class LBSettingsProfiles
----@field page table?
 local Profiles = {}
 LB.SettingsProfiles = Profiles
 
+---@param change fun(...)
+---@return fun(...) change that places edit mode's targets again afterwards
+local function Placed(change)
+	return function(...)
+		change(...)
+		LB.EditTargets:Apply()
+	end
+end
+
 local adapter = {
-	builtin = "Default",
 	List = function()
 		return LB.Profile:List()
 	end,
 	Active = function()
 		return LB.Profile.activeName
 	end,
-	Switch = function(name)
+	Switch = Placed(function(name)
 		LB.Profile:Activate(name)
-	end,
-	New = function(name)
+	end),
+	New = Placed(function(name)
 		LB.Profile:New(name)
-	end,
-	Copy = function(name)
+	end),
+	Copy = Placed(function(name)
 		LB.Profile:Copy(LB.Profile.activeName, name)
-	end,
-	Rename = function(name)
+	end),
+	Rename = Placed(function(name)
 		LB.Profile:Rename(LB.Profile.activeName, name)
-	end,
-	Delete = function(name, replacement)
+	end),
+	Delete = Placed(function(name, replacement)
 		LB.Profile:Delete(name, replacement)
-	end,
-	Reset = function()
+	end),
+	Reset = Placed(function()
 		LB.Profile:Reset()
-	end,
+	end),
 	Export = function()
 		return LB.Profile:Export(LB.Profile.activeName) or ""
 	end,
@@ -49,55 +57,22 @@ local adapter = {
 
 		return payload
 	end,
-	Import = function(payload, name)
+	Import = Placed(function(payload, name)
 		LB.Profile:Import(payload, name)
-	end,
-	IsEditing = function()
-		return LB.EditMode:IsActive()
-	end,
+	end),
 	UsesCharacterProfile = function()
 		return LB.Profile.char.useCharacterProfile == true
 	end,
-	SetUseCharacterProfile = function(on)
+	SetUseCharacterProfile = Placed(function(on)
 		LB.Profile:SetUseCharacterProfile(on)
-	end,
+	end),
 }
 
----@return table page
-function Profiles:Page()
-	if not self.page then
-		self.page = AS:CreateProfilesPage({ id = "profiles", title = L["Profiles"], adapter = adapter })
-		self.page.description = L["Per-character or shared settings, with copy, export and import."]
-	end
-
-	return self.page
-end
-
----The Profiles page on LibAeonSettings, over the same adapter. Profile actions empty the window's Undo history and
----read every value again; the bars follow the swap through the profile's own "Settings" callback, and edit mode's
----targets are placed again.
 ---@param window table
 function Profiles:Declare(window)
-	-- Edit mode's own state locks the page, and every action that changes the profile places the frames again.
-	local SKIP = { builtin = true, IsEditing = true }
-	local REPLACES = { Switch = true, New = true, Copy = true, Rename = true, Delete = true, Reset = true,
-		Import = true, SetUseCharacterProfile = true }
-	local shared = {}
-
-	for name, fn in pairs(adapter) do
-		if REPLACES[name] then
-			shared[name] = function(...)
-				fn(...)
-				LB.EditTargets:Apply()
-			end
-		elseif not SKIP[name] then
-			shared[name] = fn
-		end
-	end
-
 	window:ProfilesPage("profiles", {
 		title = L["Profiles"],
 		description = L["Per-character or shared settings, with copy, export and import."],
-		adapter = shared,
+		adapter = adapter,
 	})
 end

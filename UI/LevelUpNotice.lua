@@ -329,7 +329,6 @@ function Notice:EditTargets()
 			key = "levelUp",
 			label = LB.L["Level-Up Notices"],
 			frame = box,
-			fixed = false,
 			default = NoticeStack:DefaultPosition((Notice:Footprint()), -1),
 			settings = { page = "levelups", section = "placement" },
 			read = function()
@@ -340,14 +339,6 @@ function Notice:EditTargets()
 			end,
 			place = function(position)
 				Notice:PlaceBox(position)
-			end,
-			save = function(left, bottom, width, height)
-				local screenWidth, screenHeight = UIParent:GetWidth(), UIParent:GetHeight()
-
-				LB.Profile:Set(
-					"party.levelUp.screen",
-					LB.Placement:Anchor(left, bottom, width, height, screenWidth, screenHeight)
-				)
 			end,
 		},
 	}

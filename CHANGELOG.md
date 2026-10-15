@@ -1,5 +1,20 @@
 # Levelbound
 
+## Unreleased
+
+Settings:
+
+- The settings window and edit mode are rebuilt on the settings library Aeon's addons share, with search across
+  every page and Undo.
+- The Bars settings are now five pages: Layout, Appearance (with the bar preview), Text, Visibility and Gain
+  Indicator. Gain Indicator, Party Progress and Level-Ups no longer have tabs; Party Progress shows the sections
+  for markers or for standalone bars, as Display is set. `/lb appearance`, `/lb text` and `/lb visibility` open
+  their own pages.
+- Settings no longer have a Defaults button per page. A setting that follows a shared value goes back to it with
+  its reset arrow, and the profile's Reset still restores everything.
+- In edit mode, each frame has a menu with its position and a shortcut to its settings. Your snap, grid and
+  toolbar choices carry over.
+
 ## 1.2.1
 
 Fixes:

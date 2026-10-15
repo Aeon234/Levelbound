@@ -19,8 +19,6 @@ L["the last profile cannot be deleted."] = "последний профиль н
 L["the settings window is not available yet."] = "окно настроек пока недоступно."
 L["saved settings failed to load, so the bars are off for this session."] = "не удалось загрузить сохраненные настройки, поэтому полосы отключены до конца сеанса."
 L["the %s bar hit an error and is off for this session."] = "в полосе «%s» произошла ошибка, она отключена до конца сеанса."
-L["the layout cannot be edited in combat."] = "расположение нельзя изменять в бою."
-L["layout editing is paused for combat."] = "редактирование расположения приостановлено на время боя."
 L["there is no progress to share."] = "нет прогресса, которым можно поделиться."
 -- party, instance, raid, guild and say are the /lb share command's words; keep them in English
 L["share to party, instance, raid, guild or say."] = "куда поделиться: party, instance, raid, guild или say."
@@ -113,10 +111,6 @@ L["tag.session"] = "Время сеанса"
 L["tag.leveltime"] = "Время на уровне"
 L["tag.played"] = "Общее время в игре"
 
--- Settings window: frame (Settings/Settings.lua); "Edit Mode" is also the edit mode toolbar's title
-L["Edit Mode"] = "Режим редактирования"
-L["Editing the layout. Changes are not saved yet."] = "Редактирование расположения. Изменения еще не сохранены."
-
 -- Settings window: used on more than one page
 L["Font"] = "Шрифт"
 L["Size"] = "Размер"
@@ -170,7 +164,7 @@ L["Reset Session"] = "Сбросить сеанс"
 L["This character only."] = "Только для этого персонажа."
 L["Session reset."] = "Сеанс сброшен."
 
--- Settings window: Layout; mode names (Core/Layout.lua), sizes and "Off" are also used by edit mode
+-- Settings window: Layout; mode names (Core/Layout.lua)
 L["Layout"] = "Расположение"
 L["Layout Mode"] = "Режим расположения"
 L["Segmented"] = "Сегментированный"
@@ -246,7 +240,6 @@ L["Gain Indicator"] = "Индикатор прироста"
 L["Show Gain Indicator"] = "Показывать индикатор прироста"
 L["Animate"] = "Анимация"
 L["Behavior"] = "Поведение"
-L["Amount"] = "Прирост"
 L["Position"] = "Положение"
 L["Fill Edge"] = "Край заполнения"
 L["Right End"] = "Правый конец"
@@ -300,22 +293,18 @@ L["No other bar to copy from."] = "Нет другой полосы для ко�
 
 -- Settings window: Party
 L["Party"] = "Группа"
-L["Markers"] = "Метки"
-L["Notices"] = "Уведомления"
 L["Party Markers"] = "Метки группы"
 L["Party Progress"] = "Прогресс группы"
 L["Display"] = "Отображение"
 L["Markers on Your Bar"] = "Метки на вашей полосе"
 L["Standalone Bars"] = "Отдельные полосы"
 L["Party Bars"] = "Полосы группы"
-L["Show Party Bars"] = "Показывать полосы группы"
 L["Class Color Fill"] = "Заливка цветом класса"
 L["Compact"] = "Компактно"
 L["Compact sets the gap to 1 pixel."] = "Компактный режим ставит отступ в 1 пиксель."
 L["Compact shows the text inside the bars only."] = "Компактный режим показывает только текст внутри полос."
 L["Match Bar Visibility"] = "Как у основных полос"
 L["Uses the bars' Visibility settings."] = "Использует настройки видимости основных полос."
-L["Show Party Markers"] = "Показывать метки группы"
 L["Show Party Progress"] = "Показывать прогресс группы"
 L["Marker Style"] = "Стиль меток"
 L["Dot"] = "Точка"
@@ -344,7 +333,6 @@ L["Top Right"] = "Сверху справа"
 L["Bottom Left"] = "Снизу слева"
 L["Bottom Right"] = "Снизу справа"
 L["Notice Text"] = "Текст уведомления"
-L["Announcements"] = "Объявления"
 L["Print Level-Up Message"] = "Новый уровень: в свой чат"
 L["Party Level-Up Message"] = "Новый уровень: в группу"
 L["Dungeon Summary"] = "Сводка подземелья"
@@ -360,9 +348,8 @@ L["This is not a Levelbound profile string, or it was cut short."] = "Это н�
 L["This profile string was made by a newer version of Levelbound."] = "Эта строка профиля создана более новой версией Levelbound."
 L["This profile string has no profile in it."] = "В этой строке профиля нет профиля."
 
--- Settings window: page descriptions, under each page's title (Settings/Pages.lua, Settings/Profiles.lua)
+-- Settings window: page descriptions, under each page's title (Settings/General.lua, Bars.lua, Types.lua, Party.lua, Profiles.lua)
 L["The minimap button, bar tooltips and clicks, and time tracking."] = "Кнопка у миникарты, подсказки и щелчки по полосам, учёт времени."
-L["How every bar is arranged, sized, drawn and shown."] = "Как все полосы расположены, какого они размера, как рисуются и когда видны."
 L["The arrow and amount shown each time a bar gains progress."] = "Стрелка и количество, которые появляются при каждом продвижении полосы."
 L["This bar's colors, its own size and its text."] = "Цвета этой полосы, её собственный размер и её текст."
 L["Party members running Levelbound, as markers on your experience bar or as bars of their own."] = "Участники группы с Levelbound: метками на вашей полосе опыта или отдельными полосами."
@@ -499,23 +486,8 @@ L["When you are not in that group or guild, it is printed for you alone."] = "Е
 L["%s, %s or %s: posted to that chat."] = "%s, %s или %s: публикуются в этот чат."
 L["How the bars are arranged:\nSegmented: one bar shared by every progress type.\nConnected: a bar for each type, stacked.\nIndependent: a bar for each type, each placed in Edit Mode."] = "Как расположены полосы:\nСегментированный: одна полоса на все типы прогресса.\nСвязанный: по полосе на каждый тип, стопкой.\nНезависимый: по полосе на каждый тип, каждая размещается в режиме редактирования."
 
--- Edit mode: toolbar, mover panel, popups and the bars' mover labels (Settings/EditMode.lua, Settings/EditPanel.lua, UI/BarGroup.lua)
-L["Exit"] = "Выход"
-L["Snap"] = "Привязка"
-L["Enabled"] = "Вкл."
-L["Disabled"] = "Выкл."
-L["Grid Lines"] = "Линии сетки"
-L["Dimmed"] = "Тусклые"
-L["Bright"] = "Яркие"
-L["Hover Top Bar"] = "Верхняя панель при наведении"
-L["Resume Editing"] = "Продолжить редактирование"
-L["Paused"] = "Приостановлено"
-L["Paused for combat"] = "Приостановлено на время боя"
+-- Edit mode: the bars' mover labels and the pinned note (UI/BarGroup.lua)
 L["Progress Bars"] = "Полосы прогресса"
 L["Bar Stack"] = "Стопка полос"
-L["X"] = "X"
-L["Y"] = "Y"
 L["Pinned to Top Edge"] = "Закреплено у верхнего края"
 L["Pinned to Bottom Edge"] = "Закреплено у нижнего края"
-L["Save your layout changes?"] = "Сохранить изменения расположения?"
-L["Discard"] = "Не сохранять"

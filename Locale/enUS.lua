@@ -29,8 +29,6 @@ L["the settings window is not available yet."] = "the settings window is not ava
 L["saved settings failed to load, so the bars are off for this session."] =
 	"saved settings failed to load, so the bars are off for this session."
 L["the %s bar hit an error and is off for this session."] = "the %s bar hit an error and is off for this session."
-L["the layout cannot be edited in combat."] = "the layout cannot be edited in combat."
-L["layout editing is paused for combat."] = "layout editing is paused for combat."
 L["there is no progress to share."] = "there is no progress to share."
 -- party, instance, raid, guild and say are the /lb share command's words; keep them in English
 L["share to party, instance, raid, guild or say."] = "share to party, instance, raid, guild or say."
@@ -123,10 +121,6 @@ L["tag.session"] = "Session time"
 L["tag.leveltime"] = "Time this level"
 L["tag.played"] = "Total time played"
 
--- Settings window: frame (Settings/Settings.lua); "Edit Mode" is also the edit mode toolbar's title
-L["Edit Mode"] = "Edit Mode"
-L["Editing the layout. Changes are not saved yet."] = "Editing the layout. Changes are not saved yet."
-
 -- Settings window: used on more than one page
 L["Font"] = "Font"
 L["Size"] = "Size"
@@ -180,7 +174,7 @@ L["Reset Session"] = "Reset Session"
 L["This character only."] = "This character only."
 L["Session reset."] = "Session reset."
 
--- Settings window: Layout; mode names (Core/Layout.lua), sizes and "Off" are also used by edit mode
+-- Settings window: Layout; mode names (Core/Layout.lua)
 L["Layout"] = "Layout"
 L["Layout Mode"] = "Layout Mode"
 L["Segmented"] = "Segmented"
@@ -256,7 +250,6 @@ L["Gain Indicator"] = "Gain Indicator"
 L["Show Gain Indicator"] = "Show Gain Indicator"
 L["Animate"] = "Animate"
 L["Behavior"] = "Behavior"
-L["Amount"] = "Amount"
 L["Position"] = "Position"
 L["Fill Edge"] = "Fill Edge"
 L["Right End"] = "Right End"
@@ -311,22 +304,18 @@ L["No other bar to copy from."] = "No other bar to copy from."
 
 -- Settings window: Party
 L["Party"] = "Party"
-L["Markers"] = "Markers"
-L["Notices"] = "Notices"
 L["Party Markers"] = "Party Markers"
 L["Party Progress"] = "Party Progress"
 L["Display"] = "Display"
 L["Markers on Your Bar"] = "Markers on Your Bar"
 L["Standalone Bars"] = "Standalone Bars"
 L["Party Bars"] = "Party Bars"
-L["Show Party Bars"] = "Show Party Bars"
 L["Class Color Fill"] = "Class Color Fill"
 L["Compact"] = "Compact"
 L["Compact sets the gap to 1 pixel."] = "Compact sets the gap to 1 pixel."
 L["Compact shows the text inside the bars only."] = "Compact shows the text inside the bars only."
 L["Match Bar Visibility"] = "Match Bar Visibility"
 L["Uses the bars' Visibility settings."] = "Uses the bars' Visibility settings."
-L["Show Party Markers"] = "Show Party Markers"
 L["Show Party Progress"] = "Show Party Progress"
 L["Marker Style"] = "Marker Style"
 L["Dot"] = "Dot"
@@ -355,7 +344,6 @@ L["Top Right"] = "Top Right"
 L["Bottom Left"] = "Bottom Left"
 L["Bottom Right"] = "Bottom Right"
 L["Notice Text"] = "Notice Text"
-L["Announcements"] = "Announcements"
 L["Print Level-Up Message"] = "Print Level-Up Message"
 L["Party Level-Up Message"] = "Party Level-Up Message"
 L["Dungeon Summary"] = "Dungeon Summary"
@@ -373,10 +361,9 @@ L["This profile string was made by a newer version of Levelbound."] =
 	"This profile string was made by a newer version of Levelbound."
 L["This profile string has no profile in it."] = "This profile string has no profile in it."
 
--- Settings window: page descriptions, under each page's title (Settings/Pages.lua, Settings/Profiles.lua)
+-- Settings window: page descriptions, under each page's title (Settings/General.lua, Bars.lua, Types.lua, Party.lua, Profiles.lua)
 L["The minimap button, bar tooltips and clicks, and time tracking."] =
 	"The minimap button, bar tooltips and clicks, and time tracking."
-L["How every bar is arranged, sized, drawn and shown."] = "How every bar is arranged, sized, drawn and shown."
 L["The arrow and amount shown each time a bar gains progress."] =
 	"The arrow and amount shown each time a bar gains progress."
 L["This bar's colors, its own size and its text."] = "This bar's colors, its own size and its text."
@@ -567,23 +554,8 @@ L["%s, %s or %s: posted to that chat."] = "%s, %s or %s: posted to that chat."
 L["How the bars are arranged:\nSegmented: one bar shared by every progress type.\nConnected: a bar for each type, stacked.\nIndependent: a bar for each type, each placed in Edit Mode."] =
 	"How the bars are arranged:\nSegmented: one bar shared by every progress type.\nConnected: a bar for each type, stacked.\nIndependent: a bar for each type, each placed in Edit Mode."
 
--- Edit mode: toolbar, mover panel, popups and the bars' mover labels (Settings/EditMode.lua, Settings/EditPanel.lua, UI/BarGroup.lua)
-L["Exit"] = "Exit"
-L["Snap"] = "Snap"
-L["Enabled"] = "Enabled"
-L["Disabled"] = "Disabled"
-L["Grid Lines"] = "Grid Lines"
-L["Dimmed"] = "Dimmed"
-L["Bright"] = "Bright"
-L["Hover Top Bar"] = "Hover Top Bar"
-L["Resume Editing"] = "Resume Editing"
-L["Paused"] = "Paused"
-L["Paused for combat"] = "Paused for combat"
+-- Edit mode: the bars' mover labels and the pinned note (UI/BarGroup.lua)
 L["Progress Bars"] = "Progress Bars"
 L["Bar Stack"] = "Bar Stack"
-L["X"] = "X"
-L["Y"] = "Y"
 L["Pinned to Top Edge"] = "Pinned to Top Edge"
 L["Pinned to Bottom Edge"] = "Pinned to Bottom Edge"
-L["Save your layout changes?"] = "Save your layout changes?"
-L["Discard"] = "Discard"

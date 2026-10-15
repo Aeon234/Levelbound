@@ -4,8 +4,22 @@ local lib = LibStub("LibAeonSettings-1.0")
 
 local ADDON_NAME = ...
 
--- Each owner describes what edit mode moves and where it is saved: `:EditTargets()` entries with `read`, `write`,
--- `place`, `default` and the mover's options.
+---What an owner's `:EditTargets()` describes: a frame edit mode moves, where its position is saved and how it is
+---placed.
+---@class LBEditTarget
+---@field key string
+---@field label string? the mover's label; the progress type's name when nil
+---@field typeId string? the progress type a bar shows
+---@field frame Frame
+---@field outline Frame? the border the mover covers
+---@field default LBFramePosition
+---@field fixedEdge LBVerticalLock? the edge a stack keeps as it grows
+---@field pinned string? why the frame cannot be moved now
+---@field settings { page: string, section: string? } where Element Options opens the settings
+---@field read fun(): LBFramePosition? the saved position
+---@field write fun(position: LBFramePosition?) saves a position
+---@field place fun(position: LBFramePosition) anchors the frame at a position
+
 local OWNERS = { LB.BarGroup, LB.LevelUpNotice, LB.Gain, LB.PartyBars }
 
 ---Levelbound's frames in LibAeonSettings' edit mode: the owners' targets, positions read and written through them,

@@ -605,7 +605,6 @@ function Gain:EditTargets()
 			key = "gain",
 			label = L["Gain Indicator"],
 			frame = box,
-			fixed = false,
 			default = NoticeStack:DefaultPosition((Gain:DetachedFootprint()), 1),
 			settings = { page = "gain", section = "placement" },
 			read = function()
@@ -616,11 +615,6 @@ function Gain:EditTargets()
 			end,
 			place = function(position)
 				Gain:PlaceBox(position)
-			end,
-			save = function(left, bottom, width, height)
-				local screenWidth, screenHeight = UIParent:GetWidth(), UIParent:GetHeight()
-
-				LB.Profile:Set("gain.screen", LB.Placement:Anchor(left, bottom, width, height, screenWidth, screenHeight))
 			end,
 		},
 	}

@@ -178,7 +178,7 @@ local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 ---@class LBGlobalSettings
 ---@field minimapButton { hide: boolean }
 ---@field requestTimePlayed boolean
----@field editMode { snap: boolean, grid: "DIMMED" | "BRIGHT" | "OFF", hoverBar: boolean }
+---@field editMode table? LibAeonSettings' edit mode preferences, which the library reads and writes
 ---@field styleChosen boolean the starting look was chosen; true from the start for data saved before it was offered
 
 ---@class LBCharacterDatabase
@@ -379,7 +379,6 @@ local globalDefaults = {
 	global = {
 		minimapButton = { hide = false },
 		requestTimePlayed = true,
-		editMode = { snap = true, grid = "BRIGHT", hoverBar = false },
 	},
 }
 
@@ -967,21 +966,6 @@ function Profile:Read(profile, fn)
 	if not ok then
 		error(err, 0)
 	end
-end
-
----@return LBProfileData copy of the active profile, for an editing session to fall back to
-function Profile:Snapshot()
-	return LB:CopyTable(self.active)
-end
-
----@param data LBProfileData a copy taken by Snapshot while this profile was active
-function Profile:Restore(data)
-	LB:MergeDefaults(data, defaults)
-
-	self.db.profiles[self.activeName] = data
-	self.active = data
-
-	LB.Callbacks:Fire("Settings", nil, nil)
 end
 
 ---Changes several settings of the active profile at once, then reports one whole-profile change.
