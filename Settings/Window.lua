@@ -42,6 +42,7 @@ function Settings:Window()
 
 	self.window = window
 	self:DeclareGeneral(window)
+	self:DeclareBars(window)
 
 	return window
 end
@@ -136,20 +137,72 @@ function Settings:Tooltip(key, id, note)
 	return base or note
 end
 
----Declares a checkbox bound to a profile path, with its default and tooltip.
+---Declares a setting of a library control kind (`"Checkbox"`, `"Slider"`, `"Dropdown"` ...). A setting bound by
+---`path` gets the profile default; the tooltip is the description under `key`, followed by `note`. Dropdown
+---choices are already localized and keep their case.
 ---@param section table
+---@param kind string
 ---@param key string the descriptions' page key
----@param id string
----@param label string
----@param path string
----@param fields table? further setting fields, which take precedence
+---@param info table the setting's fields
+---@param note string?
 ---@return table? setting
-function Settings:Checkbox(section, key, id, label, path, fields)
-	local info = { id = id, label = label, path = path, default = self:Default(path), tooltip = self:Tooltip(key, id) }
-
-	for field, value in pairs(fields or {}) do
-		info[field] = value
+function Settings:Add(section, kind, key, info, note)
+	if info.path and info.default == nil then
+		info.default = self:Default(info.path)
 	end
 
-	return section:Checkbox(info)
+	if info.tooltip == nil then
+		info.tooltip = self:Tooltip(key, info.id, note)
+	end
+
+	if kind == "Dropdown" and info.titleCase == nil then
+		info.titleCase = false
+	end
+
+	return section[kind](section, info)
+end
+
+---@param options { value: any, label: string }[] | fun(): { value: any, label: string }[]
+---@return fun(): { value: any, text: string }[] choices a dropdown's `options`
+function Settings:Choices(options)
+	return function()
+		local list = type(options) == "function" and options() or options
+		local choices = {}
+
+		for index, option in ipairs(list) do
+			choices[index] = { value = option.value, text = option.label }
+		end
+
+		return choices
+	end
+end
+
+---A 0 to 1 profile value shown as a percentage, for a slider's `get` and `set`.
+---@param path string
+---@return fun(): number get
+---@return fun(value: number) set
+function Settings:Percent(path)
+	return function()
+		return math.floor((LB.Profile:Get(path) or 0) * 100 + 0.5)
+	end, function(value)
+		LB.Profile:Set(path, value / 100)
+	end
+end
+
+---A profile color stored as `{ r, g, b, a? }`, for a swatch's `get` and `set`. With `opacity`, the swatch edits
+---the alpha too; without, a stored alpha is kept.
+---@param path string
+---@param opacity boolean?
+---@return fun(): table? get
+---@return fun(value: table) set
+function Settings:ColorAccess(path, opacity)
+	return function()
+		local color = LB.Profile:Get(path)
+
+		return color and { r = color[1], g = color[2], b = color[3], a = color[4] }
+	end, function(value)
+		local old = LB.Profile:Get(path) or {}
+
+		LB.Profile:Set(path, { value.r, value.g, value.b, opacity and (value.a or 1) or old[4] })
+	end
 end

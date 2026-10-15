@@ -29,8 +29,12 @@ function Settings:DeclareGeneral(window)
 
 	local interaction = page:Section("interaction", L["Bar Interaction"])
 
-	self:Checkbox(interaction, "general", "tooltip", L["Show Tooltip"], "tooltip.enabled")
-	self:Checkbox(interaction, "general", "clickActions", L["Click to Open or Share"], "tooltip.clickActions")
+	self:Add(interaction, "Checkbox", "general", { id = "tooltip", label = L["Show Tooltip"], path = "tooltip.enabled" })
+	self:Add(interaction, "Checkbox", "general", {
+		id = "clickActions",
+		label = L["Click to Open or Share"],
+		path = "tooltip.clickActions",
+	})
 
 	local time = page:Section("time", L["Time Tracking"])
 
