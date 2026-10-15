@@ -43,6 +43,7 @@ function Settings:Window()
 	self.window = window
 	self:DeclareGeneral(window)
 	self:DeclareBars(window)
+	self:DeclareTypes(window)
 
 	return window
 end

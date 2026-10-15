@@ -505,3 +505,226 @@ function Text:Elements(ctx, typeId)
 
 	return elements
 end
+
+---Declares the slot editor on LibAeonSettings: one set of rows that edits whichever slot is chosen, in a Text
+---section of `container` (a page or a tab) with Copy Settings From on its title line.
+---@param container table a page or a tab
+---@param typeId string
+---@return table section
+function Text:Declare(container, typeId)
+	local Settings = LB.Settings
+	local KEY = typeId == "party" and "markers" or "type"
+
+	local function Chosen()
+		return self:Chosen(typeId)
+	end
+
+	-- With no slot left to edit, every row says why.
+	local function Blocked()
+		return Unavailable(typeId, Chosen())
+	end
+
+	local function Field(field, fallback)
+		return function()
+			local slot = Slot(typeId, Chosen())
+
+			if slot and slot[field] ~= nil then
+				return slot[field]
+			end
+
+			return fallback
+		end
+	end
+
+	local function Setter(field)
+		return function(value)
+			SetField(typeId, Chosen(), field, value)
+		end
+	end
+
+	-- A style row shows the slot's own value while it has one, and the text style's otherwise (◆ and ↺).
+	local function Override(field)
+		return function()
+			if Overridden(typeId, Chosen(), field) then
+				return Slot(typeId, Chosen()).style[field]
+			end
+		end, function(value)
+			if value == nil then
+				if Overridden(typeId, Chosen(), field) then
+					LB.Profile:Set(Path(typeId, Chosen()) .. ".style." .. field, nil)
+				end
+
+				return
+			end
+
+			SetOverride(typeId, Chosen(), field, value)
+		end
+	end
+
+	local section = container:Section("text", L["Text"])
+	local copyChoices = CopyChoices(typeId)
+
+	section:Menu({
+		id = "copyFrom",
+		label = L["Copy Settings From"],
+		tooltip = Settings:Tooltip(KEY, "copyFrom"),
+		placeholder = L["Copy Settings From"],
+		titleCase = false,
+		action = true,
+		verb = L["Copy"],
+		width = COPY_WIDTH,
+		options = copyChoices,
+		blocked = function()
+			if #copyChoices == 0 then
+				return L["No other bar to copy from."]
+			end
+		end,
+		confirm = function(from)
+			return L["Replace this bar's text with %s's?"]:format(LB.Model:Label(from))
+		end,
+		set = function(from, setting)
+			LB.Profile:CopySlots(from, typeId)
+			setting.window:Refresh()
+		end,
+	})
+
+	local textInput
+
+	Settings:Add(section, "Dropdown", KEY, {
+		id = "slot",
+		label = L["Slot"],
+		keywords = SearchText(typeId),
+		redraws = true,
+		options = function()
+			return SlotChoices(typeId)
+		end,
+		get = Chosen,
+		set = function(value)
+			self:Choose(typeId, value)
+
+			if textInput then
+				textInput:SetTextCursor(nil)
+			end
+		end,
+	})
+	section:Skip()
+
+	textInput = Settings:Add(section, "TextInput", KEY, {
+		id = "slotText." .. typeId,
+		label = L["Text"],
+		allowEmpty = true,
+		blocked = Blocked,
+		get = Field("text", ""),
+		set = Setter("text"),
+	})
+	Settings:Add(section, "Dropdown", KEY, {
+		id = "insertTag",
+		label = L["Insert Tag"],
+		placeholder = L["Insert Tag"],
+		action = true,
+		blocked = Blocked,
+		options = function()
+			return TagChoices(typeId)
+		end,
+		set = function(tag)
+			textInput:InsertText("[" .. tag .. "]")
+		end,
+	})
+	Settings:Add(section, "Dropdown", KEY, {
+		id = "visibility",
+		label = L["Visibility"],
+		blocked = Blocked,
+		options = {
+			{ value = "HIDDEN", text = L["Hidden"] },
+			{ value = "HOVER", text = L["On Hover"] },
+			{ value = "ALWAYS", text = ALWAYS },
+		},
+		get = Field("visibility", "ALWAYS"),
+		set = Setter("visibility"),
+	})
+	section:Skip()
+	Settings:Add(section, "Slider", KEY, {
+		id = "nudgeX",
+		label = L["Nudge X"],
+		min = -NUDGE_LIMIT,
+		max = NUDGE_LIMIT,
+		step = 1,
+		blocked = Blocked,
+		get = Field("x", 0),
+		set = Setter("x"),
+	})
+	Settings:Add(section, "Slider", KEY, {
+		id = "nudgeY",
+		label = L["Nudge Y"],
+		min = -NUDGE_LIMIT,
+		max = NUDGE_LIMIT,
+		step = 1,
+		blocked = Blocked,
+		get = Field("y", 0),
+		set = Setter("y"),
+	})
+
+	local getFont, setFont = Override("font")
+
+	Settings:Add(section, "Dropdown", KEY, {
+		id = "slotFont",
+		label = L["Font"],
+		picker = "font",
+		inherits = { path = "text.style.font", from = L["Text Style"] },
+		blocked = Blocked,
+		get = getFont,
+		set = setFont,
+	})
+
+	local getSize, setSize = Override("size")
+
+	Settings:Add(section, "Slider", KEY, {
+		id = "slotSize",
+		label = L["Size"],
+		min = SIZE_MIN,
+		max = SIZE_MAX,
+		step = 1,
+		inherits = { path = "text.style.size", from = L["Text Style"] },
+		blocked = Blocked,
+		get = getSize,
+		set = setSize,
+	})
+
+	local getOutline, setOutline = Override("outline")
+
+	Settings:Add(section, "Dropdown", KEY, {
+		id = "slotOutline",
+		label = L["Outline"],
+		options = Settings:Choices(LB.Media.outlines),
+		inherits = { path = "text.style.outline", from = L["Text Style"] },
+		blocked = Blocked,
+		get = getOutline,
+		set = setOutline,
+	})
+
+	local getColor, setColor = Override("color")
+
+	Settings:Add(section, "Color", KEY, {
+		id = "slotColor",
+		label = COLOR,
+		inherits = {
+			from = L["Text Style"],
+			get = function()
+				local color = LB.Profile:Get("text.style.color")
+
+				return { r = color[1], g = color[2], b = color[3] }
+			end,
+		},
+		blocked = Blocked,
+		get = function()
+			local color = getColor()
+
+			return color and { r = color[1], g = color[2], b = color[3] }
+		end,
+		set = function(value)
+			setColor(value and { value.r, value.g, value.b })
+		end,
+	})
+
+	return section
+end
