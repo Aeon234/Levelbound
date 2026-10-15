@@ -13,6 +13,9 @@ externals:
   Libs/LibDataBroker-1.1: https://repos.wowace.com/wow/libdbicon-1-0/trunk/LibDataBroker-1.1
   Libs/LibDBIcon-1.0: https://repos.wowace.com/wow/libdbicon-1-0/trunk/LibDBIcon-1.0
   Libs/ChatThrottleLib: https://repos.wowace.com/wow/chatthrottlelib/trunk
+  Libs/LibAeonSettings:
+    url: https://github.com/Aeon234/LibAeonSettings.git
+    tag: 1.0.0
 
 ignore:
   - .pkgmeta

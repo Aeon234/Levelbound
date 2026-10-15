@@ -248,9 +248,11 @@ function EditMode:Enter(fromSettings)
 
 	LB.Editing:Set({ editMode = true })
 
-	if LB.Settings:IsOpen() then
-		LB.Settings:Close()
+	if LB.LegacySettings:IsOpen() then
+		LB.LegacySettings:Close()
 	end
+
+	LB.Settings:Close()
 
 	self:ShowLayout()
 	self:FadeIn()
@@ -299,7 +301,7 @@ function EditMode:Exit()
 		return
 	end
 
-	local reopen = self.fromSettings == true and not self.hidden and not LB.Settings:IsOpen()
+	local reopen = self.fromSettings == true and not self.hidden and not LB.LegacySettings:IsOpen()
 	local toolbar, driver = self.toolbar, self.driver
 
 	LB.Events:UnregisterAll(self)
@@ -335,9 +337,9 @@ function EditMode:Finish(reopen)
 	LB.Editing:Set({ editMode = false })
 
 	if reopen then
-		LB.Settings:Open()
+		LB.LegacySettings:Open()
 	else
-		LB.Settings:Refresh()
+		LB.LegacySettings:Refresh()
 	end
 end
 
@@ -385,7 +387,7 @@ end
 
 ---@param section string?
 function EditMode:OpenSettings(section)
-	LB.Settings:Open(section)
+	LB.LegacySettings:Open(section)
 end
 
 function EditMode:OnSettingsShown()

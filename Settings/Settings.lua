@@ -3,7 +3,7 @@ local LB = select(2, ...)
 local L = LB.L
 local AS = LB.AeonSettings
 
-local FRAME_NAME = "LevelboundSettings"
+local FRAME_NAME = "LevelboundSettingsLegacy"
 
 -- Page ids that older callers and `/lb <page>` use.
 local ALIASES = {
@@ -15,11 +15,12 @@ local ALIASES = {
 	visibility = "layout",
 }
 
----The settings window, built on the AeonSettings library.
----@class LBSettings
+---The settings window on the vendored AeonSettings, kept reachable through `/lb old` while the pages move to
+---LibAeonSettings.
+---@class LBLegacySettings
 ---@field window table?
 local Settings = {}
-LB.Settings = Settings
+LB.LegacySettings = Settings
 
 function Settings:Create()
 	if self.window then

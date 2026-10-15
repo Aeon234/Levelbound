@@ -315,10 +315,10 @@ end
 local function TypePreview(id)
 	return {
 		Pick = function(key)
-			if SLOT_KEYS[key] and LB.Settings.window then
+			if SLOT_KEYS[key] and LB.LegacySettings.window then
 				LB.SettingsText:Choose(id, key)
-				LB.Settings.window:SetPreviewChosen(key)
-				LB.Settings.window:RefreshPage()
+				LB.LegacySettings.window:SetPreviewChosen(key)
+				LB.LegacySettings.window:RefreshPage()
 			end
 		end,
 		Draw = function(sample, _, addPart)
@@ -351,8 +351,8 @@ local function TypePreview(id)
 				addPart(Previews:Zone(bar, key, zone), ("slotText.%s.%s"):format(id, key), false, key)
 			end
 
-			if LB.Settings.window then
-				LB.Settings.window:SetPreviewChosen(LB.SettingsText:Chosen(id))
+			if LB.LegacySettings.window then
+				LB.LegacySettings.window:SetPreviewChosen(LB.SettingsText:Chosen(id))
 			end
 
 			Previews:Finish()
@@ -765,10 +765,10 @@ local function PartyBarsPreview()
 			Previews.partyMember = nil
 		end,
 		Pick = function(key)
-			if SLOT_KEYS[key] and LB.Settings.window then
+			if SLOT_KEYS[key] and LB.LegacySettings.window then
 				LB.SettingsText:Choose("party", key)
-				LB.Settings.window:SetPreviewChosen(key)
-				LB.Settings.window:RefreshPage()
+				LB.LegacySettings.window:SetPreviewChosen(key)
+				LB.LegacySettings.window:RefreshPage()
 			end
 		end,
 		Draw = function(sample, _, addPart)
@@ -793,8 +793,8 @@ local function PartyBarsPreview()
 				addPart(Previews:Zone(bar, key, zone), ("slotText.%s.%s"):format("party", key), false, key)
 			end
 
-			if LB.Settings.window then
-				LB.Settings.window:SetPreviewChosen(LB.SettingsText:Chosen("party"))
+			if LB.LegacySettings.window then
+				LB.LegacySettings.window:SetPreviewChosen(LB.SettingsText:Chosen("party"))
 			end
 
 			Previews:Finish()

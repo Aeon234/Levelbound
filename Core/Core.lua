@@ -43,6 +43,7 @@ local addonName = ...
 ---@field TimePlayed LBTimePlayed
 ---@field failed boolean?
 ---@field Settings LBSettings
+---@field LegacySettings LBLegacySettings
 ---@field SettingsPages LBSettingsPages
 ---@field SettingsText LBSettingsText
 ---@field SettingsProfiles LBSettingsProfiles
@@ -226,6 +227,13 @@ end
 
 ---@param section string? section to open at
 function LB:OpenSettings(section)
+	-- The edit session still returns to the AeonSettings window until edit mode moves to the library.
+	if self.EditMode and self.EditMode:IsActive() and self.LegacySettings then
+		self.LegacySettings:Open(section)
+
+		return
+	end
+
 	if self.Settings then
 		self.Settings:Open(section)
 
@@ -335,6 +343,12 @@ SlashCmdList.LEVELBOUND = function(message)
 
 	if command == "edit" then
 		LB.EditMode:Toggle()
+
+		return
+	end
+
+	if command == "old" then
+		LB.LegacySettings:Open(argument ~= "" and argument or nil)
 
 		return
 	end
