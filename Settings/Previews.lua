@@ -964,11 +964,10 @@ local FIXED = {
 
 		return PAD * 2 + rows * (GAIN_HEIGHT + GainRoomMax())
 	end,
-	markers = function()
-		if LB.Profile:Get("party.display") == "BARS" then
-			return PAD * 2 + BAR_MAX + TEXT_MAX + SLOT_ROOM + ReachMax()
-		end
-
+	partyBars = function()
+		return PAD * 2 + BAR_MAX + TEXT_MAX + SLOT_ROOM + ReachMax()
+	end,
+	partyMarkers = function()
 		local above = LB.Marker.Reach("DIAMOND", "TOP", MARKER_OFFSET_MAX, MARKER_SIZE_MAX, BAR_MAX)
 
 		return PAD * 2 + BAR_MAX + math.max(above, MARKER_SIZE_MAX) * 2
@@ -1028,8 +1027,85 @@ function Previews:For(pageID)
 	elseif pageID == "gain" then
 		return Framed(GainPreview(), FIXED.gain)
 	elseif pageID == "markers" then
-		return Framed(PartyPreview(), FIXED.markers)
+		return Framed(PartyPreview(), function()
+			return LB.Profile:Get("party.display") == "BARS" and FIXED.partyBars() or FIXED.partyMarkers()
+		end)
 	elseif pageID == "levelups" then
 		return Framed(LevelUpsPreview(), FIXED.levelups)
 	end
+end
+
+-- LibAeonSettings ------------------------------------------------------------------------------------------
+
+local STAGE_ROOM = 8 -- the height the library's preview stage keeps free around the sample
+
+---Gives a LibAeonSettings page its preview, drawn by the same builders as the AeonSettings window's. The stage
+---holds the page's sample with every setting at its largest; the library shrinks a larger drawing to fit.
+---@param page table
+---@param pageID string
+function Previews:Declare(page, pageID)
+	local typeID = pageID:match("^type%.(.+)$")
+	local preview, height
+
+	if typeID then
+		preview, height = TypePreview(typeID), FIXED.type()
+	elseif pageID == "appearance" then
+		preview, height = AppearancePreview(), FIXED.layout()
+	elseif pageID == "gain" then
+		preview, height = GainPreview(), FIXED.gain()
+	elseif pageID == "markers" then
+		preview, height = PartyPreview(), math.max(FIXED.partyBars(), FIXED.partyMarkers())
+	elseif pageID == "levelups" then
+		preview, height = LevelUpsPreview(), FIXED.levelups()
+	else
+		return
+	end
+
+	---@return string? typeID the progress type whose text slots the sample shows, or nil
+	local function SlotType()
+		if typeID then
+			return typeID
+		elseif pageID == "markers" and LB.Profile:Get("party.display") == "BARS" then
+			return "party"
+		end
+	end
+
+	page:Preview({
+		height = height + STAGE_ROOM,
+		refresh = function(canvas, state, handle)
+			local width, drawn = preview.Draw(canvas, state, function(region, target, isText, key)
+				-- One Text box edits the chosen slot, so every slot finds it.
+				if target then
+					target = (target:gsub("^(slotText%.[^.]+)%..+$", "%1"))
+				end
+
+				handle:Part(region, target, { text = isText or nil, key = key })
+			end)
+			local slotType = SlotType()
+
+			if slotType then
+				handle:Choose(LB.SettingsText:Chosen(slotType))
+			end
+
+			return width, drawn
+		end,
+		stop = function()
+			if preview.Stop then
+				preview.Stop()
+			end
+		end,
+		pick = function(key)
+			local slotType = SlotType()
+
+			if slotType and SLOT_KEYS[key] then
+				local text = page.settings["slotText." .. slotType]
+
+				LB.SettingsText:Choose(slotType, key)
+
+				if text then
+					text:SetTextCursor(nil)
+				end
+			end
+		end,
+	})
 end

@@ -39,6 +39,7 @@ function Settings:DeclareTypes(window)
 				},
 			})
 
+			LB.SettingsPreviews:Declare(page, "type." .. id)
 			self:DeclareTypeBar(page:Tab("bar", L["Bar"]), id)
 			LB.SettingsText:Declare(page:Tab("text", L["Text"]), id)
 		end

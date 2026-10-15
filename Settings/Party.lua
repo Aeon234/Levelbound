@@ -64,6 +64,7 @@ end
 
 ---@param page table
 function Settings:DeclarePartyProgress(page)
+	LB.SettingsPreviews:Declare(page, "markers")
 	self:DeclareMarkers(page)
 	self:DeclarePartyBars(page)
 end
@@ -252,6 +253,8 @@ end
 ---@param page table
 function Settings:DeclareLevelUps(page)
 	local KEY = "levelups"
+
+	LB.SettingsPreviews:Declare(page, "levelups")
 
 	local function Detached()
 		if LB.Profile:Get("party.levelUp.detached") == true then

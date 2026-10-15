@@ -206,6 +206,8 @@ end
 
 ---@param page table
 function Settings:DeclareAppearance(page)
+	LB.SettingsPreviews:Declare(page, "appearance")
+
 	local function Style()
 		return LB.Profile:Get("appearance.border.style")
 	end
@@ -384,6 +386,8 @@ end
 
 ---@param page table
 function Settings:DeclareGain(page)
+	LB.SettingsPreviews:Declare(page, "gain")
+
 	local function Detached()
 		return LB.Profile:Get("gain.detached") == true
 	end
