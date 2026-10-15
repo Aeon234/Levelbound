@@ -13,5 +13,6 @@
 	<Script file="StylePicker.lua" />
 	<Script file="Mover.lua" />
 	<Script file="EditMode.lua" />
+	<Script file="EditTargets.lua" />
 	<Script file="EditPanel.lua" />
 </Ui>

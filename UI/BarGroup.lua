@@ -127,15 +127,18 @@ function BarGroup:ComputeLayout(ids, screenWidth)
 
 	for index, id in ipairs(ids) do
 		local stored = independent[id]
-		local position = stored and stored.position or layout.positions.INDEPENDENT
+		local stack = layout.positions.INDEPENDENT
+		-- Without a place of its own, a bar stacks below the Independent position.
+		local default = { point = stack.point, x = stack.x, y = stack.y - (index - 1) * (height + spacing) }
+		local position = LB:EditPosition(id, stored and stored.position) or default
 
 		rects[id] = {
 			width = stored and stored.width or layout.width,
 			height = LB.Layout.Height(layout, fixed, stored and stored.height),
 			point = position.point,
 			x = position.x,
-			y = (stored and stored.position) and position.y
-				or (position.y - (index - 1) * (height + spacing)),
+			y = position.y,
+			default = default,
 		}
 	end
 
@@ -308,7 +311,7 @@ function BarGroup:ApplyLayout(animated)
 		frame:SetPoint(other, UIParent, other, 0, 0)
 		LB:SetPixelHeight(frame, math.max(groupHeight, 1))
 	else
-		local position = layout.positions[layout.mode]
+		local position = LB:EditPosition("group", layout.positions[layout.mode])
 
 		LB:SetPixelSize(frame, math.max(groupWidth, 1), math.max(groupHeight, 1))
 		PlaceOnScreen(frame, position)
@@ -406,12 +409,34 @@ function BarGroup:EditTargets()
 			local bar = self.bars[id]
 
 			if bar and bar:IsShown() then
+				local rect = self.rects[id]
+
 				targets[#targets + 1] = {
 					key = id,
 					typeId = id,
 					frame = bar,
 					fixed = false,
 					outline = bar.border,
+					default = rect and rect.default or LB:CopyTable(layout.positions.INDEPENDENT),
+					settings = { page = "type." .. id, section = "size" },
+					read = function()
+						local entry = LB.Profile:Get("layout.independent")[id]
+
+						return entry and entry.position
+					end,
+					write = function(position)
+						local independent = LB.Profile:Get("layout.independent")
+						local entry = independent[id] or {}
+
+						entry.position = position
+						independent[id] = entry
+
+						LB.Profile:Set("layout.independent", independent)
+					end,
+					place = function(position)
+						bar:ClearAllPoints()
+						PlaceOnScreen(bar, position)
+					end,
 					save = function(left, bottom, width, height)
 						local independent = LB.Profile:Get("layout.independent")
 						local entry = independent[id] or {}
@@ -428,12 +453,34 @@ function BarGroup:EditTargets()
 		return targets
 	end
 
+	local mode = layout.mode
+	local fullscreen = LB.Layout.Fullscreen(layout)
+
 	targets[1] = {
 		key = "group",
-		label = layout.mode == "CONNECTED" and L["Bar Stack"] or L["Progress Bars"],
+		label = mode == "CONNECTED" and L["Bar Stack"] or L["Progress Bars"],
 		frame = frame,
-		fixed = LB.Layout.Fullscreen(layout) ~= nil,
+		fixed = fullscreen ~= nil,
+		pinned = fullscreen and (fullscreen == "TOP" and L["Pinned to Top Edge"] or L["Pinned to Bottom Edge"]) or nil,
+		fixedEdge = mode == "CONNECTED" and LB.Placement:StackLock(layout.growth) or nil,
 		outline = self.border,
+		default = LB:CopyTable(LB.Profile:Defaults().layout.positions[mode]),
+		settings = { page = "layout", section = "placement" },
+		read = function()
+			return LB.Profile:Get("layout.positions." .. mode)
+		end,
+		write = function(position)
+			position = position or LB:CopyTable(LB.Profile:Defaults().layout.positions[mode])
+
+			LB.Profile:Set("layout.positions." .. mode, position)
+		end,
+		-- A fullscreen group is anchored to the screen's edge by the layout itself.
+		place = function(position)
+			if not fullscreen then
+				frame:ClearAllPoints()
+				PlaceOnScreen(frame, position)
+			end
+		end,
 		save = function(left, bottom, width, height)
 			local current = LB.Profile:Get("layout")
 			local lock = current.mode == "CONNECTED" and LB.Placement:StackLock(current.growth) or nil

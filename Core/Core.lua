@@ -20,6 +20,7 @@ local addonName = ...
 ---@field Preview LBPreview
 ---@field Placement LBPlacement
 ---@field EditMode LBEditMode
+---@field EditTargets LBEditTargets
 ---@field EditPanel LBEditPanel
 ---@field Mover LBMoverFactory
 ---@field MoverMixin LBMover
@@ -225,6 +226,18 @@ function LB:SetPixelSize(region, width, height)
 	self:SetPixelHeight(region, height)
 end
 
+---The position LibAeonSettings' edit mode holds unsaved for one of Levelbound's targets, else `stored`; placement
+---reads it, so a relayout during an edit session keeps an unsaved move.
+---@param key string the edit target's key
+---@param stored LBFramePosition?
+---@return LBFramePosition?
+function LB:EditPosition(key, stored)
+	local lib = LibStub and LibStub("LibAeonSettings-1.0", true)
+	local pending = lib and lib:IsEditing() and lib:GetPending(addonName, key)
+
+	return pending or stored
+end
+
 ---@param section string? section to open at
 function LB:OpenSettings(section)
 	-- The edit session still returns to the AeonSettings window until edit mode moves to the library.
@@ -342,7 +355,7 @@ SlashCmdList.LEVELBOUND = function(message)
 	end
 
 	if command == "edit" then
-		LB.EditMode:Toggle()
+		LB.EditTargets:Toggle()
 
 		return
 	end

@@ -164,7 +164,7 @@ function PartyBars:Refresh()
 
 	frame:SetFrameStrata(LB.Profile:Get("layout.strata"))
 	LB:SetPixelSize(frame, settings.width, math.max(top + total, 1))
-	Place(frame, settings.screen, settings.growth)
+	Place(frame, LB:EditPosition("partyBars", settings.screen), settings.growth)
 
 	for index, member in ipairs(members) do
 		local bar = self:Bar(index)
@@ -242,6 +242,18 @@ local function Save(left, bottom, width, height, growth)
 	LB.Profile:Set("party.bars.screen", position)
 end
 
+---@param frame Frame
+---@param growth "UP" | "DOWN"
+---@return LBFramePosition position the stack's default place in stored form, anchored at the end it grows from
+local function DefaultPosition(frame, growth)
+	local screenWidth, screenHeight = UIParent:GetWidth(), UIParent:GetHeight()
+	local width, height = frame:GetSize()
+	local top = screenHeight / 2 + DEFAULT_Y
+
+	return LB.Placement:Anchor((screenWidth - width) / 2, top - height, width, height, screenWidth, screenHeight,
+		LB.Placement:StackLock(growth))
+end
+
 ---@return LBEditTarget[] targets the stack, while the party bars are on
 function PartyBars:EditTargets()
 	if not self:Enabled() then
@@ -254,12 +266,27 @@ function PartyBars:EditTargets()
 		return {}
 	end
 
+	local frame = self.frame
+	local growth = LB.Profile:Get("party.bars.growth")
+
 	return {
 		{
 			key = "partyBars",
 			label = L["Party Bars"],
 			frame = self.frame,
 			fixed = false,
+			fixedEdge = LB.Placement:StackLock(growth),
+			default = DefaultPosition(frame, growth),
+			settings = { page = "markers", section = "bars" },
+			read = function()
+				return LB.Profile:Get("party.bars.screen")
+			end,
+			write = function(position)
+				LB.Profile:Set("party.bars.screen", position)
+			end,
+			place = function(position)
+				Place(frame, position, growth)
+			end,
 			save = function(left, bottom, width, height)
 				Save(left, bottom, width, height, LB.Profile:Get("party.bars.growth"))
 			end,

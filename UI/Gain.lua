@@ -315,10 +315,11 @@ function Gain:DetachedFootprint()
 	return width, height
 end
 
-function Gain:PlaceBox()
+---@param position LBFramePosition? where to place it; the saved place, or one edit mode holds unsaved, when nil
+function Gain:PlaceBox(position)
 	local width, height = self:DetachedFootprint()
 
-	NoticeStack:PlaceBox(self.box, Settings().screen, width, height, 1)
+	NoticeStack:PlaceBox(self.box, position or LB:EditPosition("gain", Settings().screen), width, height, 1)
 end
 
 ---Where the stack sits when gains gather beside the segmented row: against the row's side, its first line centered
@@ -605,6 +606,17 @@ function Gain:EditTargets()
 			label = L["Gain Indicator"],
 			frame = box,
 			fixed = false,
+			default = NoticeStack:DefaultPosition((Gain:DetachedFootprint()), 1),
+			settings = { page = "gain", section = "placement" },
+			read = function()
+				return LB.Profile:Get("gain.screen")
+			end,
+			write = function(position)
+				LB.Profile:Set("gain.screen", position)
+			end,
+			place = function(position)
+				Gain:PlaceBox(position)
+			end,
 			save = function(left, bottom, width, height)
 				local screenWidth, screenHeight = UIParent:GetWidth(), UIParent:GetHeight()
 

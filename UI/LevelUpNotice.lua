@@ -189,10 +189,11 @@ function Notice:Footprint()
 	return width, NoticeStack:BoxHeight(line)
 end
 
-function Notice:PlaceBox()
+---@param position LBFramePosition? where to place it; the saved place, or one edit mode holds unsaved, when nil
+function Notice:PlaceBox(position)
 	local width, height = self:Footprint()
 
-	NoticeStack:PlaceBox(self.box, Settings().screen, width, height, -1)
+	NoticeStack:PlaceBox(self.box, position or LB:EditPosition("levelUp", Settings().screen), width, height, -1)
 end
 
 ---@param name string the member's name, already class-colored
@@ -329,6 +330,17 @@ function Notice:EditTargets()
 			label = LB.L["Level-Up Notices"],
 			frame = box,
 			fixed = false,
+			default = NoticeStack:DefaultPosition((Notice:Footprint()), -1),
+			settings = { page = "levelups", section = "placement" },
+			read = function()
+				return Settings().screen
+			end,
+			write = function(position)
+				LB.Profile:Set("party.levelUp.screen", position)
+			end,
+			place = function(position)
+				Notice:PlaceBox(position)
+			end,
 			save = function(left, bottom, width, height)
 				local screenWidth, screenHeight = UIParent:GetWidth(), UIParent:GetHeight()
 

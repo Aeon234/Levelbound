@@ -74,14 +74,24 @@ function Profiles:Page()
 end
 
 ---The Profiles page on LibAeonSettings, over the same adapter. Profile actions empty the window's Undo history and
----read every value again; the bars follow the swap through the profile's own "Settings" callback.
+---read every value again; the bars follow the swap through the profile's own "Settings" callback, and edit mode's
+---targets are placed again.
 ---@param window table
 function Profiles:Declare(window)
+	-- Edit mode's own state locks the page, and every action that changes the profile places the frames again.
+	local SKIP = { builtin = true, IsEditing = true }
+	local REPLACES = { Switch = true, New = true, Copy = true, Rename = true, Delete = true, Reset = true,
+		Import = true, SetUseCharacterProfile = true }
 	local shared = {}
 
-	for name, value in pairs(adapter) do
-		if name ~= "builtin" then
-			shared[name] = value
+	for name, fn in pairs(adapter) do
+		if REPLACES[name] then
+			shared[name] = function(...)
+				fn(...)
+				LB.EditTargets:Apply()
+			end
+		elseif not SKIP[name] then
+			shared[name] = fn
 		end
 	end
 

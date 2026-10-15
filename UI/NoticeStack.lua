@@ -129,13 +129,20 @@ function NoticeStack:CreateBox(name)
 	return box
 end
 
+---@param width number
+---@param side integer -1 for left of the screen's center, 1 for right of it
+---@return LBFramePosition position a detached box's default place, beside the screen's center
+function NoticeStack:DefaultPosition(width, side)
+	return { point = "CENTER", x = side * (CENTER_GAP + width / 2), y = 0 }
+end
+
 ---@param box Frame
 ---@param position LBFramePosition? nil for the default place beside the screen's center
 ---@param width number
 ---@param height number
 ---@param side integer -1 to default left of the center, 1 to default right of it
 function NoticeStack:PlaceBox(box, position, width, height, side)
-	position = position or { point = "CENTER", x = side * (CENTER_GAP + width / 2), y = 0 }
+	position = position or self:DefaultPosition(width, side)
 
 	LB:SetPixelSize(box, width, height)
 	box:ClearAllPoints()

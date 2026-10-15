@@ -9,7 +9,7 @@ LB.Broker = Broker
 
 local function OnClick(_, button)
 	if button == "RightButton" then
-		LB.EditMode:Toggle()
+		LB.EditTargets:Toggle()
 
 		return
 	end
