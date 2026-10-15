@@ -364,6 +364,11 @@ L["This profile string has no profile in it."] = "This profile string has no pro
 -- Settings window: page descriptions, under each page's title (Settings/General.lua, Bars.lua, Types.lua, Party.lua, Profiles.lua)
 L["The minimap button, bar tooltips and clicks, and time tracking."] =
 	"The minimap button, bar tooltips and clicks, and time tracking."
+L["The bars' texture, background, border, dividers and spark."] =
+	"The bars' texture, background, border, dividers and spark."
+L["The style of every bar's text, and how its numbers are written."] =
+	"The style of every bar's text, and how its numbers are written."
+L["When the bars fade, dim or hide."] = "When the bars fade, dim or hide."
 L["The arrow and amount shown each time a bar gains progress."] =
 	"The arrow and amount shown each time a bar gains progress."
 L["This bar's colors, its own size and its text."] = "This bar's colors, its own size and its text."

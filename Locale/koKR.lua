@@ -350,6 +350,9 @@ L["This profile string has no profile in it."] = "이 프로필 문자열에는 
 
 -- Settings window: page descriptions, under each page's title (Settings/General.lua, Bars.lua, Types.lua, Party.lua, Profiles.lua)
 L["The minimap button, bar tooltips and clicks, and time tracking."] = "미니맵 버튼, 바 툴팁과 클릭, 시간 기록입니다."
+L["The bars' texture, background, border, dividers and spark."] = "바의 텍스처, 배경, 테두리, 구분선, 불꽃 효과입니다."
+L["The style of every bar's text, and how its numbers are written."] = "모든 바 텍스트의 스타일과 숫자 표기 방식입니다."
+L["When the bars fade, dim or hide."] = "바가 흐려지거나 어두워지거나 숨겨지는 시점입니다."
 L["The arrow and amount shown each time a bar gains progress."] = "바가 진행될 때마다 표시되는 화살표와 획득량입니다."
 L["This bar's colors, its own size and its text."] = "이 바의 색상, 개별 크기, 텍스트입니다."
 L["Party members running Levelbound, as markers on your experience bar or as bars of their own."] = "Levelbound를 사용하는 파티원을 경험치 바의 표시 또는 개별 바로 보여줍니다."

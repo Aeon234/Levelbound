@@ -350,6 +350,9 @@ L["This profile string has no profile in it."] = "此配置字符串中没有配
 
 -- Settings window: page descriptions, under each page's title (Settings/General.lua, Bars.lua, Types.lua, Party.lua, Profiles.lua)
 L["The minimap button, bar tooltips and clicks, and time tracking."] = "小地图按钮、进度条的鼠标提示和点击，以及时间统计。"
+L["The bars' texture, background, border, dividers and spark."] = "进度条的材质、背景、边框、分隔线和火花。"
+L["The style of every bar's text, and how its numbers are written."] = "所有进度条文字的样式，以及数字的写法。"
+L["When the bars fade, dim or hide."] = "进度条何时淡出、变暗或隐藏。"
 L["The arrow and amount shown each time a bar gains progress."] = "每次进度条增长时显示的箭头和数值。"
 L["This bar's colors, its own size and its text."] = "此进度条的颜色、独立大小和文本。"
 L["Party members running Levelbound, as markers on your experience bar or as bars of their own."] = "使用 Levelbound 的队友，显示为经验条上的标记或独立的进度条。"

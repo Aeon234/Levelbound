@@ -350,6 +350,9 @@ L["This profile string has no profile in it."] = "Questa stringa non contiene al
 
 -- Settings window: page descriptions, under each page's title (Settings/General.lua, Bars.lua, Types.lua, Party.lua, Profiles.lua)
 L["The minimap button, bar tooltips and clicks, and time tracking."] = "Il pulsante della minimappa, i tooltip e i clic delle barre e il conteggio del tempo."
+L["The bars' texture, background, border, dividers and spark."] = "Texture, sfondo, bordo, divisori e scintilla delle barre."
+L["The style of every bar's text, and how its numbers are written."] = "Lo stile del testo di ogni barra e come vengono scritti i suoi numeri."
+L["When the bars fade, dim or hide."] = "Quando le barre sfumano, si attenuano o si nascondono."
 L["The arrow and amount shown each time a bar gains progress."] = "La freccia e la quantità mostrate ogni volta che una barra avanza."
 L["This bar's colors, its own size and its text."] = "I colori di questa barra, la sua dimensione e il suo testo."
 L["Party members running Levelbound, as markers on your experience bar or as bars of their own."] = "I membri del gruppo con Levelbound, come indicatori sulla tua barra esperienza o come barre separate."

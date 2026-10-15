@@ -109,9 +109,21 @@ end
 function Settings:DeclareBars(window)
 	window:Header("bars", L["Bars"])
 	self:DeclareLayout(window:Page("layout", { title = L["Layout"], under = "bars" }))
-	self:DeclareAppearance(window:Page("appearance", { title = L["Appearance"], under = "bars" }))
-	self:DeclareText(window:Page("text", { title = L["Text"], under = "bars" }))
-	self:DeclareVisibility(window:Page("visibility", { title = L["Visibility"], under = "bars" }))
+	self:DeclareAppearance(window:Page("appearance", {
+		title = L["Appearance"],
+		under = "bars",
+		description = L["The bars' texture, background, border, dividers and spark."],
+	}))
+	self:DeclareText(window:Page("text", {
+		title = L["Text"],
+		under = "bars",
+		description = L["The style of every bar's text, and how its numbers are written."],
+	}))
+	self:DeclareVisibility(window:Page("visibility", {
+		title = L["Visibility"],
+		under = "bars",
+		description = L["When the bars fade, dim or hide."],
+	}))
 	self:DeclareGain(window:Page("gain", {
 		title = L["Gain Indicator"],
 		under = "bars",

@@ -350,6 +350,9 @@ L["This profile string has no profile in it."] = "В этой строке пр�
 
 -- Settings window: page descriptions, under each page's title (Settings/General.lua, Bars.lua, Types.lua, Party.lua, Profiles.lua)
 L["The minimap button, bar tooltips and clicks, and time tracking."] = "Кнопка у миникарты, подсказки и щелчки по полосам, учёт времени."
+L["The bars' texture, background, border, dividers and spark."] = "Текстура, фон, рамка, деления и искра полос."
+L["The style of every bar's text, and how its numbers are written."] = "Стиль текста всех полос и запись чисел в нём."
+L["When the bars fade, dim or hide."] = "Когда полосы бледнеют, затемняются или скрываются."
 L["The arrow and amount shown each time a bar gains progress."] = "Стрелка и количество, которые появляются при каждом продвижении полосы."
 L["This bar's colors, its own size and its text."] = "Цвета этой полосы, её собственный размер и её текст."
 L["Party members running Levelbound, as markers on your experience bar or as bars of their own."] = "Участники группы с Levelbound: метками на вашей полосе опыта или отдельными полосами."
