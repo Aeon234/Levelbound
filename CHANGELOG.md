@@ -23,6 +23,7 @@ Fixes:
   as level-up announcements do. `/lb share say` can't wait, so it tells you to try again instead.
 - Names on the bar and in party level-up notices are the character's real name, not one changed by a disguise
   or toy.
+- The party level-up sound plays on the Master channel, so you hear it with sound effects turned off.
 
 ## 1.2.1
 

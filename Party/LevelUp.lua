@@ -134,7 +134,7 @@ function LevelUp:PlaySound(name)
 	local file = name and LB.Media:Fetch("sound", name) or LB.Media.sounds.levelUp
 
 	if PlaySoundFile and file then
-		PlaySoundFile(file, "SFX")
+		PlaySoundFile(file, "Master")
 	end
 end
 
