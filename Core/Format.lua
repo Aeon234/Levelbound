@@ -29,6 +29,17 @@ local function Options()
 	return options
 end
 
+---Converts a 0-1 fraction to a percentage truncated to `places` decimals, so progress never reads higher than
+---reached. The epsilon absorbs binary error such as `0.29 * 100 == 28.999...`.
+---@param fraction number
+---@param places integer
+---@return number
+local function PercentDown(fraction, places)
+	local scale = 10 ^ places
+
+	return math.floor(fraction * 100 * scale + 1e-6) / scale
+end
+
 ---@param value number?
 ---@return string
 function Format:Number(value)
@@ -51,10 +62,10 @@ function Format:Percent(fraction)
 	end
 
 	if Options().decimals then
-		return PERCENT_DECIMAL:format(fraction * 100)
+		return PERCENT_DECIMAL:format(PercentDown(fraction, 1))
 	end
 
-	return PERCENT_WHOLE:format(Round(fraction * 100))
+	return PERCENT_WHOLE:format(PercentDown(fraction, 0))
 end
 
 ---@param fraction number? 0-1
@@ -65,10 +76,10 @@ function Format:PercentNumber(fraction)
 	end
 
 	if Options().decimals then
-		return ("%.1f"):format(fraction * 100)
+		return ("%.1f"):format(PercentDown(fraction, 1))
 	end
 
-	return tostring(Round(fraction * 100))
+	return ("%d"):format(PercentDown(fraction, 0))
 end
 
 ---@param cur number?

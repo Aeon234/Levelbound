@@ -15,6 +15,11 @@ Settings:
 - In edit mode, each frame has a menu with its position and a shortcut to its settings. Your snap, grid and
   toolbar choices carry over.
 
+Fixes:
+
+- Percentages round down, so the bar no longer reads 100% (or 100.0%) while you are still short of the next
+  level.
+
 ## 1.2.1
 
 Fixes:
