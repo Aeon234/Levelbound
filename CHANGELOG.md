@@ -24,6 +24,8 @@ Fixes:
 - Names on the bar and in party level-up notices are the character's real name, not one changed by a disguise
   or toy.
 - The party level-up sound plays on the Master channel, so you hear it with sound effects turned off.
+- Logging in or reloading no longer prints the two time played lines in chat. A `/played` you type still shows
+  them.
 
 ## 1.2.1
 
