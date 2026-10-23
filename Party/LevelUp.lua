@@ -85,7 +85,7 @@ local function Read(unit)
 		return nil
 	end
 
-	local name = LB:Readable(UnitName(unit), nil)
+	local name = LB:Readable(UnitNameUnmodified(unit), nil)
 	local level = LB:Readable(UnitLevel(unit), nil)
 
 	if type(name) ~= "string" or name == "" or name == UNKNOWNOBJECT or type(level) ~= "number" or level < 1 then
@@ -227,7 +227,7 @@ function LevelUp:Sample()
 
 	self:Notify({
 		key = "sample",
-		name = LB:Readable(UnitName("player"), nil) or UNKNOWNOBJECT,
+		name = LB:Readable(UnitNameUnmodified("player"), nil) or UNKNOWNOBJECT,
 		class = LB:Readable(class, nil),
 		level = (LB:Readable(UnitLevel("player"), nil) or 0) + 1,
 	})

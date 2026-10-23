@@ -104,7 +104,7 @@ end
 ---@param variant string?
 ---@return string name the player's name in the variant's style, or "" while it is secret
 local function PlayerName(variant)
-	local name, second = UnitName("player")
+	local name, second = UnitNameUnmodified("player")
 
 	name = LB:Readable(name, nil)
 

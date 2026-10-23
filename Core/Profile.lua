@@ -416,7 +416,7 @@ local function RealmKey()
 end
 
 ---The character's key in `profileKeys`. It is worked out from the name once and kept in the character's own saved
----variables, because the name a client reports can change between sessions: on Forever `UnitName` returns the
+---variables, because the name a client reports can change between sessions: on Forever `UnitNameUnmodified` returns the
 ---surname as its second value, and its first can carry the first name alone or joined to the surname.
 ---@return string
 function Profile:CharacterKey()
@@ -432,7 +432,7 @@ function Profile:CharacterKey()
 		return characterKey
 	end
 
-	local name, surname = UnitName("player")
+	local name, surname = UnitNameUnmodified("player")
 
 	name = LB:Readable(name, nil)
 

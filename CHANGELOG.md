@@ -21,6 +21,8 @@ Fixes:
   level.
 - `/lb share` to party, instance, raid or guild during a chat lockdown waits and sends once chat opens again,
   as level-up announcements do. `/lb share say` can't wait, so it tells you to try again instead.
+- Names on the bar and in party level-up notices are the character's real name, not one changed by a disguise
+  or toy.
 
 ## 1.2.1
 
