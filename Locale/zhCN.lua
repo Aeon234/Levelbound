@@ -23,6 +23,7 @@ L["there is no progress to share."] = "没有可分享的进度。"
 -- party, instance, raid, guild and say are the /lb share command's words; keep them in English
 L["share to party, instance, raid, guild or say."] = "可分享到：party、instance、raid、guild 或 say。"
 L["you are not in a group or guild to share with."] = "你不在可分享的队伍或公会中。"
+L["chat is restricted right now; share to say once it lifts."] = "聊天当前受限；限制解除后再用 say 分享。"
 
 -- Party level-up notices, on screen and in chat (UI/LevelUpNotice.lua, Party/LevelUp.lua)
 L["%s reached level %d"] = "%s达到了%d级"

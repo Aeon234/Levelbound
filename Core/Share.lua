@@ -121,5 +121,12 @@ function Share:Command(channel)
 		return
 	end
 
-	C_ChatInfo.SendChatMessage(self:TextFor(id), chatType)
+	-- A held SAY send would fire without the hardware event SAY needs outside instances.
+	if chatType == "SAY" and LB.Comms:IsRestricted() then
+		LB:Print(L["chat is restricted right now; share to say once it lifts."])
+
+		return
+	end
+
+	LB.Announce:Send(self:TextFor(id), chatType)
 end

@@ -19,6 +19,8 @@ Fixes:
 
 - Percentages round down, so the bar no longer reads 100% (or 100.0%) while you are still short of the next
   level.
+- `/lb share` to party, instance, raid or guild during a chat lockdown waits and sends once chat opens again,
+  as level-up announcements do. `/lb share say` can't wait, so it tells you to try again instead.
 
 ## 1.2.1
 
