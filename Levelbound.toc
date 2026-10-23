@@ -1,6 +1,6 @@
 ## Interface: 16001, 120100 
 ## Title: Level|cffe8b64abound|r
-## IconTexture: Interface\AddOns\Levelbound\Media\Levelbound
+## IconTexture: Interface\AddOns\Levelbound\Media\Levelboundv2
 ## Notes: Experience and progress bars with party XP markers.
 ## Author: Aeon
 ## Version: @project-version@
@@ -24,3 +24,7 @@ Data\Data.xml
 Party\Party.xml
 UI\UI.xml
 Settings\Settings.xml
+
+#@do-not-package@
+Dev\Demo.lua
+#@end-do-not-package@
