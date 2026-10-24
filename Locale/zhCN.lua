@@ -75,11 +75,13 @@ L["Shift-Click to Share"] = "Shift+点击分享"
 L["Shift-Click to Show as Experience Bar"] = "Shift+点击显示为经验条"
 L["Shift-Click to Stop Showing as Experience Bar"] = "Shift+点击取消显示为经验条"
 
--- Sharing to chat (Core/Share.lua, Core/Format.lua); the "[Levelbound]" prefix itself is never translated
+-- Sharing to chat (Core/Share.lua) and durations in chat, text and tooltips (Core/Format.lua); the "[Levelbound]"
+-- prefix itself is never translated
 L["%s xp to go"] = "还需%s经验值"
 L["~%s at %s XP/hr"] = "约%s（每小时%s经验值）"
+L["%dd %dh"] = "%d天%d小时"
 L["%dh %dm"] = "%d小时%d分"
-L["%dm"] = "%d分"
+L["%dm %ds"] = "%d分%d秒"
 L["%ds"] = "%d秒"
 L["Reached level %d in %s"] = "达到%d级，用时%s"
 L["Reached level %d"] = "达到%d级"

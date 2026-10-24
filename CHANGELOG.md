@@ -27,6 +27,12 @@ Fixes:
 - Logging in or reloading no longer prints the two time played lines in chat. A `/played` you type still shows
   them.
 
+Text and tooltips:
+
+- Times on the bars and in tooltips use the short form chat already used, such as `1h 24m` and `45s`. Times under an
+  hour show seconds, such as `18m 4s`, and times of a day or more show days, such as `2d 5h`. Chat lines follow
+  the same form.
+
 ## 1.2.1
 
 Fixes:

@@ -75,11 +75,13 @@ L["Shift-Click to Share"] = "Shift-클릭하여 공유"
 L["Shift-Click to Show as Experience Bar"] = "Shift-클릭하여 경험치 바로 표시"
 L["Shift-Click to Stop Showing as Experience Bar"] = "Shift-클릭하여 경험치 바로 표시 중지"
 
--- Sharing to chat (Core/Share.lua, Core/Format.lua); the "[Levelbound]" prefix itself is never translated
+-- Sharing to chat (Core/Share.lua) and durations in chat, text and tooltips (Core/Format.lua); the "[Levelbound]"
+-- prefix itself is never translated
 L["%s xp to go"] = "%s 경험치 남음"
 L["~%s at %s XP/hr"] = "~%s (시간당 경험치 %s 기준)"
+L["%dd %dh"] = "%d일 %d시간"
 L["%dh %dm"] = "%d시간 %d분"
-L["%dm"] = "%d분"
+L["%dm %ds"] = "%d분 %d초"
 L["%ds"] = "%d초"
 L["Reached level %d in %s"] = "%d레벨 달성 (%s 소요)"
 L["Reached level %d"] = "%d레벨 달성"

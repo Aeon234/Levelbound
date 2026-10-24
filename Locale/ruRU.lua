@@ -75,11 +75,13 @@ L["Shift-Click to Share"] = "Shift-щелчок: поделиться"
 L["Shift-Click to Show as Experience Bar"] = "Shift-щелчок: показывать как полосу опыта"
 L["Shift-Click to Stop Showing as Experience Bar"] = "Shift-щелчок: не показывать как полосу опыта"
 
--- Sharing to chat (Core/Share.lua, Core/Format.lua); the "[Levelbound]" prefix itself is never translated
+-- Sharing to chat (Core/Share.lua) and durations in chat, text and tooltips (Core/Format.lua); the "[Levelbound]"
+-- prefix itself is never translated
 L["%s xp to go"] = "осталось %s опыта"
 L["~%s at %s XP/hr"] = "~%s при %s опыта/ч"
+L["%dd %dh"] = "%d д %d ч"
 L["%dh %dm"] = "%d ч %d мин"
-L["%dm"] = "%d мин"
+L["%dm %ds"] = "%d мин %d с"
 L["%ds"] = "%d с"
 L["Reached level %d in %s"] = "Достигнут уровень %d за %s"
 L["Reached level %d"] = "Достигнут уровень %d"

@@ -93,17 +93,14 @@ function Format:Fraction(cur, max)
 	return ("%s / %s"):format(self:Number(cur), self:Number(max))
 end
 
+---`Format:Short`, or a dash when there is no time to show.
 ---@param seconds number?
 ---@return string
 function Format:Duration(seconds)
-	if not seconds or seconds <= 0 then
-		return DASH
-	end
-
-	return SecondsToTime(seconds)
+	return self:Short(seconds) or DASH
 end
 
--- Compact, for chat: "1h 24m", "18m", "45s".
+-- Compact: "2d 5h", "1h 24m", "18m 4s", "45s".
 ---@param seconds number?
 ---@return string?
 function Format:Short(seconds)
@@ -111,13 +108,16 @@ function Format:Short(seconds)
 		return nil
 	end
 
-	local hours = math.floor(seconds / 3600)
+	local days = math.floor(seconds / 86400)
+	local hours = math.floor(seconds % 86400 / 3600)
 	local minutes = math.floor(seconds % 3600 / 60)
 
-	if hours > 0 then
+	if days > 0 then
+		return LB.L["%dd %dh"]:format(days, hours)
+	elseif hours > 0 then
 		return LB.L["%dh %dm"]:format(hours, minutes)
 	elseif minutes > 0 then
-		return LB.L["%dm"]:format(minutes)
+		return LB.L["%dm %ds"]:format(minutes, math.floor(seconds % 60))
 	end
 
 	return LB.L["%ds"]:format(math.floor(seconds))

@@ -75,11 +75,13 @@ L["Shift-Click to Share"] = "Umschalt-Klick zum Teilen"
 L["Shift-Click to Show as Experience Bar"] = "Umschalt-Klick, um als Erfahrungsleiste anzuzeigen"
 L["Shift-Click to Stop Showing as Experience Bar"] = "Umschalt-Klick, um nicht mehr als Erfahrungsleiste anzuzeigen"
 
--- Sharing to chat (Core/Share.lua, Core/Format.lua); the "[Levelbound]" prefix itself is never translated
+-- Sharing to chat (Core/Share.lua) and durations in chat, text and tooltips (Core/Format.lua); the "[Levelbound]"
+-- prefix itself is never translated
 L["%s xp to go"] = "noch %s EP"
 L["~%s at %s XP/hr"] = "~%s bei %s EP/Std."
+L["%dd %dh"] = "%d Tg. %d Std."
 L["%dh %dm"] = "%d Std. %d Min."
-L["%dm"] = "%d Min."
+L["%dm %ds"] = "%d Min. %d Sek."
 L["%ds"] = "%d Sek."
 L["Reached level %d in %s"] = "Stufe %d erreicht in %s"
 L["Reached level %d"] = "Stufe %d erreicht"
