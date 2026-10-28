@@ -16,7 +16,7 @@ local GAIN_COLUMNS = 4
 local GAIN_SIDE_COLUMNS = 2 -- with the indicators beside the bars
 local GAIN_COLUMN_GAP = 16
 
--- The largest values the settings allow, from which each page's preview takes a fixed height.
+-- The largest values the settings allow, which size a page's stage for the settings edited on that page.
 local BAR_MAX = LB.LIMITS.barHeight.max
 local TEXT_MAX = LB.LIMITS.textSize.max
 local BORDER_PIXELS_MAX = LB.LIMITS.borderWidth.max
@@ -223,15 +223,39 @@ local function GainSide()
 	return position == "OUTSIDE_RIGHT" and "RIGHT" or position == "OUTSIDE_LEFT" and "LEFT" or nil
 end
 
----@return number room beside a bar for its gain indicator and its slide, which keeps clear of the border
-local function GainSideRoom()
-	return LB.Gain:DetachedSize() + LB.NoticeStack.RISE + SLOT_ROOM + LB.TextSlot:BorderReach(nil)
+---@param indicators (Frame?)[] the gain indicators held beside their bars
+---@return number room beside a bar for the widest indicator and its slide, which keeps clear of the border
+local function GainSideRoom(indicators)
+	local width, slide = 0, 0
+
+	for _, indicator in ipairs(indicators) do
+		width = math.max(width, indicator:GetWidth())
+
+		if indicator.dx and indicator.dx ~= 0 then
+			slide = LB.NoticeStack.RISE
+		end
+	end
+
+	return width + slide + SLOT_ROOM + LB.TextSlot:BorderReach(nil)
 end
 
 ---@param height number the bar's height
 ---@return number overhang how far an indicator centered beside the bar stands past its top and bottom
 local function GainOverhang(height)
 	return math.max(0, LB.Profile:Get("gain.text.size") - height / 2)
+end
+
+---@param id string
+---@param height number the bar's height
+---@return number above room above a progress type's sample bar for its outer text slots and gain indicator
+---@return number below room below it
+local function TypeRoom(id, height)
+	local outer = #LB.SettingsText:Usable(id) > 3
+	local zone = outer and LB.Profile:Get("text.style.size") + SLOT_ROOM + LB.TextSlot:BorderReach(nil) or 0
+	local side = GainSide()
+	local overhang = GainOverhang(height)
+
+	return math.max(zone, side and overhang + LB.NoticeStack.RISE or GainRoom()), math.max(zone, side and overhang or 0)
 end
 
 ---Sizes a grid for `count` bars filled column by column: the fewest rows that fit within `limit` columns, then the
@@ -318,25 +342,20 @@ local function TypePreview(id)
 
 			local width, height = BarSize(id)
 			local keys = LB.SettingsText:Usable(id)
-			local outer = #keys > 3
 			local zone = LB.Profile:Get("text.style.size") + SLOT_ROOM
-			local reach = outer and LB.TextSlot:BorderReach(nil) or 0
-			local side = GainSide()
-			local room = side and GainSideRoom() or 0
-			local overhang = GainOverhang(height)
-			local above = math.max(outer and zone + reach or 0, side and overhang + LB.NoticeStack.RISE or GainRoom())
-			local below = math.max(outer and zone + reach or 0, side and overhang or 0)
+			local above, below = TypeRoom(id, height)
 			local bar = Previews:Bar(id, width, height)
-
-			bar:SetPoint("TOPLEFT", sample, "TOPLEFT", PAD + (side == "LEFT" and room or 0), -(PAD + above))
-
 			local fill = FillSetting(id)
 
 			if fill then
 				addPart(bar, fill)
 			end
 
-			LB.Gain:Hold(bar, GAIN_AMOUNT)
+			-- The indicator's room is kept on both sides of the bar, so the bar is centered.
+			local indicator = LB.Gain:Hold(bar, GAIN_AMOUNT)
+			local room = GainSide() and GainSideRoom({ indicator }) or 0
+
+			bar:SetPoint("TOPLEFT", sample, "TOPLEFT", PAD + room, -(PAD + above))
 			LB.TextSlot:ApplySample(bar, true)
 
 			for _, key in ipairs(keys) do
@@ -345,7 +364,7 @@ local function TypePreview(id)
 
 			Previews:Finish()
 
-			return width + room + PAD * 2, height + above + below + PAD * 2
+			return width + room * 2 + PAD * 2, height + above + below + PAD * 2
 		end,
 	}
 end
@@ -551,45 +570,56 @@ local function GainPreview()
 			-- the bars.
 			local width, height = GAIN_WIDTH, LB.Border:HeldHeight() or GAIN_HEIGHT
 			local side = GainSide()
-			local room = side and GainSideRoom() or GainRoom()
 			local columns, rows = GainGrid(#ids, side and GAIN_SIDE_COLUMNS or GAIN_COLUMNS)
 			local bars = {}
+
+			for index, id in ipairs(ids) do
+				bars[index] = Previews:Bar(id, width, height)
+			end
+
+			---@return Frame[] indicators the indicators held, one per bar while the gain indicator is on
+			local function Play()
+				local indicators = {}
+
+				for index, bar in ipairs(bars) do
+					indicators[#indicators + 1] = LB.Gain:Hold(bar, GAIN_AMOUNT * index, true)
+				end
+
+				return indicators
+			end
+
+			local room = side and GainSideRoom(Play()) or GainRoom()
 			-- Each bar's cell holds the bar and its indicator's room, above it or beside it.
 			local cellWidth, cellHeight, x, y = width, height + room, 0, room
+			local extra = 0
 
+			-- Beside the bars, the grid keeps the indicators' room on its other side too, so the bars are centered.
 			if side then
 				local overhang = GainOverhang(height)
 
 				cellWidth = width + room
 				cellHeight = height + overhang * 2 + LB.NoticeStack.RISE
-				x, y = side == "LEFT" and room or 0, overhang + LB.NoticeStack.RISE
+				x, y, extra = room, overhang + LB.NoticeStack.RISE, room
+			else
+				Play()
 			end
 
-			for index, id in ipairs(ids) do
-				local bar = Previews:Bar(id, width, height)
+			for index, bar in ipairs(bars) do
 				local column = math.floor((index - 1) / rows)
 				local row = (index - 1) % rows
 
 				bar:SetPoint("TOPLEFT", sample, "TOPLEFT", PAD + column * (cellWidth + GAIN_COLUMN_GAP) + x,
 					-(PAD + row * cellHeight + y))
-				bars[#bars + 1] = bar
-				addPart(bar, "tint." .. id)
-				addPart(Previews:Area(bar, "gain", room, side), "tint." .. id)
+				addPart(bar, "tint." .. bar.id)
+				addPart(Previews:Area(bar, "gain", room, side), "tint." .. bar.id)
 			end
 
 			local bottom = PAD + rows * cellHeight
 
-			local function Play()
-				for index, bar in ipairs(bars) do
-					LB.Gain:Hold(bar, GAIN_AMOUNT * index, true)
-				end
-			end
-
-			Play()
 			Previews.gainLoop = C_Timer.NewTicker(LB.NoticeStack.DURATION + GAIN_PAUSE, Play)
 			Previews:Finish()
 
-			return columns * cellWidth + (columns - 1) * GAIN_COLUMN_GAP + PAD * 2, bottom + PAD
+			return columns * cellWidth + (columns - 1) * GAIN_COLUMN_GAP + extra + PAD * 2, bottom + PAD
 		end,
 	}
 end
@@ -898,27 +928,38 @@ local function LevelUpsPreview()
 	}
 end
 
--- Fixed heights ---------------------------------------------------------------------------------------------
+-- Stage heights ---------------------------------------------------------------------------------------------
 
----@return number the farthest any border style can reach past a bar
-local function ReachMax()
-	local pixel = LB.Border:Outset("PIXEL", BAR_MAX, BORDER_PIXELS_MAX)
+---@param height number the bar's height
+---@return number the farthest any border style can reach past a bar of that height
+local function ReachMax(height)
+	local pixel = LB.Border:Outset("PIXEL", height, BORDER_PIXELS_MAX)
 
-	return math.max(pixel, LB.Border:Outset("METALLIC", BAR_MAX), LB.Border:Outset("BLIZZARD", BAR_MAX))
+	return math.max(pixel, LB.Border:Outset("METALLIC", height), LB.Border:Outset("BLIZZARD", height))
 end
 
----@return number room above a bar for the largest gain indicator
-local function GainRoomMax()
-	return TEXT_MAX * 2 + SLOT_ROOM * 2 + ReachMax()
-end
+-- Each page's sample height: settings edited on that page at their largest, so the page's rows hold still while one
+-- changes, and settings from other pages as they are now.
+local HEIGHTS = {
+	---@param id string
+	type = function(id)
+		local _, height = BarSize(id)
 
--- Each page's sample height with every setting at its largest.
-local FIXED = {
-	type = function()
-		return PAD * 2 + BAR_MAX + GainRoomMax() + TEXT_MAX + SLOT_ROOM + ReachMax()
+		if LB.Layout.Independent(LB.Profile:Get("layout")) and not LB.Border:HeldHeight() then
+			height = BAR_MAX
+		end
+
+		local above, below = TypeRoom(id, height)
+
+		return PAD * 2 + height + above + below
 	end,
-	layout = function()
-		return PAD * 2 + BAR_MAX * 2 + APPEARANCE_GAP + ReachMax() * 2
+	appearance = function()
+		local layout = LB.Profile:Get("layout")
+		local height = math.max(layout.height, LB.Layout.HeldHeight(layout, LB.Border:FixedHeight("BLIZZARD")) or 0)
+		local reach = Fullscreen() and 0 or ReachMax(height)
+		local count = #Pair()
+
+		return PAD * 2 + height * count + (count - 1) * (APPEARANCE_GAP + reach * 2)
 	end,
 	gain = function()
 		-- Rows for every type this client can track, enabled or not, so the height holds as types are switched.
@@ -931,19 +972,23 @@ local FIXED = {
 		end
 
 		local _, rows = GainGrid(capable, GAIN_COLUMNS)
+		local room = TEXT_MAX * 2 + SLOT_ROOM * 2 + LB.TextSlot:BorderReach(nil)
 
-		return PAD * 2 + rows * (GAIN_HEIGHT + GainRoomMax())
+		return PAD * 2 + rows * ((LB.Border:HeldHeight() or GAIN_HEIGHT) + room)
 	end,
-	partyBars = function()
-		return PAD * 2 + BAR_MAX + TEXT_MAX + SLOT_ROOM + ReachMax()
-	end,
-	partyMarkers = function()
-		local above = LB.Marker.Reach("DIAMOND", "TOP", MARKER_OFFSET_MAX, MARKER_SIZE_MAX, BAR_MAX)
+	markers = function()
+		local zone = LB.Profile:Get("text.style.size") + SLOT_ROOM
+		local bars = (FixedHeight() or BAR_MAX) + zone + LB.TextSlot:BorderReach(nil)
+		local _, height = SharedSize()
+		local above = LB.Marker.Reach("DIAMOND", "TOP", MARKER_OFFSET_MAX, MARKER_SIZE_MAX, height)
+		local markers = height + math.max(above, MARKER_SIZE_MAX) * 2
 
-		return PAD * 2 + BAR_MAX + math.max(above, MARKER_SIZE_MAX) * 2
+		return PAD * 2 + math.max(bars, markers)
 	end,
 	levelups = function()
-		return PAD * 2 + BAR_MAX + NOTICE_LINES * (TEXT_MAX + 4)
+		local _, height = SharedSize()
+
+		return PAD * 2 + height + NOTICE_LINES * (TEXT_MAX + 4)
 	end,
 }
 
@@ -951,7 +996,8 @@ local FIXED = {
 
 local STAGE_ROOM = 8 -- the height the library's preview stage keeps free around the sample
 
----Gives a settings page its preview. The stage holds the page's sample with every setting at its largest; the library shrinks a larger drawing to fit.
+---Gives a settings page its preview. The stage, sized each time the page shows, holds the page's sample with its own
+---settings at their largest; the library shrinks a larger drawing to fit.
 ---@param page table
 ---@param pageID string
 function Previews:Declare(page, pageID)
@@ -959,15 +1005,18 @@ function Previews:Declare(page, pageID)
 	local preview, height
 
 	if typeID then
-		preview, height = TypePreview(typeID), FIXED.type()
+		preview = TypePreview(typeID)
+		height = function()
+			return HEIGHTS.type(typeID)
+		end
 	elseif pageID == "appearance" then
-		preview, height = AppearancePreview(), FIXED.layout()
+		preview, height = AppearancePreview(), HEIGHTS.appearance
 	elseif pageID == "gain" then
-		preview, height = GainPreview(), FIXED.gain()
+		preview, height = GainPreview(), HEIGHTS.gain
 	elseif pageID == "markers" then
-		preview, height = PartyPreview(), math.max(FIXED.partyBars(), FIXED.partyMarkers())
+		preview, height = PartyPreview(), HEIGHTS.markers
 	elseif pageID == "levelups" then
-		preview, height = LevelUpsPreview(), FIXED.levelups()
+		preview, height = LevelUpsPreview(), HEIGHTS.levelups
 	else
 		return
 	end
@@ -982,7 +1031,9 @@ function Previews:Declare(page, pageID)
 	end
 
 	page:Preview({
-		height = height + STAGE_ROOM,
+		height = function()
+			return height() + STAGE_ROOM
+		end,
 		refresh = function(canvas, state, handle)
 			local width, drawn = preview.Draw(canvas, state, function(region, target, isText, key)
 				handle:Part(region, target, { text = isText or nil, key = key })
