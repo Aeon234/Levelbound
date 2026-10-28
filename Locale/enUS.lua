@@ -22,9 +22,6 @@ L["settings were saved by a newer version of Levelbound and may not load correct
 	"settings were saved by a newer version of Levelbound and may not load correctly."
 L["your character name could not be read, so the account-wide profile is in use."] =
 	"your character name could not be read, so the account-wide profile is in use."
-L["a profile needs a name."] = "a profile needs a name."
-L["a profile named %q already exists."] = "a profile named %q already exists."
-L["the last profile cannot be deleted."] = "the last profile cannot be deleted."
 L["the settings window is not available yet."] = "the settings window is not available yet."
 L["saved settings failed to load, so the bars are off for this session."] =
 	"saved settings failed to load, so the bars are off for this session."
@@ -293,6 +290,7 @@ L["Hidden"] = "Hidden"
 L["On Hover"] = "On Hover"
 L["Copy"] = "Copy"
 L["Replace this bar's text with %s's?"] = "Replace this bar's text with %s's?"
+L["Copied text from %s."] = "Copied text from %s."
 L["Copy Text From"] = "Copy Text From"
 L["The Blizzard border leaves no room for text inside the bar."] =
 	"The Blizzard border leaves no room for text inside the bar."
@@ -357,6 +355,9 @@ L["This is not a Levelbound profile string, or it was cut short."] =
 L["This profile string was made by a newer version of Levelbound."] =
 	"This profile string was made by a newer version of Levelbound."
 L["This profile string has no profile in it."] = "This profile string has no profile in it."
+L["A profile needs a name."] = "A profile needs a name."
+L['A profile named "%s" already exists.'] = 'A profile named "%s" already exists.'
+L["The last profile can't be deleted."] = "The last profile can't be deleted."
 
 -- Settings window: page descriptions, on the page switch's card (Settings/Bars.lua, Party.lua)
 L["The arrow and amount shown each time a bar gains progress."] =

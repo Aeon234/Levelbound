@@ -8,6 +8,7 @@ function Settings:DeclareGeneral(window)
 	local page = window:Page("general", {
 		title = GENERAL,
 		icon = LB.Media.sidebar.general,
+		iconTint = true,
 	})
 
 	local minimap = page:Section("minimap", MINIMAP_LABEL)

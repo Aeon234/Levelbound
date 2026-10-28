@@ -9,12 +9,14 @@ local L = LB.L
 local Profiles = {}
 LB.SettingsProfiles = Profiles
 
----@param change fun(...)
----@return fun(...) change that places edit mode's targets again afterwards
+---@param change fun(...): boolean?, string?
+---@return fun(...): boolean?, string? change that places edit mode's targets again afterwards, returning its result
 local function Placed(change)
 	return function(...)
-		change(...)
+		local ok, reason = change(...)
 		LB.EditTargets:Apply()
+
+		return ok, reason
 	end
 end
 
@@ -29,16 +31,16 @@ local adapter = {
 		LB.Profile:Activate(name)
 	end),
 	New = Placed(function(name)
-		LB.Profile:New(name)
+		return LB.Profile:New(name)
 	end),
 	Copy = Placed(function(name)
-		LB.Profile:Copy(LB.Profile.activeName, name)
+		return LB.Profile:Copy(LB.Profile.activeName, name)
 	end),
 	Rename = Placed(function(name)
-		LB.Profile:Rename(LB.Profile.activeName, name)
+		return LB.Profile:Rename(LB.Profile.activeName, name)
 	end),
 	Delete = Placed(function(name, replacement)
-		LB.Profile:Delete(name, replacement)
+		return LB.Profile:Delete(name, replacement)
 	end),
 	Reset = Placed(function()
 		LB.Profile:Reset()
@@ -58,7 +60,7 @@ local adapter = {
 		return payload
 	end,
 	Import = Placed(function(payload, name)
-		LB.Profile:Import(payload, name)
+		return LB.Profile:Import(payload, name)
 	end),
 	UsesCharacterProfile = function()
 		return LB.Profile.char.useCharacterProfile == true
@@ -75,6 +77,7 @@ function Profiles:Declare(window)
 	window:ProfilesPage("profiles", {
 		title = L["Profiles"],
 		icon = LB.Media.sidebar.profiles,
+		iconTint = true,
 		adapter = adapter,
 	})
 end

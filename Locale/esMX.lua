@@ -13,9 +13,6 @@ L["Rested:"] = "Descansado:"
 -- Chat messages (Core, Data)
 L["settings were saved by a newer version of Levelbound and may not load correctly."] = "la configuración se guardó con una versión más reciente de Levelbound y quizás no cargue correctamente."
 L["your character name could not be read, so the account-wide profile is in use."] = "no se pudo leer el nombre de tu personaje, así que se usa el perfil de toda la cuenta."
-L["a profile needs a name."] = "un perfil necesita un nombre."
-L["a profile named %q already exists."] = "ya existe un perfil llamado %q."
-L["the last profile cannot be deleted."] = "no se puede eliminar el último perfil."
 L["the settings window is not available yet."] = "la ventana de configuración aún no está disponible."
 L["saved settings failed to load, so the bars are off for this session."] = "no se pudo cargar la configuración guardada, así que las barras están desactivadas en esta sesión."
 L["the %s bar hit an error and is off for this session."] = "la barra de %s tuvo un error y está desactivada en esta sesión."
@@ -281,6 +278,7 @@ L["Hidden"] = "Oculto"
 L["On Hover"] = "Al pasar el cursor"
 L["Copy"] = "Copiar"
 L["Replace this bar's text with %s's?"] = "¿Reemplazar el texto de esta barra con el de %s?"
+L["Copied text from %s."] = "Texto copiado de %s."
 L["Copy Text From"] = "Copiar texto de"
 L["The Blizzard border leaves no room for text inside the bar."] = "El borde de Blizzard no deja espacio para texto dentro de la barra."
 L["Example: %s"] = "Ejemplo: %s"
@@ -342,6 +340,9 @@ L['Levelbound profile "%s", format %d.'] = 'Perfil de Levelbound "%s", formato %
 L["This is not a Levelbound profile string, or it was cut short."] = "Esta no es una cadena de perfil de Levelbound, o está incompleta."
 L["This profile string was made by a newer version of Levelbound."] = "Esta cadena de perfil se creó con una versión más reciente de Levelbound."
 L["This profile string has no profile in it."] = "Esta cadena de perfil no contiene ningún perfil."
+L["A profile needs a name."] = "Un perfil necesita un nombre."
+L['A profile named "%s" already exists.'] = 'Ya existe un perfil llamado "%s".'
+L["The last profile can't be deleted."] = "No se puede eliminar el último perfil."
 
 -- Settings window: page descriptions, on the page switch's card (Settings/Bars.lua, Party.lua)
 L["The arrow and amount shown each time a bar gains progress."] = "La flecha y la cantidad que aparecen cada vez que una barra avanza."

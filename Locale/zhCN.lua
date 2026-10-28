@@ -13,9 +13,6 @@ L["Rested:"] = "休息："
 -- Chat messages (Core, Data)
 L["settings were saved by a newer version of Levelbound and may not load correctly."] = "设置由更新版本的Levelbound保存，可能无法正确加载。"
 L["your character name could not be read, so the account-wide profile is in use."] = "无法读取你的角色名称，因此正在使用账号通用配置文件。"
-L["a profile needs a name."] = "配置文件需要一个名称。"
-L["a profile named %q already exists."] = "名为%q的配置文件已存在。"
-L["the last profile cannot be deleted."] = "无法删除最后一个配置文件。"
 L["the settings window is not available yet."] = "设置窗口暂不可用。"
 L["saved settings failed to load, so the bars are off for this session."] = "已保存的设置加载失败，本次登录期间进度条已关闭。"
 L["the %s bar hit an error and is off for this session."] = "%s条出现错误，本次登录期间已关闭。"
@@ -281,6 +278,7 @@ L["Hidden"] = "隐藏"
 L["On Hover"] = "悬停时"
 L["Copy"] = "复制"
 L["Replace this bar's text with %s's?"] = "将此进度条的文本替换为%s的文本？"
+L["Copied text from %s."] = "已从%s复制文本。"
 L["Copy Text From"] = "复制文字自"
 L["The Blizzard border leaves no room for text inside the bar."] = "Blizzard 边框没有在进度条内放置文本的空间。"
 L["Example: %s"] = "示例：%s"
@@ -342,6 +340,9 @@ L['Levelbound profile "%s", format %d.'] = 'Levelbound配置文件“%s”，格
 L["This is not a Levelbound profile string, or it was cut short."] = "这不是Levelbound配置字符串，或者字符串不完整。"
 L["This profile string was made by a newer version of Levelbound."] = "此配置字符串由更新版本的Levelbound生成。"
 L["This profile string has no profile in it."] = "此配置字符串中没有配置文件。"
+L["A profile needs a name."] = "配置文件需要一个名称。"
+L['A profile named "%s" already exists.'] = '名为"%s"的配置文件已存在。'
+L["The last profile can't be deleted."] = "无法删除最后一个配置文件。"
 
 -- Settings window: page descriptions, on the page switch's card (Settings/Bars.lua, Party.lua)
 L["The arrow and amount shown each time a bar gains progress."] = "每次进度条增长时显示的箭头和数值。"

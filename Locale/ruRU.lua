@@ -13,9 +13,6 @@ L["Rested:"] = "Отдых:"
 -- Chat messages (Core, Data)
 L["settings were saved by a newer version of Levelbound and may not load correctly."] = "настройки сохранены более новой версией Levelbound и могут загрузиться неправильно."
 L["your character name could not be read, so the account-wide profile is in use."] = "не удалось прочитать имя персонажа, поэтому используется общий профиль учетной записи."
-L["a profile needs a name."] = "у профиля должно быть имя."
-L["a profile named %q already exists."] = "профиль с именем %q уже существует."
-L["the last profile cannot be deleted."] = "последний профиль нельзя удалить."
 L["the settings window is not available yet."] = "окно настроек пока недоступно."
 L["saved settings failed to load, so the bars are off for this session."] = "не удалось загрузить сохраненные настройки, поэтому полосы отключены до конца сеанса."
 L["the %s bar hit an error and is off for this session."] = "в полосе «%s» произошла ошибка, она отключена до конца сеанса."
@@ -281,6 +278,7 @@ L["Hidden"] = "Скрыто"
 L["On Hover"] = "При наведении"
 L["Copy"] = "Копировать"
 L["Replace this bar's text with %s's?"] = "Заменить текст этой полосы текстом полосы «%s»?"
+L["Copied text from %s."] = "Текст скопирован из: %s."
 L["Copy Text From"] = "Копировать текст из"
 L["The Blizzard border leaves no room for text inside the bar."] = "Рамка Blizzard не оставляет места для текста внутри полосы."
 L["Example: %s"] = "Пример: %s"
@@ -342,6 +340,9 @@ L['Levelbound profile "%s", format %d.'] = 'Профиль Levelbound «%s», ф
 L["This is not a Levelbound profile string, or it was cut short."] = "Это не строка профиля Levelbound, или она обрезана."
 L["This profile string was made by a newer version of Levelbound."] = "Эта строка профиля создана более новой версией Levelbound."
 L["This profile string has no profile in it."] = "В этой строке профиля нет профиля."
+L["A profile needs a name."] = "У профиля должно быть имя."
+L['A profile named "%s" already exists.'] = 'Профиль с именем "%s" уже существует.'
+L["The last profile can't be deleted."] = "Последний профиль нельзя удалить."
 
 -- Settings window: page descriptions, on the page switch's card (Settings/Bars.lua, Party.lua)
 L["The arrow and amount shown each time a bar gains progress."] = "Стрелка и количество, которые появляются при каждом продвижении полосы."

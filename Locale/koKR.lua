@@ -13,9 +13,6 @@ L["Rested:"] = "휴식:"
 -- Chat messages (Core, Data)
 L["settings were saved by a newer version of Levelbound and may not load correctly."] = "설정이 더 최신 버전의 Levelbound로 저장되어 제대로 불러오지 못할 수 있습니다."
 L["your character name could not be read, so the account-wide profile is in use."] = "캐릭터 이름을 읽을 수 없어 계정 공용 프로필을 사용합니다."
-L["a profile needs a name."] = "프로필 이름이 필요합니다."
-L["a profile named %q already exists."] = "%q 이름의 프로필이 이미 있습니다."
-L["the last profile cannot be deleted."] = "마지막 프로필은 삭제할 수 없습니다."
 L["the settings window is not available yet."] = "설정 창을 아직 사용할 수 없습니다."
 L["saved settings failed to load, so the bars are off for this session."] = "저장된 설정을 불러오지 못해 이번 세션에서는 바가 꺼집니다."
 L["the %s bar hit an error and is off for this session."] = "%s 바에 오류가 발생해 이번 세션에서는 꺼집니다."
@@ -281,6 +278,7 @@ L["Hidden"] = "숨김"
 L["On Hover"] = "마우스 오버 시"
 L["Copy"] = "복사"
 L["Replace this bar's text with %s's?"] = "이 바의 텍스트를 %s의 텍스트로 바꾸시겠습니까?"
+L["Copied text from %s."] = "%s에서 텍스트를 복사했습니다."
 L["Copy Text From"] = "텍스트 가져올 바"
 L["The Blizzard border leaves no room for text inside the bar."] = "Blizzard 테두리에는 바 안에 텍스트를 넣을 공간이 없습니다."
 L["Example: %s"] = "예: %s"
@@ -342,6 +340,9 @@ L['Levelbound profile "%s", format %d.'] = 'Levelbound 프로필 "%s", 형식 %d
 L["This is not a Levelbound profile string, or it was cut short."] = "Levelbound 프로필 문자열이 아니거나 문자열이 잘렸습니다."
 L["This profile string was made by a newer version of Levelbound."] = "더 최신 버전의 Levelbound로 만든 프로필 문자열입니다."
 L["This profile string has no profile in it."] = "이 프로필 문자열에는 프로필이 없습니다."
+L["A profile needs a name."] = "프로필 이름이 필요합니다."
+L['A profile named "%s" already exists.'] = '"%s" 이름의 프로필이 이미 있습니다.'
+L["The last profile can't be deleted."] = "마지막 프로필은 삭제할 수 없습니다."
 
 -- Settings window: page descriptions, on the page switch's card (Settings/Bars.lua, Party.lua)
 L["The arrow and amount shown each time a bar gains progress."] = "바가 진행될 때마다 표시되는 화살표와 획득량입니다."

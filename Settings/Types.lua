@@ -28,6 +28,7 @@ function Settings:DeclareTypes(window)
 			local page = window:Page("type." .. id, {
 				title = label,
 				icon = LB.Media.sidebar[id],
+				iconTint = true,
 				under = "types",
 				switch = {
 					path = "types." .. id,

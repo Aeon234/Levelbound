@@ -669,17 +669,14 @@ end
 
 ---@param name string
 ---@return boolean valid
+---@return string? reason why the name was refused, when it was
 local function ValidateNewName(name)
 	if not name or name:trim() == "" then
-		LB:Warn(L["a profile needs a name."])
-
-		return false
+		return false, L["A profile needs a name."]
 	end
 
 	if LB.Profile:Find(name) then
-		LB:Warn(L["a profile named %q already exists."], name)
-
-		return false
+		return false, L['A profile named "%s" already exists.']:format(name)
 	end
 
 	return true
@@ -696,9 +693,12 @@ end
 
 ---@param name string
 ---@return boolean created
+---@return string? reason why it was refused, when it was
 function Profile:New(name)
-	if not ValidateNewName(name) then
-		return false
+	local valid, reason = ValidateNewName(name)
+
+	if not valid then
+		return false, reason
 	end
 
 	self:Activate(name)
@@ -709,9 +709,16 @@ end
 ---@param source string
 ---@param name string
 ---@return boolean created
+---@return string? reason why it was refused, when it was
 function Profile:Copy(source, name)
-	if not self:Exists(source) or not ValidateNewName(name) then
+	if not self:Exists(source) then
 		return false
+	end
+
+	local valid, reason = ValidateNewName(name)
+
+	if not valid then
+		return false, reason
 	end
 
 	self.db.profiles[name] = LB:CopyTable(self.db.profiles[source])
@@ -834,9 +841,12 @@ end
 ---@param payload LBExportPayload from Profile:Decode
 ---@param name string
 ---@return boolean imported
+---@return string? reason why it was refused, when it was
 function Profile:Import(payload, name)
-	if not ValidateNewName(name) then
-		return false
+	local valid, reason = ValidateNewName(name)
+
+	if not valid then
+		return false, reason
 	end
 
 	local profile = LB:CopyTable(payload.profile)
@@ -882,15 +892,22 @@ end
 ---@param from string
 ---@param to string
 ---@return boolean renamed
+---@return string? reason why it was refused, when it was
 function Profile:Rename(from, to)
 	if from == to then
 		return self:Exists(from)
 	end
 
-	local existing = self:Find(to)
-
-	if not self:Exists(from) or (existing ~= from and not ValidateNewName(to)) then
+	if not self:Exists(from) then
 		return false
+	end
+
+	if self:Find(to) ~= from then
+		local valid, reason = ValidateNewName(to)
+
+		if not valid then
+			return false, reason
+		end
 	end
 
 	self.db.profiles[to] = self.db.profiles[from]
@@ -912,15 +929,14 @@ end
 ---@param name string
 ---@param replacement string? the profile to activate when `name` is active; the first remaining when nil
 ---@return boolean deleted
+---@return string? reason why it was refused, when it was
 function Profile:Delete(name, replacement)
 	if not self:Exists(name) then
 		return false
 	end
 
 	if #self:List() <= 1 then
-		LB:Warn(L["the last profile cannot be deleted."])
-
-		return false
+		return false, L["The last profile can't be deleted."]
 	end
 
 	self.db.profiles[name] = nil

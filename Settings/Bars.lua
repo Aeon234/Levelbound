@@ -107,25 +107,29 @@ end
 function Settings:DeclareBars(window)
 	window:Header("bars", L["Bars"])
 	self:DeclareLayout(window:Page("layout", { title = L["Layout"], under = "bars",
-		icon = LB.Media.sidebar.layout }))
+		icon = LB.Media.sidebar.layout, iconTint = true }))
 	self:DeclareAppearance(window:Page("appearance", {
 		title = L["Appearance"],
 		icon = LB.Media.sidebar.appearance,
+		iconTint = true,
 		under = "bars",
 	}))
 	self:DeclareText(window:Page("text", {
 		title = L["Text"],
 		icon = LB.Media.sidebar.text,
+		iconTint = true,
 		under = "bars",
 	}))
 	self:DeclareVisibility(window:Page("visibility", {
 		title = L["Visibility"],
 		icon = LB.Media.sidebar.visibility,
+		iconTint = true,
 		under = "bars",
 	}))
 	self:DeclareGain(window:Page("gain", {
 		title = L["Gain Indicator"],
 		icon = LB.Media.sidebar.gain,
+		iconTint = true,
 		under = "bars",
 		description = L["The arrow and amount shown each time a bar gains progress."],
 		switch = {

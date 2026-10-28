@@ -30,6 +30,7 @@ function Settings:DeclareParty(window)
 	self:DeclarePartyProgress(window:Page("markers", {
 		title = L["Party Progress"],
 		icon = LB.Media.sidebar.markers,
+		iconTint = true,
 		under = "party",
 		description = L["Party members running Levelbound, as markers on your experience bar or as bars of their own."],
 		switch = {
@@ -41,6 +42,7 @@ function Settings:DeclareParty(window)
 	self:DeclareLevelUps(window:Page("levelups", {
 		title = L["Level-Ups"],
 		icon = LB.Media.sidebar.levelups,
+		iconTint = true,
 		under = "party",
 	}))
 end

@@ -330,6 +330,7 @@ function Text:Declare(container, typeId, show)
 		set = function(from, setting)
 			LB.Profile:CopySlots(from, typeId)
 			setting.window:Refresh()
+			setting.window:ShowStatus(L["Copied text from %s."]:format(LB.Model:Label(from)))
 		end,
 	})
 
