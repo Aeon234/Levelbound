@@ -98,31 +98,34 @@ local function HeightFixed()
 	end
 end
 
----@return string?
-local function OnlyConnected()
-	if LB.Profile:Get("layout.mode") ~= "CONNECTED" then
-		return L["Requires Connected layout."]
-	end
+---@return boolean
+local function Connected()
+	return LB.Profile:Get("layout.mode") == "CONNECTED"
 end
 
 ---@param window table
 function Settings:DeclareBars(window)
 	window:Header("bars", L["Bars"])
-	self:DeclareLayout(window:Page("layout", { title = L["Layout"], under = "bars" }))
+	self:DeclareLayout(window:Page("layout", { title = L["Layout"], under = "bars",
+		icon = LB.Media.sidebar.layout }))
 	self:DeclareAppearance(window:Page("appearance", {
 		title = L["Appearance"],
+		icon = LB.Media.sidebar.appearance,
 		under = "bars",
 	}))
 	self:DeclareText(window:Page("text", {
 		title = L["Text"],
+		icon = LB.Media.sidebar.text,
 		under = "bars",
 	}))
 	self:DeclareVisibility(window:Page("visibility", {
 		title = L["Visibility"],
+		icon = LB.Media.sidebar.visibility,
 		under = "bars",
 	}))
 	self:DeclareGain(window:Page("gain", {
 		title = L["Gain Indicator"],
+		icon = LB.Media.sidebar.gain,
 		under = "bars",
 		description = L["The arrow and amount shown each time a bar gains progress."],
 		switch = {
@@ -175,14 +178,13 @@ function Settings:DeclareLayout(page)
 		blocked = HeightFixed,
 	})
 
-	local stacking = page:Section("stacking", L["Stacking"])
+	local stacking = page:Section("stacking", L["Stacking"], { show = Connected })
 
 	self:Add(stacking, "Dropdown", KEY, {
 		id = "growth",
 		label = L["Growth Direction"],
 		default = self:Default("layout.growth"),
 		options = self:Choices(UP_DOWN),
-		blocked = OnlyConnected,
 		get = function()
 			return LB.Profile:Get("layout.growth")
 		end,
@@ -197,7 +199,6 @@ function Settings:DeclareLayout(page)
 		min = 0,
 		max = 10,
 		step = 1,
-		blocked = OnlyConnected,
 	})
 
 	local advanced = page:Section("advanced", ADVANCED_LABEL)
@@ -230,14 +231,14 @@ function Settings:DeclareAppearance(page)
 		end
 	end
 
-	local bars = page:Section("bars", L["Bars"])
+	local fill = page:Section("fill", L["Fill"])
 
-	self:Add(bars, "Dropdown", KEY, { id = "texture", label = L["Bar Texture"], path = "appearance.texture",
+	self:Add(fill, "Dropdown", KEY, { id = "texture", label = L["Bar Texture"], path = "appearance.texture",
 		picker = "texture" })
 
 	local getBackground, setBackground = self:ColorAccess("appearance.background", true)
 
-	self:Add(bars, "Color", KEY, { id = "background", label = BACKGROUND, hasOpacity = true, get = getBackground,
+	self:Add(fill, "Color", KEY, { id = "background", label = BACKGROUND, hasOpacity = true, get = getBackground,
 		set = setBackground })
 
 	local border = page:Section("border", L["Border"])
@@ -370,7 +371,11 @@ function Settings:DeclareVisibility(page)
 	self:Add(fading, "Slider", KEY, { id = "fadedAlpha", label = L["Faded Opacity"], min = 0, max = 100, step = 5,
 		format = "percent", get = getFaded, set = setFaded, depends = "fade" })
 	self:Add(fading, "Checkbox", KEY, { id = "fullInCombat", label = L["Fully Visible in Combat"],
-		path = "visibility.fullInCombat", depends = "fade" })
+		path = "visibility.fullInCombat", depends = "fade", blocked = function()
+			if LB.Profile:Get("visibility.hideInCombat") == true then
+				return L["Set by Hide in Combat."]
+			end
+		end })
 	self:Add(fading, "Checkbox", KEY, { id = "fullWithTarget", label = L["Fully Visible with a Target"],
 		path = "visibility.fullWithTarget", depends = "fade" })
 

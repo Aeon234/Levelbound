@@ -42,6 +42,26 @@ Media.icons = {
 	speaker = [[Interface\Common\VoiceChat-Speaker]],
 }
 
+-- Settings sidebar icons, by page id; progress type pages by their type id.
+Media.sidebar = {
+	general = PATH .. [[Textures\SidebarGeneral.tga]],
+	layout = PATH .. [[Textures\SidebarLayout.tga]],
+	appearance = PATH .. [[Textures\SidebarAppearance.tga]],
+	text = PATH .. [[Textures\SidebarText.tga]],
+	visibility = PATH .. [[Textures\SidebarVisibility.tga]],
+	gain = PATH .. [[Textures\SidebarGain.tga]],
+	xp = PATH .. [[Textures\SidebarExperience.tga]],
+	petxp = PATH .. [[Textures\SidebarPetExperience.tga]],
+	reputation = PATH .. [[Textures\SidebarReputation.tga]],
+	house = PATH .. [[Textures\SidebarHousing.tga]],
+	endeavor = PATH .. [[Textures\SidebarEndeavor.tga]],
+	travelers = PATH .. [[Textures\SidebarTravel.tga]],
+	honor = PATH .. [[Textures\SidebarHonor.tga]],
+	markers = PATH .. [[Textures\SidebarPartyProgress.tga]],
+	levelups = PATH .. [[Textures\SidebarLevelUps.tga]],
+	profiles = PATH .. [[Textures\SidebarProfiles.tga]],
+}
+
 Media.sounds = {
 	levelUp = PATH .. [[Sounds\LevelUp.ogg]],
 }

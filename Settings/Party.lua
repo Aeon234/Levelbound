@@ -29,6 +29,7 @@ function Settings:DeclareParty(window)
 	window:Header("party", L["Party"])
 	self:DeclarePartyProgress(window:Page("markers", {
 		title = L["Party Progress"],
+		icon = LB.Media.sidebar.markers,
 		under = "party",
 		description = L["Party members running Levelbound, as markers on your experience bar or as bars of their own."],
 		switch = {
@@ -39,6 +40,7 @@ function Settings:DeclareParty(window)
 	}))
 	self:DeclareLevelUps(window:Page("levelups", {
 		title = L["Level-Ups"],
+		icon = LB.Media.sidebar.levelups,
 		under = "party",
 	}))
 end
@@ -212,7 +214,11 @@ function Settings:DeclarePartyBars(page)
 	self:Add(visibility, "Slider", KEY, { id = "barsFadedAlpha", label = L["Faded Opacity"], min = 0, max = 100,
 		step = 5, format = "percent", get = getFaded, set = setFaded, depends = "barsFade", show = Unmatched })
 	self:Add(visibility, "Checkbox", KEY, { id = "barsFullInCombat", label = L["Fully Visible in Combat"],
-		path = VISIBILITY .. "fullInCombat", depends = "barsFade", show = Unmatched })
+		path = VISIBILITY .. "fullInCombat", depends = "barsFade", show = Unmatched, blocked = function()
+			if LB.Profile:Get(VISIBILITY .. "hideInCombat") == true then
+				return L["Set by Hide in Combat."]
+			end
+		end })
 	self:Add(visibility, "Checkbox", KEY, { id = "barsFullWithTarget", label = L["Fully Visible with a Target"],
 		path = VISIBILITY .. "fullWithTarget", depends = "barsFade", show = Unmatched })
 end

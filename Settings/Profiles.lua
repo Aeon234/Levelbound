@@ -68,10 +68,13 @@ local adapter = {
 	end),
 }
 
+---Declares the Profiles page below a divider, as the sidebar's last entry.
 ---@param window table
 function Profiles:Declare(window)
+	window:Divider()
 	window:ProfilesPage("profiles", {
 		title = L["Profiles"],
+		icon = LB.Media.sidebar.profiles,
 		adapter = adapter,
 	})
 end

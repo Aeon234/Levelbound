@@ -7,11 +7,12 @@ local Settings = LB.Settings
 function Settings:DeclareGeneral(window)
 	local page = window:Page("general", {
 		title = GENERAL,
+		icon = LB.Media.sidebar.general,
 	})
 
-	local access = page:Section("access", L["Access"])
+	local minimap = page:Section("minimap", MINIMAP_LABEL)
 
-	access:Checkbox({
+	minimap:Checkbox({
 		id = "minimapButton",
 		label = L["Show Minimap Button"],
 		default = true,

@@ -21,6 +21,9 @@ Settings:
 - Clearer names: Copy Text From, Horizontal and Vertical Offset in the text editor, Use Class Color, Wait Until
   Out of Combat for level-up notices, and Print in Chat When Solo, Post to Party and Post to Guild for your own
   level-ups.
+- Every settings page has an icon in the sidebar, and Profiles sits below a divider. Each progress type is one
+  page instead of two tabs, Stacking shows only in Connected layout, and Fully Visible in Combat is grayed out
+  while Hide in Combat is on.
 - Less text to read: tooltips appear only where they add something the label doesn't say, pages no longer open
   with a summary of their own sections, and a grayed-out option says what it requires or what sets it.
 

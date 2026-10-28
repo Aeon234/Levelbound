@@ -12,13 +12,6 @@ local function Independent()
 end
 
 ---@return string?
-local function OnlyIndependent()
-	if not Independent() then
-		return L["Requires Independent layout."]
-	end
-end
-
----@return string?
 local function HeightFixed()
 	if LB.Border:HeldHeight() then
 		return L["Set by the border style."]
@@ -34,6 +27,7 @@ function Settings:DeclareTypes(window)
 			local label = LB.Model:Label(id)
 			local page = window:Page("type." .. id, {
 				title = label,
+				icon = LB.Media.sidebar[id],
 				under = "types",
 				switch = {
 					path = "types." .. id,
@@ -43,26 +37,25 @@ function Settings:DeclareTypes(window)
 			})
 
 			LB.SettingsPreviews:Declare(page, "type." .. id)
-			self:DeclareTypeBar(page:Tab("bar", L["Bar"]), id)
-			LB.SettingsText:Declare(page:Tab("text", L["Text"]), id)
+			self:DeclareTypeBar(page, id)
+			LB.SettingsText:Declare(page, id)
 		end
 	end
 end
 
----@param tab table
+---@param page table
 ---@param id string
-function Settings:DeclareTypeBar(tab, id)
+function Settings:DeclareTypeBar(page, id)
 	if id == "xp" then
-		self:DeclareExperienceColors(tab:Section("colors", L["Colors"]))
+		self:DeclareExperienceColors(page:Section("colors", L["Colors"]))
 	elseif id ~= "reputation" then
-		local colors = tab:Section("colors", L["Colors"])
+		local colors = page:Section("colors", L["Colors"])
 		local get, set = self:ColorAccess("appearance.typeColors." .. id)
 
 		self:Add(colors, "Color", KEY, { id = "color", label = L["Bar Color"], get = get, set = set })
 	end
 
-	-- Reputation's tab has no other section, so its Size stays in view, inactive with its reason.
-	local size = tab:Section("size", L["Size"], id ~= "reputation" and { show = Independent } or nil)
+	local size = page:Section("size", L["Size"], { show = Independent })
 
 	self:BarSize(size, id, "width", L["Width"], LIMITS.barWidth.min, function()
 		return math.floor(UIParent:GetWidth())
@@ -130,7 +123,7 @@ function Settings:BarSize(section, id, field, label, minimum, maximum)
 		step = 1,
 		inherits = { path = "layout." .. field, from = L["Layout"] },
 		blocked = function()
-			return OnlyIndependent() or (field == "height" and HeightFixed() or nil)
+			return field == "height" and HeightFixed() or nil
 		end,
 		get = function()
 			local entry = LB.Profile:Get("layout.independent")[id]
