@@ -209,10 +209,8 @@ L["Metallic"] = "Metallic"
 L["Blizzard"] = "Blizzard"
 L["Set by the border style."] = "Set by the border style."
 L["Custom Color"] = "Custom Color"
-L["Requires a textured border style."] = "Requires a textured border style."
-L["Requires a border style."] = "Requires a border style."
 L["Border Color"] = "Border Color"
-L["Requires Custom Color."] = "Requires Custom Color."
+L["Separator Color"] = "Separator Color"
 L["XP Dividers"] = "XP Dividers"
 L["Show Dividers"] = "Show Dividers"
 L["Spacing"] = "Spacing"
@@ -390,8 +388,9 @@ L["The Pixel or Pill border's thickness, in screen pixels. A Pill at 0 has no ou
 	"The Pixel or Pill border's thickness, in screen pixels. A Pill at 0 has no outline."
 L["Tints a textured border with Border Color instead of its own colors."] =
 	"Tints a textured border with Border Color instead of its own colors."
-L["Also colors the XP dividers, unless they have their own."] =
-	"Also colors the XP dividers, unless they have their own."
+L["Also colors the XP dividers and the separators, unless they have their own."] =
+	"Also colors the XP dividers and the separators, unless they have their own."
+L["The lines between progress types in Segmented layout."] = "The lines between progress types in Segmented layout."
 L["Marks the experience and pet experience bars at even steps through the level."] =
 	"Marks the experience and pet experience bars at even steps through the level."
 L["Gives the dividers their own color instead of the border's."] =

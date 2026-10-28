@@ -53,7 +53,8 @@ LB.SettingsDescriptions = {
 		-- Appearance tab
 		borderWidth = L["The Pixel or Pill border's thickness, in screen pixels. A Pill at 0 has no outline."],
 		borderCustom = L["Tints a textured border with Border Color instead of its own colors."],
-		borderColor = L["Also colors the XP dividers, unless they have their own."],
+		borderColor = L["Also colors the XP dividers and the separators, unless they have their own."],
+		separatorColor = L["The lines between progress types in Segmented layout."],
 		dividers = L["Marks the experience and pet experience bars at even steps through the level."],
 		dividerCustom = L["Gives the dividers their own color instead of the border's."],
 		spark = L["A bright line at the end of each bar's fill."],

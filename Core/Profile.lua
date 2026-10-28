@@ -82,6 +82,7 @@ local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 ---@field typeColors table<string, LBColor>
 ---@field standingColors table<string, LBColor> overrides on Blizzard's FACTION_BAR_COLORS
 ---@field border { style: string, width: integer, color: LBColor, customColor: boolean } width: the Pixel style's line in physical pixels
+---@field separatorColor LBColor? the segmented layout's separators; absent, they take the border's color
 ---@field spark { enabled: boolean, customColor: boolean, color: LBColor } the bar's own color unless customColor
 ---@field dividers { enabled: boolean, spacing: 5|10, customColor: boolean, color: LBColor } marks on the XP and pet XP
 ---bars every `spacing` percent of a level

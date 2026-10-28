@@ -224,11 +224,9 @@ function Settings:DeclareAppearance(page)
 		return LB.Profile:Get("appearance.border.style")
 	end
 
-	---@return string?
-	local function NoBorder()
-		if Style() == "NONE" then
-			return L["Requires a border style."]
-		end
+	---@return boolean
+	local function Textured()
+		return LB.Border:IsTextured(Style())
 	end
 
 	local fill = page:Section("fill", L["Fill"])
@@ -271,13 +269,7 @@ function Settings:DeclareAppearance(page)
 		id = "borderCustom",
 		label = L["Custom Color"],
 		path = "appearance.border.customColor",
-		blocked = function()
-			if NoBorder() then
-				return NoBorder()
-			elseif not LB.Border:IsTextured(Style()) then
-				return L["Requires a textured border style."]
-			end
-		end,
+		show = Textured,
 	})
 
 	local getBorder, setBorder = self:ColorAccess("appearance.border.color", true)
@@ -288,15 +280,46 @@ function Settings:DeclareAppearance(page)
 		hasOpacity = true,
 		get = getBorder,
 		set = setBorder,
-		blocked = function()
-			-- Segmented layout's separators take Border Color even with no border.
-			if NoBorder() and LB.Profile:Get("layout.mode") ~= "SEGMENTED" then
-				return NoBorder()
-			elseif LB.Border:IsTextured(Style()) and LB.Profile:Get("appearance.border.customColor") ~= true then
-				return L["Requires Custom Color."]
-			end
+		-- A flat style always draws in Border Color; a textured one only with Custom Color on.
+		show = function()
+			return Style() ~= "NONE" and (not Textured() or LB.Profile:Get("appearance.border.customColor") == true)
 		end,
 	})
+
+	---@param color LBColor
+	---@return table swatch
+	local function Swatch(color)
+		return { r = color[1], g = color[2], b = color[3], a = color[4] or 1 }
+	end
+
+	-- The separators follow the border's color until given their own (◆, and again after ↺).
+	self:Add(border, "Color", KEY, {
+		id = "separatorColor",
+		label = L["Separator Color"],
+		hasOpacity = true,
+		show = function()
+			return LB.Profile:Get("layout.mode") == "SEGMENTED"
+		end,
+		inherits = {
+			from = L["Border Color"],
+			get = function()
+				return Swatch(LB.BarGroup:BorderColor())
+			end,
+		},
+		get = function()
+			local own = LB.BarGroup:OwnSeparatorColor()
+
+			return own and Swatch(own)
+		end,
+		set = function(value)
+			if value == nil and LB.BarGroup:OwnSeparatorColor() == nil then
+				return
+			end
+
+			LB.Profile:Set("appearance.separatorColor", value and { value.r, value.g, value.b, value.a or 1 })
+		end,
+	})
+
 	local dividers = page:Section("dividers", L["XP Dividers"])
 
 	self:Add(dividers, "Checkbox", KEY, { id = "dividers", label = L["Show Dividers"],

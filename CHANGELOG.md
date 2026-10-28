@@ -24,6 +24,8 @@ Settings:
 - Every settings page has an icon in the sidebar, and Profiles sits below a divider. Each progress type is one
   page instead of two tabs, Stacking shows only in Connected layout, and Fully Visible in Combat is grayed out
   while Hide in Combat is on.
+- In Segmented layout, the lines between progress types have their own Separator Color. It follows the border's
+  color until you change it. Custom Color and Border Color show only when the border style uses them.
 - Less text to read: tooltips appear only where they add something the label doesn't say, pages no longer open
   with a summary of their own sections, and a grayed-out option says what it requires or what sets it.
 

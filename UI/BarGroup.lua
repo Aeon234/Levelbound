@@ -196,6 +196,36 @@ function BarGroup:Separator(parent, index)
 	return separator
 end
 
+---@return LBColor color the border's color, which the separators take until they have their own
+function BarGroup:BorderColor()
+	local border = LB.Profile:Get("appearance.border")
+
+	return LB.Border:Color(border.style, border)
+end
+
+---@return LBColor? color the separators' own color, or nil while they take the border's
+function BarGroup:OwnSeparatorColor()
+	local own = LB.Profile:Get("appearance.separatorColor")
+
+	-- The key has no default, so an imported profile is not checked against one; use only a well-formed color.
+	if type(own) ~= "table" then
+		return nil
+	end
+
+	for channel = 1, 3 do
+		if type(own[channel]) ~= "number" then
+			return nil
+		end
+	end
+
+	return own
+end
+
+---@return LBColor color the segmented layout's separators: their own color when set, otherwise the border's
+function BarGroup:SeparatorColor()
+	return self:OwnSeparatorColor() or self:BorderColor()
+end
+
 ---@param frame Frame
 ---@param ids string[]
 ---@param rects table<string, LBBarRect>
@@ -204,8 +234,7 @@ function BarGroup:PlaceSeparators(frame, ids, rects)
 	local shown = 0
 
 	if layout.mode == "SEGMENTED" then
-		local border = LB.Profile:Get("appearance.border")
-		local color = LB.Border:Color(border.style, border)
+		local color = self:SeparatorColor()
 
 		for index = 1, #ids - 1 do
 			local rect = rects[ids[index]]
