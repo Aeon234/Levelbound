@@ -158,17 +158,6 @@ function Settings:DeclareLayout(page)
 		}),
 		blocked = NotIndependent,
 	})
-	self:Add(placement, "Dropdown", KEY, {
-		id = "strata",
-		label = L["Frame Strata"],
-		path = "layout.strata",
-		options = self:Choices({
-			{ value = "BACKGROUND", label = BACKGROUND },
-			{ value = "LOW", label = L["Low"] },
-			{ value = "MEDIUM", label = L["Medium"] },
-			{ value = "HIGH", label = L["High"] },
-		}),
-	})
 
 	local size = page:Section("size", L["Size"])
 
@@ -213,6 +202,20 @@ function Settings:DeclareLayout(page)
 		max = 10,
 		step = 1,
 		blocked = OnlyConnected,
+	})
+
+	local advanced = page:Section("advanced", ADVANCED_LABEL)
+
+	self:Add(advanced, "Dropdown", KEY, {
+		id = "strata",
+		label = L["Frame Strata"],
+		path = "layout.strata",
+		options = self:Choices({
+			{ value = "BACKGROUND", label = BACKGROUND },
+			{ value = "LOW", label = L["Low"] },
+			{ value = "MEDIUM", label = L["Medium"] },
+			{ value = "HIGH", label = L["High"] },
+		}),
 	})
 end
 
@@ -297,11 +300,13 @@ function Settings:DeclareAppearance(page)
 			end
 		end,
 	})
-	self:Add(border, "Checkbox", KEY, { id = "dividers", label = L["Show XP Dividers"],
+	local dividers = page:Section("dividers", L["XP Dividers"])
+
+	self:Add(dividers, "Checkbox", KEY, { id = "dividers", label = L["Show Dividers"],
 		path = "appearance.dividers.enabled" })
-	self:Add(border, "Dropdown", KEY, {
+	self:Add(dividers, "Dropdown", KEY, {
 		id = "dividerSpacing",
-		label = L["Divider Spacing"],
+		label = L["Spacing"],
 		path = "appearance.dividers.spacing",
 		options = self:Choices({
 			{ value = 10, label = L["Every 10%"] },
@@ -309,19 +314,18 @@ function Settings:DeclareAppearance(page)
 		}),
 		depends = "dividers",
 	})
-	self:Add(border, "Checkbox", KEY, { id = "dividerCustom", label = L["Divider Custom Color"],
+	self:Add(dividers, "Checkbox", KEY, { id = "dividerCustom", label = L["Custom Color"],
 		path = "appearance.dividers.customColor", depends = "dividers" })
 
 	local getDivider, setDivider = self:ColorAccess("appearance.dividers.color")
 
-	self:Add(border, "Color", KEY, { id = "dividerColor", label = L["Divider Color"], get = getDivider,
+	self:Add(dividers, "Color", KEY, { id = "dividerColor", label = L["Divider Color"], get = getDivider,
 		set = setDivider, depends = "dividerCustom" })
 
 	local spark = page:Section("spark", L["Spark and Shimmer"])
 
 	self:Add(spark, "Checkbox", KEY, { id = "spark", label = L["Progress Spark"], path = "appearance.spark.enabled" })
-	self:Add(spark, "Checkbox", KEY, { id = "shimmer", label = L["Gain Shimmer"], path = "appearance.shimmer" })
-	self:Add(spark, "Checkbox", KEY, { id = "sparkCustom", label = L["Custom Spark Color"],
+	self:Add(spark, "Checkbox", KEY, { id = "sparkCustom", label = L["Custom Color"],
 		path = "appearance.spark.customColor", depends = "spark" })
 
 	local getSpark, setSpark = self:ColorAccess("appearance.spark.color")
@@ -329,6 +333,7 @@ function Settings:DeclareAppearance(page)
 	self:Add(spark, "Color", KEY, { id = "sparkColor", label = L["Spark Color"], get = getSpark, set = setSpark,
 		depends = "sparkCustom" })
 	self:Add(spark, "Checkbox", KEY, { id = "glow", label = L["Edge Glow"], path = "appearance.glow" })
+	self:Add(spark, "Checkbox", KEY, { id = "shimmer", label = L["Gain Shimmer"], path = "appearance.shimmer" })
 end
 
 ---@param page table
@@ -359,13 +364,6 @@ end
 
 ---@param page table
 function Settings:DeclareVisibility(page)
-	---@return string?
-	local function NeedsFade()
-		if LB.Profile:Get("visibility.fadeUntilHovered") ~= true then
-			return L["Needs Fade Until Hovered."]
-		end
-	end
-
 	local fading = page:Section("fading", L["Fading"])
 
 	self:Add(fading, "Checkbox", KEY, { id = "fade", label = L["Fade Until Hovered"],
@@ -374,11 +372,11 @@ function Settings:DeclareVisibility(page)
 	local getFaded, setFaded = self:Percent("visibility.fadedAlpha")
 
 	self:Add(fading, "Slider", KEY, { id = "fadedAlpha", label = L["Faded Opacity"], min = 0, max = 100, step = 5,
-		format = "percent", get = getFaded, set = setFaded, blocked = NeedsFade })
+		format = "percent", get = getFaded, set = setFaded, depends = "fade" })
 	self:Add(fading, "Checkbox", KEY, { id = "fullInCombat", label = L["Fully Visible in Combat"],
-		path = "visibility.fullInCombat", blocked = NeedsFade })
+		path = "visibility.fullInCombat", depends = "fade" })
 	self:Add(fading, "Checkbox", KEY, { id = "fullWithTarget", label = L["Fully Visible with a Target"],
-		path = "visibility.fullWithTarget", blocked = NeedsFade })
+		path = "visibility.fullWithTarget", depends = "fade" })
 
 	local focus = page:Section("focus", L["Focus Mode"])
 
@@ -418,7 +416,21 @@ function Settings:DeclareGain(page)
 	local behavior = page:Section("behavior", L["Behavior"])
 
 	self:Add(behavior, "Toggle", "gain", { id = "animate", label = L["Animate"], path = "gain.animate" })
-	behavior:Skip()
+	self:Add(behavior, "Dropdown", "gain", {
+		id = "animation",
+		label = L["Animation Style"],
+		path = "gain.animation",
+		options = self:Choices({
+			{ value = "RISE", label = L["Rise"] },
+			{ value = "SLIDE", label = L["Slide Outward"] },
+		}),
+		depends = "animate",
+		blocked = function()
+			if not Beside() and not Detached() then
+				return L["Only beside the bar, or detached."]
+			end
+		end,
+	})
 	self:Add(behavior, "Checkbox", "gain", { id = "hideInCombat", label = L["Hide in Combat"],
 		path = "gain.hideInCombat" })
 	self:Add(behavior, "Checkbox", "gain", { id = "detached", label = L["Detach from Bar"], path = "gain.detached" },
@@ -464,26 +476,6 @@ function Settings:DeclareGain(page)
 			end
 		end,
 	})
-	self:Add(placement, "Slider", "gain", { id = "x", label = L["Horizontal Offset"], path = "gain.text.x", min = -40,
-		max = 40, step = 1 })
-	self:Add(placement, "Slider", "gain", { id = "y", label = L["Vertical Offset"], path = "gain.text.y", min = -40,
-		max = 40, step = 1 })
-	self:Add(placement, "Dropdown", "gain", {
-		id = "animation",
-		label = L["Animation Style"],
-		path = "gain.animation",
-		options = self:Choices({
-			{ value = "RISE", label = L["Rise"] },
-			{ value = "SLIDE", label = L["Slide Outward"] },
-		}),
-		depends = "animate",
-		blocked = function()
-			if not Beside() and not Detached() then
-				return L["Only beside the bar, or detached."]
-			end
-		end,
-	})
-
 	local amount = page:Section("amount", L["Amount Text"])
 
 	self:Add(amount, "Dropdown", "gain", { id = "font", label = L["Font"], path = "gain.text.font", picker = "font" })
@@ -510,6 +502,10 @@ function Settings:DeclareGain(page)
 			{ value = "RIGHT", label = L["Right of the Arrow"] },
 		}),
 	})
+	self:Add(amount, "Slider", "gain", { id = "x", label = L["Horizontal Offset"], path = "gain.text.x", min = -40,
+		max = 40, step = 1 })
+	self:Add(amount, "Slider", "gain", { id = "y", label = L["Vertical Offset"], path = "gain.text.y", min = -40,
+		max = 40, step = 1 })
 
 	local tints = page:Section("tints", L["Arrow Tints"])
 

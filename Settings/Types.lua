@@ -6,9 +6,14 @@ local Settings = LB.Settings
 
 local KEY = "type"
 
+---@return boolean
+local function Independent()
+	return LB.Layout.Independent(LB.Profile:Get("layout")) and true or false
+end
+
 ---@return string?
 local function OnlyIndependent()
-	if not LB.Layout.Independent(LB.Profile:Get("layout")) then
+	if not Independent() then
 		return L["Only in Independent layout."]
 	end
 end
@@ -58,7 +63,8 @@ function Settings:DeclareTypeBar(tab, id)
 		self:Add(colors, "Color", KEY, { id = "color", label = L["Bar Color"], get = get, set = set })
 	end
 
-	local size = tab:Section("size", L["Size"])
+	-- Reputation's tab has no other section, so its Size stays in view, inactive with its reason.
+	local size = tab:Section("size", L["Size"], id ~= "reputation" and { show = Independent } or nil)
 
 	self:BarSize(size, id, "width", L["Width"], LIMITS.barWidth.min, function()
 		return math.floor(UIParent:GetWidth())
@@ -88,7 +94,7 @@ function Settings:DeclareExperienceColors(section)
 		end
 	end
 
-	self:Add(section, "Checkbox", KEY, { id = "classColor", label = L["XP Uses Class Color"],
+	self:Add(section, "Checkbox", KEY, { id = "classColor", label = L["Use Class Color"],
 		path = "appearance.xpUseClassColor" })
 	self:Add(section, "Checkbox", KEY, { id = "gradientFollows", label = L["Gradient Follows Fill"],
 		path = "appearance.xpGradientFollows", blocked = ClassColor })

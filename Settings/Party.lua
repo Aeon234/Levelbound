@@ -73,24 +73,9 @@ end
 function Settings:DeclareMarkers(page)
 	local KEY = "markers"
 
-	---@return string?
-	local function Matched()
-		if LB.Profile:Get("party.opacity.matchBar") == true then
-			return L["Uses the bar's opacity."]
-		end
-	end
-
-	---@return string?
-	local function MatchedOrNoFade()
-		local matched = Matched()
-
-		if matched then
-			return matched
-		end
-
-		if LB.Profile:Get("party.opacity.fadeUntilHovered") ~= true then
-			return L["Needs Fade Until Hovered."]
-		end
+	---@return boolean
+	local function Unmatched()
+		return LB.Profile:Get("party.opacity.matchBar") ~= true
 	end
 
 	---@return string?
@@ -149,18 +134,18 @@ function Settings:DeclareMarkers(page)
 	local getAlpha, setAlpha = self:Percent("party.opacity.alpha")
 
 	self:Add(fading, "Slider", KEY, { id = "alpha", label = L["Marker Opacity"], min = 0, max = 100, step = 5,
-		format = "percent", get = getAlpha, set = setAlpha, blocked = Matched })
+		format = "percent", get = getAlpha, set = setAlpha, show = Unmatched })
 	self:Add(fading, "Checkbox", KEY, { id = "fade", label = L["Fade Until Hovered"],
-		path = "party.opacity.fadeUntilHovered", blocked = Matched })
+		path = "party.opacity.fadeUntilHovered", show = Unmatched })
 
 	local getFaded, setFaded = self:Percent("party.opacity.fadedAlpha")
 
 	self:Add(fading, "Slider", KEY, { id = "fadedAlpha", label = L["Faded Opacity"], min = 0, max = 100, step = 5,
-		format = "percent", get = getFaded, set = setFaded, blocked = MatchedOrNoFade })
+		format = "percent", get = getFaded, set = setFaded, depends = "fade", show = Unmatched })
 	self:Add(fading, "Checkbox", KEY, { id = "fullInCombat", label = L["Fully Visible in Combat"],
-		path = "party.opacity.fullInCombat", blocked = MatchedOrNoFade })
+		path = "party.opacity.fullInCombat", depends = "fade", show = Unmatched })
 	self:Add(fading, "Checkbox", KEY, { id = "fullWithTarget", label = L["Fully Visible with a Target"],
-		path = "party.opacity.fullWithTarget", blocked = MatchedOrNoFade })
+		path = "party.opacity.fullWithTarget", depends = "fade", show = Unmatched })
 end
 
 ---@param page table
@@ -182,24 +167,9 @@ function Settings:DeclarePartyBars(page)
 		end
 	end
 
-	---@return string?
-	local function Matched()
-		if LB.Profile:Get("party.bars.matchBar") == true then
-			return L["Uses the bars' Visibility settings."]
-		end
-	end
-
-	---@return string?
-	local function MatchedOrNoFade()
-		local matched = Matched()
-
-		if matched then
-			return matched
-		end
-
-		if LB.Profile:Get(VISIBILITY .. "fadeUntilHovered") ~= true then
-			return L["Needs Fade Until Hovered."]
-		end
+	---@return boolean
+	local function Unmatched()
+		return LB.Profile:Get("party.bars.matchBar") ~= true
 	end
 
 	local bars = page:Section("bars", L["Party Bars"], { show = ShowsBars })
@@ -235,19 +205,19 @@ function Settings:DeclarePartyBars(page)
 		path = "party.bars.matchBar" })
 	visibility:Skip()
 	self:Add(visibility, "Checkbox", KEY, { id = "barsHideInCombat", label = L["Hide in Combat"],
-		path = VISIBILITY .. "hideInCombat", blocked = Matched })
+		path = VISIBILITY .. "hideInCombat", show = Unmatched })
 	visibility:Skip()
 	self:Add(visibility, "Checkbox", KEY, { id = "barsFade", label = L["Fade Until Hovered"],
-		path = VISIBILITY .. "fadeUntilHovered", blocked = Matched })
+		path = VISIBILITY .. "fadeUntilHovered", show = Unmatched })
 
 	local getFaded, setFaded = self:Percent(VISIBILITY .. "fadedAlpha")
 
 	self:Add(visibility, "Slider", KEY, { id = "barsFadedAlpha", label = L["Faded Opacity"], min = 0, max = 100,
-		step = 5, format = "percent", get = getFaded, set = setFaded, blocked = MatchedOrNoFade })
+		step = 5, format = "percent", get = getFaded, set = setFaded, depends = "barsFade", show = Unmatched })
 	self:Add(visibility, "Checkbox", KEY, { id = "barsFullInCombat", label = L["Fully Visible in Combat"],
-		path = VISIBILITY .. "fullInCombat", blocked = MatchedOrNoFade })
+		path = VISIBILITY .. "fullInCombat", depends = "barsFade", show = Unmatched })
 	self:Add(visibility, "Checkbox", KEY, { id = "barsFullWithTarget", label = L["Fully Visible with a Target"],
-		path = VISIBILITY .. "fullWithTarget", blocked = MatchedOrNoFade })
+		path = VISIBILITY .. "fullWithTarget", depends = "barsFade", show = Unmatched })
 end
 
 ---@param page table
@@ -288,7 +258,7 @@ function Settings:DeclareLevelUps(page)
 		depends = "notices" })
 	self:Add(notices, "Dropdown", KEY, { id = "sound", label = SOUND, path = "party.levelUp.sound", picker = "sound",
 		options = { { value = "None", text = NONE } }, depends = "notices" })
-	self:Add(notices, "Checkbox", KEY, { id = "hideInCombat", label = L["Hide in Combat"],
+	self:Add(notices, "Checkbox", KEY, { id = "hideInCombat", label = L["Wait Until Out of Combat"],
 		path = "party.levelUp.hideInCombat", depends = "notices" })
 
 	local placement = page:Section("placement", L["Placement"])
@@ -362,14 +332,14 @@ function Settings:DeclareLevelUps(page)
 	self:Add(text, "Dropdown", KEY, { id = "outline", label = L["Outline"], path = "party.levelUp.text.outline",
 		options = self:Choices(LB.Media.outlines), depends = "onScreen" })
 
-	local announce = page:Section("announce", L["Level-Ups"])
+	local announce = page:Section("announce", L["Your Level-Ups"])
 
-	self:Add(announce, "Checkbox", KEY, { id = "levelUpEmote", label = L["Print Level-Up Message"],
+	self:Add(announce, "Checkbox", KEY, { id = "levelUpEmote", label = L["Print in Chat When Solo"],
 		path = "party.announce.levelUpEmote" })
 	announce:Skip()
-	self:Add(announce, "Checkbox", KEY, { id = "levelUpParty", label = L["Party Level-Up Message"],
+	self:Add(announce, "Checkbox", KEY, { id = "levelUpParty", label = L["Post to Party"],
 		path = "party.announce.levelUpParty" })
-	self:Add(announce, "Checkbox", KEY, { id = "levelUpGuild", label = L["Guild Level-Up Message"],
+	self:Add(announce, "Checkbox", KEY, { id = "levelUpGuild", label = L["Post to Guild"],
 		path = "party.announce.levelUpGuild" })
 
 	local summary = page:Section("summary", L["Dungeon Summary"])

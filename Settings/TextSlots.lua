@@ -251,7 +251,7 @@ local function CopyChoices(typeId)
 end
 
 ---Declares the slot editor: one set of rows that edits whichever slot is chosen, in a Text
----section of `container` (a page or a tab) with Copy Settings From on its title line.
+---section of `container` (a page or a tab) with Copy Text From on its title line.
 ---@param container table a page or a tab
 ---@param typeId string
 ---@param show (fun(): boolean)? hides the whole section while it returns false
@@ -311,9 +311,9 @@ function Text:Declare(container, typeId, show)
 
 	section:Menu({
 		id = "copyFrom",
-		label = L["Copy Settings From"],
+		label = L["Copy Text From"],
 		tooltip = Settings:Tooltip(KEY, "copyFrom"),
-		placeholder = L["Copy Settings From"],
+		placeholder = L["Copy Text From"],
 		titleCase = false,
 		action = true,
 		verb = L["Copy"],
@@ -390,7 +390,7 @@ function Text:Declare(container, typeId, show)
 	section:Skip()
 	Settings:Add(section, "Slider", KEY, {
 		id = "nudgeX",
-		label = L["Nudge X"],
+		label = L["Horizontal Offset"],
 		min = -NUDGE_LIMIT,
 		max = NUDGE_LIMIT,
 		step = 1,
@@ -400,7 +400,7 @@ function Text:Declare(container, typeId, show)
 	})
 	Settings:Add(section, "Slider", KEY, {
 		id = "nudgeY",
-		label = L["Nudge Y"],
+		label = L["Vertical Offset"],
 		min = -NUDGE_LIMIT,
 		max = NUDGE_LIMIT,
 		step = 1,

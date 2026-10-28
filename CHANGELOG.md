@@ -14,6 +14,13 @@ Settings:
   its reset arrow, and the profile's Reset still restores everything.
 - In edit mode, each frame has a menu with its position and a shortcut to its settings. Your snap, grid and
   toolbar choices carry over.
+- Settings are easier to scan. Options that need another one turned on appear once it is, and options a Match
+  setting overrides are hidden while it is on. XP dividers have their own section, Frame Strata moves to
+  Advanced, and the gain indicator's offsets sit with its amount text. A bar's own size shows only in Independent
+  layout.
+- Clearer names: Copy Text From, Horizontal and Vertical Offset in the text editor, Use Class Color, Wait Until
+  Out of Combat for level-up notices, and Print in Chat When Solo, Post to Party and Post to Guild for your own
+  level-ups.
 
 Fixes:
 
