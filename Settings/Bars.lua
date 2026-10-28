@@ -87,7 +87,7 @@ end
 ---@return string?
 local function NotIndependent()
 	if LB.Layout.Independent(LB.Profile:Get("layout")) then
-		return L["Not in Independent layout."]
+		return L["Requires Segmented or Connected layout."]
 	end
 end
 
@@ -101,7 +101,7 @@ end
 ---@return string?
 local function OnlyConnected()
 	if LB.Profile:Get("layout.mode") ~= "CONNECTED" then
-		return L["Only in Connected layout."]
+		return L["Requires Connected layout."]
 	end
 end
 
@@ -112,17 +112,14 @@ function Settings:DeclareBars(window)
 	self:DeclareAppearance(window:Page("appearance", {
 		title = L["Appearance"],
 		under = "bars",
-		description = L["The bars' texture, background, border, dividers and spark."],
 	}))
 	self:DeclareText(window:Page("text", {
 		title = L["Text"],
 		under = "bars",
-		description = L["The style of every bar's text, and how its numbers are written."],
 	}))
 	self:DeclareVisibility(window:Page("visibility", {
 		title = L["Visibility"],
 		under = "bars",
-		description = L["When the bars fade, dim or hide."],
 	}))
 	self:DeclareGain(window:Page("gain", {
 		title = L["Gain Indicator"],
@@ -132,7 +129,6 @@ function Settings:DeclareBars(window)
 			path = "gain.enabled",
 			default = self:Default("gain.enabled"),
 			label = L["Show Gain Indicator"],
-			tooltip = self:Tooltip("gain", "enabled"),
 		},
 	}))
 end
@@ -278,7 +274,7 @@ function Settings:DeclareAppearance(page)
 			if NoBorder() then
 				return NoBorder()
 			elseif not LB.Border:IsTextured(Style()) then
-				return L["This border always uses Border Color."]
+				return L["Requires a textured border style."]
 			end
 		end,
 	})
@@ -296,7 +292,7 @@ function Settings:DeclareAppearance(page)
 			if NoBorder() and LB.Profile:Get("layout.mode") ~= "SEGMENTED" then
 				return NoBorder()
 			elseif LB.Border:IsTextured(Style()) and LB.Profile:Get("appearance.border.customColor") ~= true then
-				return L["Requires Custom Color to be enabled."]
+				return L["Requires Custom Color."]
 			end
 		end,
 	})
@@ -427,7 +423,7 @@ function Settings:DeclareGain(page)
 		depends = "animate",
 		blocked = function()
 			if not Beside() and not Detached() then
-				return L["Only beside the bar, or detached."]
+				return L["Requires Right or Left of Bar, or Detach from Bar."]
 			end
 		end,
 	})
@@ -450,7 +446,7 @@ function Settings:DeclareGain(page)
 		}),
 		blocked = function()
 			if Detached() then
-				return L["Detached: placed in Edit Mode."]
+				return L["Set in Edit Mode."]
 			end
 		end,
 	})
@@ -470,9 +466,9 @@ function Settings:DeclareGain(page)
 			if Detached() then
 				return nil
 			elseif not (Beside() and LB.Profile:Get("layout.mode") == "SEGMENTED") then
-				return L["Only when detached, or beside segmented bars."]
+				return L["Requires Detach from Bar, or Right or Left of Bar in Segmented layout."]
 			elseif LB.Profile:Get("gain.animation") == "SLIDE" then
-				return L["Slide Outward grows the stack away from the bars."]
+				return L["Set by Slide Outward."]
 			end
 		end,
 	})

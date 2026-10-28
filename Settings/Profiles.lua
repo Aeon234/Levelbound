@@ -72,7 +72,6 @@ local adapter = {
 function Profiles:Declare(window)
 	window:ProfilesPage("profiles", {
 		title = L["Profiles"],
-		description = L["Per-character or shared settings, with copy, export and import."],
 		adapter = adapter,
 	})
 end

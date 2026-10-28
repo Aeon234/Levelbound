@@ -21,6 +21,8 @@ Settings:
 - Clearer names: Copy Text From, Horizontal and Vertical Offset in the text editor, Use Class Color, Wait Until
   Out of Combat for level-up notices, and Print in Chat When Solo, Post to Party and Post to Guild for your own
   level-ups.
+- Less text to read: tooltips appear only where they add something the label doesn't say, pages no longer open
+  with a summary of their own sections, and a grayed-out option says what it requires or what sets it.
 
 Fixes:
 

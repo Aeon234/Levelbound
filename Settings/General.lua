@@ -7,7 +7,6 @@ local Settings = LB.Settings
 function Settings:DeclareGeneral(window)
 	local page = window:Page("general", {
 		title = GENERAL,
-		description = L["The minimap button, bar tooltips and clicks, and time tracking."],
 	})
 
 	local access = page:Section("access", L["Access"])
@@ -15,7 +14,6 @@ function Settings:DeclareGeneral(window)
 	access:Checkbox({
 		id = "minimapButton",
 		label = L["Show Minimap Button"],
-		tooltip = self:Tooltip("general", "minimapButton"),
 		default = true,
 		wide = true,
 		get = function()

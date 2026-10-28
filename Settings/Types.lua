@@ -14,7 +14,7 @@ end
 ---@return string?
 local function OnlyIndependent()
 	if not Independent() then
-		return L["Only in Independent layout."]
+		return L["Requires Independent layout."]
 	end
 end
 
@@ -35,12 +35,10 @@ function Settings:DeclareTypes(window)
 			local page = window:Page("type." .. id, {
 				title = label,
 				under = "types",
-				description = L["This bar's colors, its own size and its text."],
 				switch = {
 					path = "types." .. id,
 					default = self:Default("types." .. id),
 					label = L["Show %s Bar"]:format(label),
-					tooltip = self:Tooltip(KEY, "enabled"),
 				},
 			})
 
@@ -77,7 +75,7 @@ function Settings:DeclareExperienceColors(section)
 	---@return string?
 	local function ClassColor()
 		if LB.Profile:Get("appearance.xpUseClassColor") == true then
-			return L["Uses your class color."]
+			return L["Set by Use Class Color."]
 		end
 	end
 

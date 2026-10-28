@@ -35,13 +35,11 @@ function Settings:DeclareParty(window)
 			path = "party.markers",
 			default = self:Default("party.markers"),
 			label = L["Show Party Progress"],
-			tooltip = self:Tooltip("markers", "markers"),
 		},
 	}))
 	self:DeclareLevelUps(window:Page("levelups", {
 		title = L["Level-Ups"],
 		under = "party",
-		description = L["Party level-up notices, and messages about your own level-ups and runs."],
 	}))
 end
 
@@ -53,7 +51,6 @@ function Settings:DeclareDisplay(section, id)
 		id = id,
 		label = L["Display"],
 		path = "party.display",
-		tooltip = self:Tooltip("markers", "display"),
 		options = self:Choices({
 			{ value = "MARKERS", label = L["Markers on Your Bar"] },
 			{ value = "BARS", label = L["Standalone Bars"] },
@@ -81,7 +78,7 @@ function Settings:DeclareMarkers(page)
 	---@return string?
 	local function Tick()
 		if LB.Profile:Get("party.style") == "TICK" then
-			return L["The full-height tick always spans the bar."]
+			return L["Set by Full-Height Tick."]
 		end
 	end
 
@@ -163,7 +160,7 @@ function Settings:DeclarePartyBars(page)
 	---@return string?
 	local function Compact()
 		if LB.Profile:Get("party.bars.compact") == true then
-			return L["Compact sets the gap to 1 pixel."]
+			return L["Set by Compact."]
 		end
 	end
 
@@ -228,7 +225,7 @@ function Settings:DeclareLevelUps(page)
 
 	local function Detached()
 		if LB.Profile:Get("party.levelUp.detached") == true then
-			return L["Detached: placed in Edit Mode."]
+			return L["Set in Edit Mode."]
 		end
 	end
 
@@ -298,7 +295,7 @@ function Settings:DeclareLevelUps(page)
 		end,
 		blocked = function()
 			if Beside() and Sliding() then
-				return L["Slide Outward grows the stack away from the bars."]
+				return L["Set by Slide Outward."]
 			end
 		end,
 	})
@@ -313,7 +310,7 @@ function Settings:DeclareLevelUps(page)
 		depends = "onScreen",
 		blocked = function()
 			if not Beside() and not Detached() then
-				return L["Only beside the bar, or detached."]
+				return L["Requires Right or Left of Bar, or Detach from Bar."]
 			end
 		end,
 	})
