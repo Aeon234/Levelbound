@@ -30,6 +30,8 @@ local function BorderStyles()
 		{ value = "ROUNDED_THICK", label = L["Simple Thick"] },
 		{ value = "BRONZE", label = L["Bronze"] },
 		{ value = "METALLIC", label = L["Metallic"] },
+		{ value = "IRON", label = L["Iron"] },
+		{ value = "IRON_LARGE", label = L["Iron Large"] },
 		{ value = "BLIZZARD", label = L["Blizzard"] },
 	}
 

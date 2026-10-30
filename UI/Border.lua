@@ -28,6 +28,8 @@ local EDGES = {
 	ROUNDED_THICK = "Levelbound Ring Thick",
 	BRONZE = "Levelbound Bronze",
 	METALLIC = "Levelbound Metallic",
+	IRON = "Levelbound Iron",
+	IRON_LARGE = "Levelbound Iron",
 }
 
 local RING = { 102 / 255, 98 / 255, 92 / 255 }
@@ -37,12 +39,28 @@ local NATIVE = {
 	ROUNDED_THICK = RING,
 	BRONZE = { 165 / 255, 130 / 255, 83 / 255 },
 	METALLIC = { 195 / 255, 133 / 255, 84 / 255 },
+	IRON = { 132 / 255, 132 / 255, 132 / 255 },
+	IRON_LARGE = { 132 / 255, 132 / 255, 132 / 255 },
 	BLIZZARD = BLIZZARD_TINT,
 }
 
 local OUTSET = 1 / 4
 local OUTSETS = {
 	METALLIC = 27.5 / 64,
+	IRON = 50 / 64,
+	IRON_LARGE = 50 / 64,
+}
+
+-- The empty margin outside a style's band, as a fraction of its edge size; layout spacing counts only the band.
+local MARGINS = {
+	IRON = 40 / 64,
+	IRON_LARGE = 40 / 64,
+}
+
+-- Styles drawn at one edge size around a bar of fixed height, instead of scaling with the bar.
+local EDGE_SIZES = {
+	IRON = 16,
+	IRON_LARGE = 32,
 }
 
 -- The Blizzard frame is drawn in three slices of a 2048 x 32 file holding the 2040 x 26 art, around a bar of fixed
@@ -56,7 +74,8 @@ local STRIP_COORDS = {
 	right = { 2024 / 2048, 2040 / 2048 },
 	bottom = 26 / 32,
 }
-local FIXED_HEIGHT = { BLIZZARD = 11 }
+local FIXED_HEIGHT = { BLIZZARD = 11, IRON = 16, IRON_LARGE = 16 }
+local NO_TEXT_ROOM = { BLIZZARD = true } -- fixed heights too short for text inside the bar
 local MASK_WIDTH = 6.5 -- the bevel's reach in from each end of the bar
 
 -- Styles that draw dividers from the Blizzard divider art, 3 UI units wide, instead of a slice of their edge file.
@@ -87,6 +106,11 @@ end
 ---@return number? height the bar height the style is drawn around, or nil when it fits any height
 function Border:FixedHeight(style)
 	return FIXED_HEIGHT[style]
+end
+
+---@return boolean roomless the chosen border style holds the bars too short for text inside them
+function Border:HoldsTextOut()
+	return self:HeldHeight() ~= nil and NO_TEXT_ROOM[LB.Profile:Get("appearance.border.style")] == true
 end
 
 ---@return number? height the height the chosen border style holds the bars at, or nil when it does not hold them
@@ -178,7 +202,7 @@ end
 ---@return number edge
 ---@return number outset
 function Border:EdgeMetrics(height, style)
-	local edge = math.max(math.min(EDGE_SIZE, math.floor(height * 2 / 3)), 2)
+	local edge = EDGE_SIZES[style] or math.max(math.min(EDGE_SIZE, math.floor(height * 2 / 3)), 2)
 
 	return edge, edge * (OUTSETS[style] or OUTSET)
 end
@@ -200,9 +224,9 @@ function Border:Outset(style, height, width)
 	end
 
 	if EDGES[style] then
-		local _, outset = self:EdgeMetrics(height, style)
+		local edge, outset = self:EdgeMetrics(height, style)
 
-		return outset
+		return outset - edge * (MARGINS[style] or 0)
 	end
 
 	return 0

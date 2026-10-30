@@ -107,6 +107,7 @@ local borders = {
 	["Levelbound Ring Thick"] = PATH .. [[Borders\RingBorderThickWhite.tga]],
 	["Levelbound Bronze"] = PATH .. [[Borders\BronzeBorderWhite.tga]],
 	["Levelbound Metallic"] = PATH .. [[Borders\MetallicBorderWhite.tga]],
+	["Levelbound Iron"] = PATH .. [[Borders\IronBorderWhite.tga]],
 }
 
 function Media:Register()

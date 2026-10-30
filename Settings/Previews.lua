@@ -955,7 +955,7 @@ local HEIGHTS = {
 	end,
 	appearance = function()
 		local layout = LB.Profile:Get("layout")
-		local height = math.max(layout.height, LB.Layout.HeldHeight(layout, LB.Border:FixedHeight("BLIZZARD")) or 0)
+		local height = math.max(layout.height, LB.Layout.HeldHeight(layout, LB.Border:FixedHeight("IRON")) or 0)
 		local reach = Fullscreen() and 0 or ReachMax(height)
 		local count = #Pair()
 
