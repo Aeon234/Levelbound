@@ -86,6 +86,13 @@ local DIVIDER_TINT = { 145 / 255, 136 / 255, 116 / 255 }
 local DIVIDER_WIDTH = 3
 local DIVIDER_COORDS = { 0, 1, 1 / 16, 15 / 16 }
 
+-- Fixed-size styles that draw dividers from their band alone: its first and last texel column in the edge file's
+-- 64 px left slice, drawn at the style's edge size.
+local DIVIDER_BANDS = {
+	IRON = { 40, 52 },
+	IRON_LARGE = { 40, 52 },
+}
+
 ---@class LBBorderFrame : Frame, BackdropTemplate
 ---@field edges Texture[] top, bottom, left, right
 ---@field strip Texture[]? left cap, middle, right cap of the Blizzard frame
@@ -138,6 +145,17 @@ end
 ---@param style string
 ---@return LBDividerArt? art the divider texture a style draws its dividers with, or nil
 function Border:DividerArt(style)
+	local band = DIVIDER_BANDS[style]
+
+	if band then
+		return {
+			path = LB.Media:Fetch("border", EDGES[style]),
+			coords = { band[1] / 512, band[2] / 512, 0, 1 },
+			width = EDGE_SIZES[style] * (band[2] - band[1]) / 64,
+			tint = NATIVE[style],
+		}
+	end
+
 	if not DIVIDER_ART[style] then
 		return nil
 	end
