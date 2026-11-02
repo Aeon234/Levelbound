@@ -14,7 +14,7 @@ local Media = {
 LB.Media = Media
 
 Media.textures = {
-	logo = PATH .. [[Levelbound.tga]],
+	logo = PATH .. [[Levelbound.png]],
 	gainArrow = PATH .. [[Textures\GainArrowUp-White.tga]],
 	markerDisc = PATH .. [[Textures\MarkerDisc-White.tga]],
 	softShade = PATH .. [[Textures\SoftShade.tga]],
