@@ -32,6 +32,7 @@ local function BorderStyles()
 		{ value = "METALLIC", label = L["Metallic"] },
 		{ value = "IRON", label = L["Iron"] },
 		{ value = "IRON_LARGE", label = L["Iron Large"] },
+		{ value = "FOREVER_MINIMAL", label = L["Forever Minimal"] },
 		{ value = "BLIZZARD", label = L["Blizzard"] },
 	}
 

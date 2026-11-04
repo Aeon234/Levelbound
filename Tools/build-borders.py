@@ -5,6 +5,7 @@ Usage:
     python Tools/build-borders.py card <style-card.png>
     python Tools/build-borders.py icons <assets-dir>
     python Tools/build-borders.py pill
+    python Tools/build-borders.py minimal <ForeverMinimalShaded.tga>
     python Tools/build-borders.py sidebar <svg-dir>
 
 <source-dir> holds wow.export's 2x PNG exports of interface/hud/uiexperiencebar2xc60:
@@ -268,6 +269,59 @@ def pill():
     save(hole[:, ::-1], "Media/Textures/PillHoleRight.tga")
 
 
+MINIMAL_ART = 110  # the source art's width and height
+MINIMAL_CORNER = 20  # its corners; past them the band is plain, so edges take a strip through the middle
+MINIMAL_SLICE = 32  # an edge file slice; a backdrop draws all but its outer 2 texels on each side
+MINIMAL_PAD = 2
+
+
+def minimal(source):
+    """Builds the Forever Minimal border's edge file from AeonUI's ForeverMinimalShaded.tga, a white band in a 110-texel
+    nine-slice layout: eight slices in backdrop order (left, right, top, bottom, then the corners), each holding 30
+    texels of the art from its outer edge, the corner and then the middle strip, after MINIMAL_PAD empty ones.
+
+    Writes Media/Borders/ForeverMinimalBorderWhite.tga. The backdrop's 28 drawn texels at edge size 14 keep the art's
+    own scale of half a UI unit per texel.
+    """
+    art = np.asarray(Image.open(source).convert("RGBA")).astype(np.float64)
+    if art.shape[:2] != (MINIMAL_ART, MINIMAL_ART):
+        sys.exit(f"Expected {MINIMAL_ART} x {MINIMAL_ART}: {source}")
+
+    middle = MINIMAL_ART // 2
+    reach = MINIMAL_SLICE - MINIMAL_PAD
+    near = list(range(MINIMAL_CORNER)) + [middle] * (reach - MINIMAL_CORNER)
+    far = [middle] * (reach - MINIMAL_CORNER) + list(range(MINIMAL_ART - MINIMAL_CORNER, MINIMAL_ART))
+
+    def padded(rows, columns, top, left):
+        cell = canvas(MINIMAL_SLICE, MINIMAL_SLICE)
+        y = MINIMAL_PAD if top else 0
+        x = MINIMAL_PAD if left else 0
+        cell[y:y + reach, x:x + reach] = art[np.ix_(rows, columns)]
+
+        return cell
+
+    along = [middle] * reach
+    cells = [
+        padded(along, near, True, True),
+        padded(along, far, True, False),
+        # A backdrop draws its top and bottom edges from slices turned on their side, the outer edge left and right.
+        padded(near, along, True, True).transpose(1, 0, 2),
+        padded(far, along, False, True).transpose(1, 0, 2),
+        padded(near, near, True, True),
+        padded(near, far, True, False),
+        padded(far, near, False, True),
+        padded(far, far, False, False),
+    ]
+
+    # The pad along an edge slice's length is sampled when the edge repeats, so it continues the strip.
+    for index in (0, 1):
+        cells[index][:MINIMAL_PAD] = cells[index][MINIMAL_PAD]
+    for index in (2, 3):
+        cells[index][:, :, :] = cells[index][-1:, :, :]
+
+    save(np.concatenate(cells, axis=1), "Media/Borders/ForeverMinimalBorderWhite.tga")
+
+
 SIDEBAR_SIZE = 64
 SIDEBAR_SAMPLES = 4  # per axis, for each pixel's coverage of the stroke
 SIDEBAR_ALPHA = 0.85  # the glyph's opacity, a step below the sidebar's white labels
@@ -427,6 +481,8 @@ def main():
         icons(sys.argv[2])
     elif len(sys.argv) == 2 and sys.argv[1] == "pill":
         pill()
+    elif len(sys.argv) == 3 and sys.argv[1] == "minimal":
+        minimal(sys.argv[2])
     elif len(sys.argv) == 3 and sys.argv[1] == "sidebar":
         sidebar(sys.argv[2])
     else:

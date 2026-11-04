@@ -30,6 +30,7 @@ local EDGES = {
 	METALLIC = "Levelbound Metallic",
 	IRON = "Levelbound Iron",
 	IRON_LARGE = "Levelbound Iron",
+	FOREVER_MINIMAL = "Levelbound Forever Minimal",
 }
 
 local RING = { 102 / 255, 98 / 255, 92 / 255 }
@@ -41,6 +42,7 @@ local NATIVE = {
 	METALLIC = { 195 / 255, 133 / 255, 84 / 255 },
 	IRON = { 132 / 255, 132 / 255, 132 / 255 },
 	IRON_LARGE = { 132 / 255, 132 / 255, 132 / 255 },
+	FOREVER_MINIMAL = { 110 / 255, 89 / 255, 71 / 255 },
 	BLIZZARD = BLIZZARD_TINT,
 }
 
@@ -49,18 +51,26 @@ local OUTSETS = {
 	METALLIC = 27.5 / 64,
 	IRON = 50 / 64,
 	IRON_LARGE = 50 / 64,
+	FOREVER_MINIMAL = 3 / 8,
 }
 
 -- The empty margin outside a style's band, as a fraction of its edge size; layout spacing counts only the band.
 local MARGINS = {
 	IRON = 40 / 64,
 	IRON_LARGE = 40 / 64,
+	FOREVER_MINIMAL = 3 / 14,
 }
 
 -- Styles drawn at one edge size around a bar of fixed height, instead of scaling with the bar.
 local EDGE_SIZES = {
 	IRON = 16,
 	IRON_LARGE = 32,
+}
+
+-- Styles drawn at most at this edge size, shrinking with a bar too short for two corners: the bar's height is this
+-- share of the edge size at the least.
+local FITTED_EDGES = {
+	FOREVER_MINIMAL = { size = 14, share = 5 / 4 },
 }
 
 -- The Blizzard frame is drawn in three slices of a 2048 x 32 file holding the 2040 x 26 art, around a bar of fixed
@@ -86,11 +96,12 @@ local DIVIDER_TINT = { 145 / 255, 136 / 255, 116 / 255 }
 local DIVIDER_WIDTH = 3
 local DIVIDER_COORDS = { 0, 1, 1 / 16, 15 / 16 }
 
--- Fixed-size styles that draw dividers from their band alone: its first and last texel column in the edge file's
--- 64 px left slice, drawn at the style's edge size.
+-- Styles that draw dividers from their band alone: its first and last texel column in the edge file's left slice, the
+-- slice's width in texels and the divider's width in UI units.
 local DIVIDER_BANDS = {
-	IRON = { 40, 52 },
-	IRON_LARGE = { 40, 52 },
+	IRON = { 40, 52, 64, 3 },
+	IRON_LARGE = { 40, 52, 64, 6 },
+	FOREVER_MINIMAL = { 8, 12, 32, 2 },
 }
 
 ---@class LBBorderFrame : Frame, BackdropTemplate
@@ -150,8 +161,8 @@ function Border:DividerArt(style)
 	if band then
 		return {
 			path = LB.Media:Fetch("border", EDGES[style]),
-			coords = { band[1] / 512, band[2] / 512, 0, 1 },
-			width = EDGE_SIZES[style] * (band[2] - band[1]) / 64,
+			coords = { band[1] / (8 * band[3]), band[2] / (8 * band[3]), 0, 1 },
+			width = band[4],
 			tint = NATIVE[style],
 		}
 	end
@@ -220,7 +231,9 @@ end
 ---@return number edge
 ---@return number outset
 function Border:EdgeMetrics(height, style)
-	local edge = EDGE_SIZES[style] or math.max(math.min(EDGE_SIZE, math.floor(height * 2 / 3)), 2)
+	local fitted = FITTED_EDGES[style]
+	local edge = EDGE_SIZES[style] or (fitted and math.min(fitted.size, height / fitted.share))
+		or math.max(math.min(EDGE_SIZE, math.floor(height * 2 / 3)), 2)
 
 	return edge, edge * (OUTSETS[style] or OUTSET)
 end
