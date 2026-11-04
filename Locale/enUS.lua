@@ -403,8 +403,8 @@ L["A bright line at the end of each bar's fill."] = "A bright line at the end of
 L["Gives the spark its own color instead of its bar's."] = "Gives the spark its own color instead of its bar's."
 L["A shine that sweeps across the fill when a bar gains progress."] =
 	"A shine that sweeps across the fill when a bar gains progress."
-L["A soft glow and trail at the end of each bar's fill, in the spark's color."] =
-	"A soft glow and trail at the end of each bar's fill, in the spark's color."
+L["A soft glow in the spark's color and a white trail at the end of each bar's fill."] =
+	"A soft glow in the spark's color and a white trail at the end of each bar's fill."
 L["The font of every bar's text, unless a text slot sets its own."] =
 	"The font of every bar's text, unless a text slot sets its own."
 L["The size of every bar's text, unless a text slot sets its own."] =

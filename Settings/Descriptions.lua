@@ -60,7 +60,7 @@ LB.SettingsDescriptions = {
 		spark = L["A bright line at the end of each bar's fill."],
 		sparkCustom = L["Gives the spark its own color instead of its bar's."],
 		shimmer = L["A shine that sweeps across the fill when a bar gains progress."],
-		glow = L["A soft glow and trail at the end of each bar's fill, in the spark's color."],
+		glow = L["A soft glow in the spark's color and a white trail at the end of each bar's fill."],
 
 		-- Text tab
 		font = L["The font of every bar's text, unless a text slot sets its own."],
