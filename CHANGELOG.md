@@ -72,6 +72,7 @@ Fixes:
   it off center.
 - In the first-time style picker, the cards fit their text from the start, the previews show sample rates and
   markers that don't cover the text, and the footer says that closing keeps Modern.
+- On Retail, party markers and party bars now appear for party members from your own realm.
 - All new text is translated into German, Spanish, French, Italian, Korean, Brazilian Portuguese, Russian and
   Chinese.
 
