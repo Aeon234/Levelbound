@@ -351,6 +351,8 @@ function Comms:OnMessage(prefix, text, channel, sender)
 		return
 	end
 
+	sender = Ambiguate(sender, "none")
+
 	if not LB.Roster:IsMember(sender) then
 		return
 	end
