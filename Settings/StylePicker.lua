@@ -23,8 +23,9 @@ local CARD_SCALE = 0.5
 local GOLD = { 1, 0.82, 0 }
 local FRAME_TINT = { 132 / 255, 105 / 255, 82 / 255 } -- the card frame art's own bronze
 local TEXT_SIZE = 14
+local TEXT_ALPHA = 0.85
 local FOOTER_SIZE = 12
-local FOOTER_ALPHA = 0.65
+local FOOTER_ALPHA = 0.75
 local SAMPLE_RATE = 3200 / 3600 -- experience per second
 -- The sample party's places along the bar, clear of the Modern sample's inside text.
 local MARKER_FRACTIONS = { 0.18, 0.27, 0.30, 0.72 }
@@ -209,7 +210,7 @@ function StylePicker:Card(frame, style, title, text, profile)
 
 	card.text = card:CreateFontString(nil, "ARTWORK")
 	lib:SetFont(card.text, "body", TEXT_SIZE)
-	card.text:SetTextColor(1, 1, 1, 1)
+	card.text:SetTextColor(1, 1, 1, TEXT_ALPHA)
 	card.text:SetPoint("TOPLEFT", card.title, "BOTTOMLEFT", 0, -TITLE_TO_TEXT)
 	card.text:SetPoint("TOPRIGHT", card.title, "BOTTOMRIGHT", 0, -TITLE_TO_TEXT)
 	card.text:SetJustifyH("CENTER")
