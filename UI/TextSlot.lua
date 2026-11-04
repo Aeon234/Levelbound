@@ -223,7 +223,7 @@ local function Draw(host, onlyTime)
 		return
 	end
 
-	local source = bar.member and LB.Tags.MemberSource(bar.member) or LB.Model:Source(bar.id)
+	local source = bar.textSource or bar.member and LB.Tags.MemberSource(bar.member) or LB.Model:Source(bar.id)
 
 	for _, entry in pairs(host.entries) do
 		if not onlyTime or entry.time then

@@ -54,6 +54,7 @@ local attached = setmetatable({}, { __mode = "k" })
 ---@class LBBar : Frame
 ---@field id string
 ---@field member LBRosterMember? the party member a standalone party bar shows
+---@field textSource LBSource? what a sample bar renders its text with, in place of its own source
 ---@field clip Frame reveals the full-width fill art; only its width changes, so the art never stretches
 ---@field content Frame
 ---@field fillTexture Texture

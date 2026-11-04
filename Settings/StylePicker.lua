@@ -25,6 +25,9 @@ local FRAME_TINT = { 132 / 255, 105 / 255, 82 / 255 } -- the card frame art's ow
 local TEXT_SIZE = 14
 local FOOTER_SIZE = 12
 local FOOTER_ALPHA = 0.65
+local SAMPLE_RATE = 3200 / 3600 -- experience per second
+-- The sample party's places along the bar, clear of the Modern sample's inside text.
+local MARKER_FRACTIONS = { 0.18, 0.27, 0.30, 0.72 }
 
 ---@alias LBStyle "BLIZZARD" | "MODERN"
 
@@ -88,6 +91,27 @@ local function LineHeight(fontString)
 	return math.max(fontString:GetStringHeight(), size or 0)
 end
 
+---@return LBRosterMember[] members a copy of the sample party, at `MARKER_FRACTIONS`
+local function SampleMembers()
+	local members = LB:CopyTable(LB.Marker:SampleParty())
+
+	for index, member in ipairs(members) do
+		member.state.xp = math.floor(MARKER_FRACTIONS[index] * member.state.xpMax)
+		member.snapshot = LB.Roster.Snapshot(member.state)
+	end
+
+	return members
+end
+
+---@return LBMemberSource source renders the rate tags from `SAMPLE_RATE`
+local function SampleSource()
+	local member = LB:CopyTable(LB.Marker:SampleParty()[1])
+
+	member.state.rate = SAMPLE_RATE
+
+	return LB.Tags.MemberSource(member)
+end
+
 ---Draws a sample experience bar in the look `profile` describes, with the sample party's markers, and returns how
 ---far its text and markers reach above and below it.
 ---@param parent Frame
@@ -101,6 +125,7 @@ local function Sample(parent, profile)
 
 	bar:EnableMouse(false)
 	bar.border = LB.Border:Create(bar)
+	bar.textSource = SampleSource()
 
 	LB.Profile:Read(profile, function()
 		local layout = LB.Profile:Get("layout")
@@ -117,7 +142,7 @@ local function Sample(parent, profile)
 		local metrics = LB.Marker:Current()
 		local reach = LB.TextSlot:BorderReach(nil)
 
-		LB.Marker:Apply(bar, LB.Marker:SampleParty())
+		LB.Marker:Apply(bar, SampleMembers())
 		above, below = LB.Marker.Reach(party.style, metrics.anchor, metrics.y, metrics.height, height)
 
 		for key, fontString in pairs(shown) do
