@@ -250,8 +250,8 @@ function StylePicker:Create()
 
 	local first = self:Card(frame, "BLIZZARD", L["Blizzard"],
 		L["The classic experience bar: Blizzard's frame and fill, no text."], blizzard)
-	local second = self:Card(frame, "MODERN", L["Modern"], L["Levelbound's clean look, with text on hover."],
-		LB.Profile:Defaults())
+	local second = self:Card(frame, "MODERN", L["Modern"],
+		L["Levelbound's clean look, with your progress in text."], LB.Profile:Defaults())
 
 	first:SetPoint("TOPLEFT", SIDE, -TOP)
 	first:SetPoint("RIGHT", -SIDE, 0)
@@ -263,7 +263,7 @@ function StylePicker:Create()
 	lib:SetFont(footer, "body", FOOTER_SIZE)
 	footer:SetTextColor(1, 1, 1, FOOTER_ALPHA)
 	footer:SetPoint("TOP", second, "BOTTOM", 0, -CARD_GAP)
-	footer:SetText(L["You can change everything later with /lb."])
+	footer:SetText(L["Closing keeps Modern. You can change everything later with /lb."])
 
 	-- Both cards take the taller one's height.
 	local function Fit()

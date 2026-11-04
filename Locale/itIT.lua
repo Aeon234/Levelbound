@@ -354,8 +354,8 @@ L["Party members running Levelbound, as markers on your experience bar or as bar
 L["Choose Your Style"] = "Scegli il tuo stile"
 L["Modern"] = "Moderno"
 L["The classic experience bar: Blizzard's frame and fill, no text."] = "La barra dell'esperienza classica: cornice e riempimento di Blizzard, senza testo."
-L["Levelbound's clean look, with text on hover."] = "Lo stile pulito di Levelbound, con il testo al passaggio del mouse."
-L["You can change everything later with /lb."] = "Potrai cambiare tutto in seguito con /lb."
+L["Levelbound's clean look, with your progress in text."] = "Lo stile pulito di Levelbound, con i tuoi progressi in testo."
+L["Closing keeps Modern. You can change everything later with /lb."] = "Chiudendo resta Moderno. Potrai cambiare tutto in seguito con /lb."
 
 -- Settings window: setting descriptions, shown in their tooltips (Settings/Descriptions.lua)
 L["Asks the server for your time played when you log in, for the time tags and the time-to-level estimate."] = "All'accesso chiede al server il tuo tempo di gioco, per i tag di tempo e la stima del tempo al livello."

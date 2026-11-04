@@ -372,8 +372,9 @@ L["Choose Your Style"] = "Choose Your Style"
 L["Modern"] = "Modern"
 L["The classic experience bar: Blizzard's frame and fill, no text."] =
 	"The classic experience bar: Blizzard's frame and fill, no text."
-L["Levelbound's clean look, with text on hover."] = "Levelbound's clean look, with text on hover."
-L["You can change everything later with /lb."] = "You can change everything later with /lb."
+L["Levelbound's clean look, with your progress in text."] = "Levelbound's clean look, with your progress in text."
+L["Closing keeps Modern. You can change everything later with /lb."] =
+	"Closing keeps Modern. You can change everything later with /lb."
 
 -- Settings window: setting descriptions, shown in their tooltips (Settings/Descriptions.lua)
 L["Asks the server for your time played when you log in, for the time tags and the time-to-level estimate."] =
