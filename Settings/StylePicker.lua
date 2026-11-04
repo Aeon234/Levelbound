@@ -80,6 +80,14 @@ function StylePicker:Choose(style)
 	end
 end
 
+---@param fontString FontString
+---@return number height never under one line, since a new font string can measure short until it is drawn
+local function LineHeight(fontString)
+	local _, size = fontString:GetFont()
+
+	return math.max(fontString:GetStringHeight(), size or 0)
+end
+
 ---Draws a sample experience bar in the look `profile` describes, with the sample party's markers, and returns how
 ---far its text and markers reach above and below it.
 ---@param parent Frame
@@ -113,8 +121,7 @@ local function Sample(parent, profile)
 		above, below = LB.Marker.Reach(party.style, metrics.anchor, metrics.y, metrics.height, height)
 
 		for key, fontString in pairs(shown) do
-			local _, size = fontString:GetFont()
-			local extent = math.max(fontString:GetStringHeight(), size or 0) + TEXT_GAP + reach
+			local extent = LineHeight(fontString) + TEXT_GAP + reach
 
 			if key:find("^ABOVE") then
 				above = math.max(above, extent)
@@ -144,7 +151,7 @@ end
 ---@param title string
 ---@param text string
 ---@param profile LBProfileData
----@return Button card its `needed` field is the height its content takes, for sizing both cards alike
+---@return Button card its `sample` field is the height its sample takes, for sizing both cards alike
 function StylePicker:Card(frame, style, title, text, profile)
 	local card = CreateFrame("Button", nil, frame)
 
@@ -170,15 +177,16 @@ function StylePicker:Card(frame, style, title, text, profile)
 	card.title = card:CreateFontString(nil, "ARTWORK")
 	lib:SetFont(card.title, "header", TITLE_SIZE)
 	card.title:SetTextColor(unpack(GOLD))
-	card.title:SetPoint("TOP", 0, -CARD_PAD)
+	card.title:SetPoint("TOPLEFT", CARD_PAD, -CARD_PAD)
+	card.title:SetPoint("TOPRIGHT", -CARD_PAD, -CARD_PAD)
+	card.title:SetJustifyH("CENTER")
 	card.title:SetText(title)
 
 	card.text = card:CreateFontString(nil, "ARTWORK")
 	lib:SetFont(card.text, "body", TEXT_SIZE)
 	card.text:SetTextColor(1, 1, 1, 1)
-	card.text:SetPoint("TOP", card.title, "BOTTOM", 0, -TITLE_TO_TEXT)
-	card.text:SetPoint("LEFT", CARD_PAD, 0)
-	card.text:SetPoint("RIGHT", -CARD_PAD, 0)
+	card.text:SetPoint("TOPLEFT", card.title, "BOTTOMLEFT", 0, -TITLE_TO_TEXT)
+	card.text:SetPoint("TOPRIGHT", card.title, "BOTTOMRIGHT", 0, -TITLE_TO_TEXT)
 	card.text:SetJustifyH("CENTER")
 	card.text:SetText(text)
 
@@ -186,18 +194,14 @@ function StylePicker:Card(frame, style, title, text, profile)
 
 	-- The room spans from the description to the band's inner edge; the sample, its text and markers included, sits
 	-- in its middle, so the space above and below it matches.
-	room:SetPoint("TOP", card.text, "BOTTOM")
-	room:SetPoint("LEFT", CARD_PAD, 0)
-	room:SetPoint("RIGHT", -CARD_PAD, 0)
-	room:SetPoint("BOTTOM", card, "BOTTOM", 0, CARD_EDGE)
+	room:SetPoint("TOPLEFT", card.text, "BOTTOMLEFT")
+	room:SetPoint("BOTTOMRIGHT", card, "BOTTOMRIGHT", -CARD_PAD, CARD_EDGE)
 
 	local bar, above, below = Sample(room, profile)
-	local sample = above + bar:GetHeight() + below
 
+	card.sample = above + bar:GetHeight() + below
 	bar:SetPoint("CENTER", room, "CENTER", 0, (below - above) / 2)
 
-	card.needed = CARD_PAD + card.title:GetStringHeight() + TITLE_TO_TEXT + card.text:GetStringHeight()
-		+ SAMPLE_GAP * 2 + sample + CARD_EDGE
 	card:SetScript("OnEnter", function()
 		card.frame:SetVertexColor(unpack(GOLD))
 	end)
@@ -210,6 +214,13 @@ function StylePicker:Card(frame, style, title, text, profile)
 	end)
 
 	return card
+end
+
+---@param card Button
+---@return number
+local function Needed(card)
+	return CARD_PAD + LineHeight(card.title) + TITLE_TO_TEXT + LineHeight(card.text) + SAMPLE_GAP * 2 + card.sample
+		+ CARD_EDGE
 end
 
 ---@return Frame
@@ -229,6 +240,7 @@ function StylePicker:Create()
 	frame:SetScript("OnDragStart", frame.StartMoving)
 	frame:SetScript("OnDragStop", frame.StopMovingOrSizing)
 	frame:SetPoint("CENTER", UIParent, "CENTER", 0, 80)
+	frame:SetWidth(WIDTH)
 	frame.NineSlice.Text:SetText(L["Choose Your Style"])
 	tinsert(UISpecialFrames, FRAME_NAME)
 
@@ -241,11 +253,6 @@ function StylePicker:Create()
 	local second = self:Card(frame, "MODERN", L["Modern"], L["Levelbound's clean look, with text on hover."],
 		LB.Profile:Defaults())
 
-	-- Both cards take the taller one's height.
-	local height = math.max(first.needed, second.needed)
-
-	first:SetHeight(height)
-	second:SetHeight(height)
 	first:SetPoint("TOPLEFT", SIDE, -TOP)
 	first:SetPoint("RIGHT", -SIDE, 0)
 	second:SetPoint("TOPLEFT", first, "BOTTOMLEFT", 0, -CARD_GAP)
@@ -258,7 +265,18 @@ function StylePicker:Create()
 	footer:SetPoint("TOP", second, "BOTTOM", 0, -CARD_GAP)
 	footer:SetText(L["You can change everything later with /lb."])
 
-	frame:SetSize(WIDTH, TOP + first:GetHeight() + CARD_GAP + second:GetHeight() + FOOTER)
+	-- Both cards take the taller one's height.
+	local function Fit()
+		local height = math.max(Needed(first), Needed(second))
+
+		first:SetHeight(height)
+		second:SetHeight(height)
+		frame:SetHeight(TOP + height * 2 + CARD_GAP + FOOTER)
+	end
+
+	Fit()
+	-- A line that wraps only measures true once it has been drawn.
+	C_Timer.After(0, Fit)
 
 	-- Closing without a pick keeps the current look, which is Modern on a fresh install.
 	frame:SetScript("OnHide", function()
