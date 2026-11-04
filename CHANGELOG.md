@@ -1,6 +1,24 @@
 # Levelbound
 
-## Unreleased
+## 1.3.0
+
+Party bars:
+
+- Party Progress can show each member running Levelbound as a bar of their own: set Display to Standalone Bars.
+  Choose the width, height, gap and growth direction, fill the bars in class color or the experience gradient, and
+  place the stack in edit mode.
+- Party bars have their own text, with tags for each member's name, class icon, level, progress, rested and quest
+  XP, XP per hour and time to level.
+- Compact stacks the bars 1 pixel apart and shows only the text inside them.
+- Party bars hide and fade with your bars. Turn off Match Bar Visibility to give them their own.
+
+New looks:
+
+- Pill border: rounded ends and no outline to start. Raise Border Width to add one.
+- Iron and Iron Large borders, which hold the bars at a fixed height.
+- Edge Glow, off by default: a soft glow in the spark's color and a white trail at the end of each bar's fill.
+- Gradient Follows Fill stretches the experience gradient across the fill, so Gradient End is always at its end.
+- Class Icon party markers: Circle, Diamond and Ring.
 
 Settings:
 
@@ -8,26 +26,35 @@ Settings:
   every page and Undo.
 - The Bars settings are now five pages: Layout, Appearance (with the bar preview), Text, Visibility and Gain
   Indicator. Gain Indicator, Party Progress and Level-Ups no longer have tabs; Party Progress shows the sections
-  for markers or for standalone bars, as Display is set. `/lb appearance`, `/lb text` and `/lb visibility` open
-  their own pages.
-- Settings no longer have a Defaults button per page. A setting that follows a shared value goes back to it with
+  for markers or for standalone bars, depending on Display. Each progress type is one page instead of two tabs.
+  `/lb appearance`, `/lb text` and `/lb visibility` open their own pages.
+- Pages no longer have a Defaults button. A setting that follows a shared value goes back to it with
   its reset arrow, and the profile's Reset still restores everything.
 - In edit mode, each frame has a menu with its position and a shortcut to its settings. Your snap, grid and
   toolbar choices carry over.
 - Settings are easier to scan. Options that need another one turned on appear once it is, and options a Match
   setting overrides are hidden while it is on. XP dividers have their own section, Frame Strata moves to
   Advanced, and the gain indicator's offsets sit with its amount text. A bar's own size shows only in Independent
-  layout.
+  layout, Stacking shows only in Connected layout, and Fully Visible in Combat is grayed out while Hide in Combat
+  is on.
 - Clearer names: Copy Text From, Horizontal and Vertical Offset in the text editor, Use Class Color, Wait Until
   Out of Combat for level-up notices, and Print in Chat When Solo, Post to Party and Post to Guild for your own
   level-ups.
-- Every settings page has an icon in the sidebar, and Profiles sits below a divider. Each progress type is one
-  page instead of two tabs, Stacking shows only in Connected layout, and Fully Visible in Combat is grayed out
-  while Hide in Combat is on.
+- Every settings page has an icon in the sidebar, and Profiles sits below a divider.
 - In Segmented layout, the lines between progress types have their own Separator Color. It follows the border's
   color until you change it. Custom Color and Border Color show only when the border style uses them.
 - Less text to read: tooltips appear only where they add something the label doesn't say, pages no longer open
   with a summary of their own sections, and a grayed-out option says what it requires or what sets it.
+
+Text and tooltips:
+
+- Times on the bars and in tooltips use the short form chat already used, such as `1h 24m` and `45s`. Times under an
+  hour show seconds, such as `18m 4s`, and times of a day or more show days, such as `2d 5h`. Chat lines follow
+  the same form.
+- New tags on the experience bar: `[name]` for your character's name and `[classicon]` for your class icon. On WoW:
+  Forever, `[name:first]` shows only the first name and `[name:short]` adds the surname's initial.
+- Experience tooltips are split into Progress, Bonus XP and Pace, with dividers, section titles and small icons.
+  Shares of the level line up in a column, and until your first XP gain a note says when pace estimates will appear.
 
 Fixes:
 
@@ -35,17 +62,18 @@ Fixes:
   level.
 - `/lb share` to party, instance, raid or guild during a chat lockdown waits and sends once chat opens again,
   as level-up announcements do. `/lb share say` can't wait, so it tells you to try again instead.
-- Names on the bar and in party level-up notices are the character's real name, not one changed by a disguise
-  or toy.
+- Names in party level-up notices are the character's real name, not one changed by a disguise or toy.
 - The party level-up sound plays on the Master channel, so you hear it with sound effects turned off.
 - Logging in or reloading no longer prints the two time played lines in chat. A `/played` you type still shows
   them.
-
-Text and tooltips:
-
-- Times on the bars and in tooltips use the short form chat already used, such as `1h 24m` and `45s`. Times under an
-  hour show seconds, such as `18m 4s`, and times of a day or more show days, such as `2d 5h`. Chat lines follow
-  the same form.
+- A profile action that can't go through, such as a name already in use, says why in the settings window instead
+  of in chat. Copy Text From confirms what it copied.
+- Settings previews size themselves to your current settings, and a gain indicator beside the bar no longer pushes
+  it off center.
+- In the first-time style picker, the cards fit their text from the start, the previews show sample rates and
+  markers that don't cover the text, and the footer says that closing keeps Modern.
+- All new text is translated into German, Spanish, French, Italian, Korean, Brazilian Portuguese, Russian and
+  Chinese.
 
 ## 1.2.1
 
