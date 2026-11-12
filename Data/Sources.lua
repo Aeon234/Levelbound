@@ -33,7 +33,8 @@ local Events = LB.Events
 ---@class LBSourceSpec
 ---@field label string
 ---@field shortLabel string
----@field textKey? string the text layout it draws, when not its own id
+---@field settingsKey? string the text layout and size it shares, when not its own id
+---@field skillLine? number for a profession
 ---@field Read fun(self: LBSource, snapshot: LBSnapshot): boolean
 ---@field IsAvailable? fun(self: LBSource): boolean
 ---@field Capability? fun(self: LBSource): boolean
@@ -189,11 +190,11 @@ function Model:Ids()
 end
 
 ---@param id string
----@return string key the text layout the type draws
-function Model:TextKey(id)
+---@return string key the text layout, size and settings page the type shares
+function Model:SettingsKey(id)
 	local source = self.sources[id]
 
-	return source and source.textKey or id
+	return source and source.settingsKey or id
 end
 
 ---@return string[] order every fixed type id, whether visible or not

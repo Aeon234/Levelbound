@@ -42,6 +42,70 @@ function Settings:DeclareTypes(window)
 			LB.SettingsText:Declare(page, id)
 		end
 	end
+
+	if LB.can.professions then
+		self:DeclareProfessions(window)
+	end
+end
+
+---@param window table
+function Settings:DeclareProfessions(window)
+	local Professions = LB.Professions
+	local page = window:Page("type.profession", { title = TRADE_SKILLS or "Professions", under = "types" })
+	local bars = page:Section("bars", L["Bars"], {
+		columns = 2,
+		show = function()
+			return #Professions:Indices() > 0
+		end,
+	})
+
+	for _, line in ipairs(Professions:All()) do
+		local path = Professions:ColorPath(line)
+
+		local function Learned()
+			return Professions:Find(line) ~= nil
+		end
+
+		self:Add(bars, "Checkbox", KEY, {
+			id = "track" .. line,
+			label = Professions:Name(line),
+			tooltip = L["This character only."],
+			default = false,
+			show = Learned,
+			get = function()
+				return Professions:IsTracked(line)
+			end,
+			set = function(value)
+				Professions:SetTracked(line, value == true)
+			end,
+		})
+
+		if path then
+			local get, set = self:ColorAccess(path)
+
+			self:Add(bars, "Color", KEY, { id = "color" .. line, label = L["Bar Color"], default = self:Default(path),
+				show = Learned, get = get, set = set })
+		end
+	end
+
+	self:DeclareTypeSize(page, "profession")
+	LB.SettingsText:Declare(page, "profession")
+
+	-- While the window is open, learning or unlearning a profession redraws the page.
+	local lib = LibStub("LibAeonSettings-1.0")
+
+	lib.RegisterCallback(Professions, "OnOpen", function(_, addonName)
+		if addonName == LB.name then
+			LB.Events:Register("SKILL_LINES_CHANGED", Professions, function()
+				self:Refresh()
+			end)
+		end
+	end)
+	lib.RegisterCallback(Professions, "OnClose", function(_, addonName)
+		if addonName == LB.name then
+			LB.Events:Unregister("SKILL_LINES_CHANGED", Professions)
+		end
+	end)
 end
 
 ---@param page table
@@ -56,6 +120,12 @@ function Settings:DeclareTypeBar(page, id)
 		self:Add(colors, "Color", KEY, { id = "color", label = L["Bar Color"], get = get, set = set })
 	end
 
+	self:DeclareTypeSize(page, id)
+end
+
+---@param page table
+---@param id string the type id, or the settings key its bars share
+function Settings:DeclareTypeSize(page, id)
 	local size = page:Section("size", L["Size"], { show = Independent })
 
 	self:BarSize(size, id, "width", L["Width"], LIMITS.barWidth.min, function()

@@ -127,14 +127,15 @@ function BarGroup:ComputeLayout(ids, screenWidth)
 
 	for index, id in ipairs(ids) do
 		local stored = independent[id]
+		local shared = independent[LB.Model:SettingsKey(id)]
 		local stack = layout.positions.INDEPENDENT
 		-- Without a place of its own, a bar stacks below the Independent position.
 		local default = { point = stack.point, x = stack.x, y = stack.y - (index - 1) * (height + spacing) }
 		local position = LB:EditPosition(id, stored and stored.position) or default
 
 		rects[id] = {
-			width = stored and stored.width or layout.width,
-			height = LB.Layout.Height(layout, fixed, stored and stored.height),
+			width = stored and stored.width or shared and shared.width or layout.width,
+			height = LB.Layout.Height(layout, fixed, stored and stored.height or shared and shared.height),
 			point = position.point,
 			x = position.x,
 			y = position.y,
@@ -436,7 +437,7 @@ function BarGroup:EditTargets()
 					frame = bar,
 					outline = bar.border,
 					default = rect and rect.default or LB:CopyTable(layout.positions.INDEPENDENT),
-					settings = { page = "type." .. id, section = "size" },
+					settings = { page = "type." .. LB.Model:SettingsKey(id), section = "size" },
 					read = function()
 						local entry = LB.Profile:Get("layout.independent")[id]
 

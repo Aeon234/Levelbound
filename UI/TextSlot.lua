@@ -127,7 +127,7 @@ end
 local function Configure(host, keys, typeId)
 	local reach = TextSlot:BorderReach(host.bar)
 
-	local slots = typeId and LB.Profile:Get("text.slots." .. LB.Model:TextKey(typeId)) or {}
+	local slots = typeId and LB.Profile:Get("text.slots." .. LB.Model:SettingsKey(typeId)) or {}
 
 	host.typeId = typeId
 
@@ -454,7 +454,7 @@ end
 ---@return number room the height a type's above-the-bar slots stand over the bar, from its border's edge; 0 when
 ---none has text
 function TextSlot:AboveRoom(typeId)
-	local slots = LB.Profile:Get("text.slots." .. LB.Model:TextKey(typeId)) or {}
+	local slots = LB.Profile:Get("text.slots." .. LB.Model:SettingsKey(typeId)) or {}
 	local room = 0
 
 	for key in pairs(ABOVE) do

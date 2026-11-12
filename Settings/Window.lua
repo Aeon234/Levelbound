@@ -67,7 +67,7 @@ function Settings:Open(page)
 	local window = self:Window()
 
 	if page and not ALIASES[page] and LB.Model:Source(page) then
-		page = "type." .. page
+		page = "type." .. LB.Model:SettingsKey(page)
 	end
 
 	page = page and (ALIASES[page] or page)

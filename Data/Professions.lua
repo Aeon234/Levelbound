@@ -6,6 +6,7 @@ local EVENTS = { "SKILL_LINES_CHANGED", "PLAYER_ENTERING_WORLD" }
 
 ---@class LBProfessions
 ---@field keys table<number, string>? skill line to its Enum.Profession key, built on first use
+---@field lines number[]? every Enum.Profession skill line, built on first use
 local Professions = {}
 LB.Professions = Professions
 
@@ -15,23 +16,68 @@ local function Capable()
 end
 
 ---@param skillLine number
----@return string? key the profession's Enum.Profession key
-function Professions:Key(skillLine)
-	if not self.keys then
-		self.keys = {}
+---@return string id the bar's type id
+local function Id(skillLine)
+	return "profession" .. skillLine
+end
 
-		if Enum.Profession and C_TradeSkillUI and C_TradeSkillUI.GetProfessionSkillLineID then
-			for key, profession in pairs(Enum.Profession) do
-				local line = C_TradeSkillUI.GetProfessionSkillLineID(profession)
-
-				if line then
-					self.keys[line] = key
-				end
-			end
-		end
+function Professions:Build()
+	if self.keys then
+		return
 	end
 
-	return self.keys[skillLine]
+	self.keys, self.lines = {}, {}
+
+	if not (Enum.Profession and C_TradeSkillUI and C_TradeSkillUI.GetProfessionSkillLineID) then
+		return
+	end
+
+	for key, profession in pairs(Enum.Profession) do
+		local line = C_TradeSkillUI.GetProfessionSkillLineID(profession)
+
+		if line and line > 0 then
+			self.keys[line] = key
+			self.lines[#self.lines + 1] = line
+		end
+	end
+end
+
+---@param skillLine number
+---@return string? key the profession's Enum.Profession key
+function Professions:Key(skillLine)
+	self:Build()
+
+	return self.keys and self.keys[skillLine]
+end
+
+---@return number[] lines every profession's skill line, sorted by name
+function Professions:All()
+	self:Build()
+
+	local lines = {}
+
+	for index, line in ipairs(self.lines or {}) do
+		lines[index] = line
+	end
+
+	table.sort(lines, function(a, b)
+		return self:Name(a) < self:Name(b)
+	end)
+
+	return lines
+end
+
+---@param skillLine number
+---@return string name the profession's name, whether or not it is learned
+function Professions:Name(skillLine)
+	local name = C_TradeSkillUI and C_TradeSkillUI.GetTradeSkillDisplayName
+		and C_TradeSkillUI.GetTradeSkillDisplayName(skillLine)
+
+	if type(name) == "string" and name ~= "" then
+		return name
+	end
+
+	return self:Key(skillLine) or LABEL
 end
 
 ---@return number[] indices the learned professions' indices, in the profession book's order
@@ -72,27 +118,44 @@ function Professions:IsTracked(skillLine)
 end
 
 ---@param skillLine number
----@return LBColor
-function Professions:Color(skillLine)
+---@param on boolean
+function Professions:SetTracked(skillLine, on)
+	LB.Profile.char.professions[skillLine] = on or nil
+
+	self:Create()
+	LB.Model:Sync()
+end
+
+---@param skillLine number
+---@return string? path the profile path of the profession's color, nil when it has no saved color
+function Professions:ColorPath(skillLine)
 	local key = self:Key(skillLine)
 
-	return key and LB.Profile:Get("appearance.professionColors." .. key) or FALLBACK_COLOR
+	return key and "appearance.professionColors." .. key
+end
+
+---@param skillLine number
+---@return LBColor
+function Professions:Color(skillLine)
+	local path = self:ColorPath(skillLine)
+
+	return path and LB.Profile:Get(path) or FALLBACK_COLOR
 end
 
 ---@param skillLine number
 ---@return LBSource
 function Professions:Ensure(skillLine)
-	local id = "profession" .. skillLine
-	local existing = LB.Model:Source(id)
+	local existing = LB.Model:Source(Id(skillLine))
 
 	if existing then
 		return existing
 	end
 
-	return LB.Source:New(id, {
+	return LB.Source:New(Id(skillLine), {
 		label = LABEL,
 		shortLabel = LABEL,
-		textKey = "profession",
+		settingsKey = "profession",
+		skillLine = skillLine,
 		Capability = Capable,
 
 		IsAvailable = function()
@@ -142,7 +205,8 @@ function Professions:Ensure(skillLine)
 	})
 end
 
--- Creates a source for each tracked profession and orders them as the profession book does.
+-- Creates a source for each tracked profession and orders every profession source as the profession book does;
+-- untracked ones stay in the order so the model can unsubscribe them.
 function Professions:Create()
 	local tracked = LB.Profile.char.professions
 
@@ -150,20 +214,23 @@ function Professions:Create()
 		return
 	end
 
-	---@type number[]
-	local lines = {}
-
 	for skillLine, on in pairs(tracked) do
 		if on then
 			self:Ensure(skillLine)
-			lines[#lines + 1] = skillLine
 		end
 	end
 
+	---@type number[]
+	local lines = {}
 	local positions = {}
 
-	for _, skillLine in ipairs(lines) do
-		positions[skillLine] = select(2, self:Find(skillLine))
+	for id, source in pairs(LB.Model.sources) do
+		local line = source.skillLine
+
+		if line and id == Id(line) then
+			lines[#lines + 1] = line
+			positions[line] = select(2, self:Find(line))
+		end
 	end
 
 	table.sort(lines, function(a, b)
@@ -177,7 +244,7 @@ function Professions:Create()
 	local ids = {}
 
 	for index, skillLine in ipairs(lines) do
-		ids[index] = "profession" .. skillLine
+		ids[index] = Id(skillLine)
 	end
 
 	LB.Model:SetExtra(ids)
