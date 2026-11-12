@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+Profession bars (WoW: Forever):
+
+- Any profession you know can show as an experience bar of its own, after your other bars. Check Show as
+  Experience Bar on its card in the profession book, or under the close button of its profession window. The
+  choice is kept for each character.
+- Each profession has its own color, which you can change on the new Professions page under Progress Types.
+  The page also holds the profession bars' shared text and, in Independent layout, their size.
+- Clicking a profession bar opens that profession's window, or the profession book for one without a crafting
+  window. Its gain indicator shows each skill-up.
+- All new text is translated into German, Spanish, French, Italian, Korean, Brazilian Portuguese, Russian and
+  Chinese.
+
 Dungeon summary:
 
 - The Post-Dungeon Summary now ends with how many more runs like it you need to level.
