@@ -4,6 +4,8 @@ local SAMPLE_MAX = 10000
 local SAMPLE_CUR = 6200
 local SAMPLE_QUEST = 1600
 local SAMPLE_RESTED = 1400
+local SAMPLE_SKILL = 112
+local SAMPLE_SKILL_MAX = 150
 
 local Editing = LB.Editing
 
@@ -29,6 +31,20 @@ end
 ---@param id string
 ---@return LBSnapshot
 local function Sample(id)
+	if id == "profession" then
+		local line = LB.Professions:Sample()
+
+		return {
+			label = line and LB.Professions:Name(line) or nil,
+			color = line and LB.Professions:Color(line) or nil,
+			cur = SAMPLE_SKILL,
+			max = SAMPLE_SKILL_MAX,
+			overlays = { quest = 0, rested = 0 },
+			atCap = false,
+			flags = {},
+		}
+	end
+
 	return {
 		color = id == "reputation" and ReputationColor() or nil,
 		cur = SAMPLE_CUR,
@@ -61,6 +77,11 @@ end
 ---@param id string
 ---@return LBSnapshot
 function Preview:Snapshot(id)
+	-- The profession sample follows the tracked professions and their colors, so it is not kept.
+	if id == "profession" then
+		return Sample(id)
+	end
+
 	local snapshot = self.snapshots[id]
 
 	if not snapshot then

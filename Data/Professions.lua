@@ -109,6 +109,24 @@ function Professions:Find(skillLine)
 	return nil, #indices + 1
 end
 
+---@return number? skillLine the profession a settings sample shows: the first tracked one learned, else the first
+---learned
+function Professions:Sample()
+	local first
+
+	for _, index in ipairs(self:Indices()) do
+		local line = select(7, GetProfessionInfo(index))
+
+		if line and self:IsTracked(line) then
+			return line
+		end
+
+		first = first or line
+	end
+
+	return first
+end
+
 ---@param skillLine number
 ---@return boolean
 function Professions:IsTracked(skillLine)

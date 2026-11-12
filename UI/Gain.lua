@@ -144,6 +144,12 @@ local function TypeColor(id)
 	local colors = Settings().colors
 	local source = LB.Model:Source(id)
 
+	if id == "profession" then
+		local line = LB.Professions:Sample()
+
+		return line and LB.Professions:Color(line) or colors.xp
+	end
+
 	return colors[id] or source and source.Color and source:Color() or colors.xp
 end
 

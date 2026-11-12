@@ -88,6 +88,7 @@ function Settings:DeclareProfessions(window)
 		end
 	end
 
+	LB.SettingsPreviews:Declare(page, "type.profession")
 	self:DeclareTypeSize(page, "profession")
 	LB.SettingsText:Declare(page, "profession")
 

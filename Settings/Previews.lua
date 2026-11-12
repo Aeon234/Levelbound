@@ -325,6 +325,10 @@ end
 local function FillSetting(id)
 	if id == "xp" then
 		return "gradientStart"
+	elseif id == "profession" then
+		local line = LB.Professions:Sample()
+
+		return line and "color" .. line
 	elseif id ~= "reputation" then
 		return "color"
 	end
