@@ -1,5 +1,16 @@
 # Levelbound
 
+## Unreleased
+
+Dungeon summary:
+
+- The Post-Dungeon Summary now ends with how many more runs like it you need to level.
+- Dying and releasing no longer restarts the run, so the summary covers the whole dungeon after you run back.
+- A reload, or a logout of up to 15 minutes, inside the same dungeon or delve no longer restarts the run. The time
+  you were logged out doesn't count toward it.
+- All new text is translated into German, Spanish, French, Italian, Korean, Brazilian Portuguese, Russian and
+  Chinese.
+
 ## 1.4.0
 
 Visibility:
