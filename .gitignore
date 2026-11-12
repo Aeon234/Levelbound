@@ -53,6 +53,7 @@ Tools/check_levelup.lua
 Tools/check_marker.lua
 Tools/check_noticestack.lua
 Tools/check_profile.lua
+Tools/check_run.lua
 Tools/check_tags.lua
 __pycache__/
 *.log

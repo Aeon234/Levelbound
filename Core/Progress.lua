@@ -90,6 +90,23 @@ function Progress.TimeToLevel(snapshot, rate)
 	return remaining / rate
 end
 
+---@param snapshot LBSnapshot
+---@param gained number XP one run gave
+---@return integer? runs runs like it still needed to level; nil when nothing is left to measure
+function Progress.Runs(snapshot, gained)
+	if gained <= 0 or not Measurable(snapshot) then
+		return nil
+	end
+
+	local remaining = Progress.Remaining(snapshot)
+
+	if remaining <= 0 then
+		return nil
+	end
+
+	return math.ceil(remaining / gained)
+end
+
 ---@param from LBSnapshot
 ---@param to LBSnapshot
 ---@return number? levels how far `to` is ahead of `from`, negative when behind

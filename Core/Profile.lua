@@ -186,6 +186,7 @@ local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 ---@class LBCharacterDatabase
 ---@field useCharacterProfile boolean
 ---@field key string? this character's key in profileKeys, worked out once and kept
+---@field run LBRun? the dungeon or delve under way
 
 local GAIN_GREEN = { 0.226, 1.0, 0.006 }
 

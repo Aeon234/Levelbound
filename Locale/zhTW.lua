@@ -84,6 +84,8 @@ L["Reached level %d in %s"] = "達到 %d 級，耗時 %s"
 L["Reached level %d"] = "達到 %d 級"
 L["This run: +%s XP (%s of a level) in %s"] = "本次：+%s 經驗值（一級的 %s），耗時 %s"
 L["%s XP/hr"] = "每小時 %s 經驗值"
+L["1 more run to level"] = "再 1 次可升級"
+L["%d more runs to level"] = "再 %d 次可升級"
 
 -- Bar text tags (Core/Tags.lua, looked up as "tag." .. tag), shown in the settings' Insert Tag list
 L["tag.level"] = "等級"

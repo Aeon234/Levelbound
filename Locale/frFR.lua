@@ -84,6 +84,8 @@ L["Reached level %d in %s"] = "Niveau %d atteint en %s"
 L["Reached level %d"] = "Niveau %d atteint"
 L["This run: +%s XP (%s of a level) in %s"] = "Cette instance : +%s XP (%s d'un niveau) en %s"
 L["%s XP/hr"] = "%s XP/h"
+L["1 more run to level"] = "encore 1 instance avant le niveau"
+L["%d more runs to level"] = "encore %d instances avant le niveau"
 
 -- Bar text tags (Core/Tags.lua, looked up as "tag." .. tag), shown in the settings' Insert Tag list
 L["tag.level"] = "Niveau"

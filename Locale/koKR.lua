@@ -84,6 +84,8 @@ L["Reached level %d in %s"] = "%d레벨 달성 (%s 소요)"
 L["Reached level %d"] = "%d레벨 달성"
 L["This run: +%s XP (%s of a level) in %s"] = "이번 진행: +%s 경험치 (레벨의 %s), %s 소요"
 L["%s XP/hr"] = "시간당 경험치 %s"
+L["1 more run to level"] = "레벨업까지 1회 더"
+L["%d more runs to level"] = "레벨업까지 %d회 더"
 
 -- Bar text tags (Core/Tags.lua, looked up as "tag." .. tag), shown in the settings' Insert Tag list
 L["tag.level"] = "레벨"

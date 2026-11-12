@@ -4,19 +4,23 @@ local L = LB.L
 
 local SETTLE = 0.5
 local RATE_AFTER = 60
+local RESUME = 900 -- seconds logged out after which a saved run is dropped
 local RUN_TYPES = { party = true, scenario = true }
 local LEVEL_UP_ICON = "{rt1}" -- the star raid target icon, which chat draws for every reader
 
 ---@class LBRun
 ---@field instance number
----@field xp number session XP when the run began
----@field started number
+---@field started number time() when the run began, moved later by any time logged out
+---@field gained number XP gained before `base` was taken
+---@field base number session XP when the run began or was restored
+---@field seen number? time() at logout or reload
 
 ---@class LBAnnounce
 ---@field held table<string, string> the latest message per chat type, waiting out a chat lockdown
----@field run LBRun? the dungeon or delve under way
+---@field loaded boolean the first loading screen since login or reload has been seen
 local Announce = {
 	held = {},
+	loaded = false,
 }
 LB.Announce = Announce
 
@@ -97,25 +101,77 @@ function Announce:RunText(gained, seconds, snapshot)
 		parts[#parts + 1] = L["%s XP/hr"]:format(AbbreviateNumbers(LB.Progress.PerHour(gained / seconds)))
 	end
 
+	local runs = LB.Progress.Runs(snapshot, gained)
+
+	if runs then
+		parts[#parts + 1] = runs == 1 and L["1 more run to level"] or L["%d more runs to level"]:format(runs)
+	end
+
 	return ("%s %s"):format(LB.Share.PREFIX, table.concat(parts, LB.Share.SEPARATOR))
 end
 
+---@param run LBRun
+---@return number
+local function Gained(run)
+	return run.gained + (LB.Session.xp or 0) - run.base
+end
+
+---Starts, keeps or drops the saved run on each loading screen. A run survives a reload or a short logout inside the
+---same instance, and the player leaving it dead or as a ghost.
 function Announce:TrackRun()
+	local char = LB.Profile.char
+
+	if not char then
+		return
+	end
+
+	local run = type(char.run) == "table" and char.run or nil
+	local first = not self.loaded
+
+	self.loaded = true
+
+	if run and first then
+		local away = run.seen and time() - run.seen
+
+		run.seen = nil
+
+		if away and away >= 0 and away <= RESUME then
+			run.started = run.started + away
+			run.base = LB.Session.xp or 0
+		else
+			run = nil
+		end
+	end
+
 	local inInstance, instanceType = IsInInstance()
 
-	if not inInstance or not RUN_TYPES[instanceType] or not LB.Session then
-		self.run = nil
+	if not inInstance or not RUN_TYPES[instanceType] then
+		char.run = run and UnitIsDeadOrGhost("player") and run or nil
 
 		return
 	end
 
 	local instance = select(8, GetInstanceInfo())
 
-	if self.run and self.run.instance == instance then
+	if run and run.instance == instance then
+		char.run = run
+
 		return
 	end
 
-	self.run = { instance = instance, xp = LB.Session.xp or 0, started = GetTime() }
+	char.run = { instance = instance, started = time(), gained = 0, base = LB.Session.xp or 0 }
+end
+
+function Announce:SaveRun()
+	local run = LB.Profile.char and LB.Profile.char.run
+
+	if type(run) ~= "table" then
+		return
+	end
+
+	run.gained = Gained(run)
+	run.base = 0
+	run.seen = time()
 end
 
 local CHAT_TYPES = { PARTY = "PARTY", INSTANCE = "INSTANCE_CHAT", GUILD = "GUILD" }
@@ -137,24 +193,29 @@ end
 ---Posts the finished run's summary to the chosen chat, or prints it for the player alone when that chat is
 ---Self Only or not available.
 function Announce:OnRunComplete()
-	local run = self.run
+	local char = LB.Profile.char
+	local run = char and char.run
 
-	self.run = nil
-
-	local announce = Settings().announce
-
-	if not run or not announce.runSummary or not LB.Session then
+	if type(run) ~= "table" then
 		return
 	end
 
-	local gained = (LB.Session.xp or 0) - run.xp
+	char.run = nil
+
+	local announce = Settings().announce
+
+	if not announce.runSummary then
+		return
+	end
+
+	local gained = Gained(run)
 	local snapshot = LB.Model:Get("xp")
 
 	if gained <= 0 or not snapshot then
 		return
 	end
 
-	local text = self:RunText(gained, GetTime() - run.started, snapshot)
+	local text = self:RunText(gained, math.max(time() - run.started, 0), snapshot)
 	local channel = announce.runChannel
 
 	if Available(channel) then
@@ -166,6 +227,10 @@ end
 
 LB.Events:Register("PLAYER_ENTERING_WORLD", Announce, function(owner)
 	owner:TrackRun()
+end)
+
+LB.Events:Register("PLAYER_LOGOUT", Announce, function(owner)
+	owner:SaveRun()
 end)
 
 for _, event in ipairs({ "LFG_COMPLETION_REWARD", "SCENARIO_COMPLETED" }) do

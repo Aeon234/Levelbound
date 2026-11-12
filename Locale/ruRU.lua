@@ -84,6 +84,8 @@ L["Reached level %d in %s"] = "Достигнут уровень %d за %s"
 L["Reached level %d"] = "Достигнут уровень %d"
 L["This run: +%s XP (%s of a level) in %s"] = "Прохождение: +%s опыта (%s уровня) за %s"
 L["%s XP/hr"] = "%s опыта/ч"
+L["1 more run to level"] = "ещё 1 прохождение до уровня"
+L["%d more runs to level"] = "прохождений до уровня: %d"
 
 -- Bar text tags (Core/Tags.lua, looked up as "tag." .. tag), shown in the settings' Insert Tag list
 L["tag.level"] = "Уровень"
