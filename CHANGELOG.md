@@ -1,9 +1,14 @@
 # Levelbound
 
-## Unreleased
+## 1.4.0
+
+Visibility:
 
 - Bar text now fades with the bars when Fade Until Hovered is on, including the text above and below Segmented
-  and Connected bars. Turn on Keep Text Visible to keep it at full opacity.
+  and Connected bars.
+- New Keep Text Visible option under Fading keeps the text at full opacity while the bars are faded.
+- All new text is translated into German, Spanish, French, Italian, Korean, Brazilian Portuguese, Russian and
+  Chinese.
 
 ## 1.3.0
 
