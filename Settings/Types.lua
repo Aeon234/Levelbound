@@ -51,8 +51,11 @@ end
 ---@param window table
 function Settings:DeclareProfessions(window)
 	local Professions = LB.Professions
-	local page = window:Page("type.profession", { title = TRADE_SKILLS or "Professions", under = "types" })
-	local bars = page:Section("bars", L["Bars"], {
+	local page = window:Page("type.profession", {
+		title = TRADE_SKILLS or "Professions",
+		under = "types",
+	})
+	local colors = page:Section("colors", L["Colors"], {
 		columns = 2,
 		show = function()
 			return #Professions:Indices() > 0
@@ -62,29 +65,19 @@ function Settings:DeclareProfessions(window)
 	for _, line in ipairs(Professions:All()) do
 		local path = Professions:ColorPath(line)
 
-		local function Learned()
-			return Professions:Find(line) ~= nil
-		end
-
-		self:Add(bars, "Checkbox", KEY, {
-			id = "track" .. line,
-			label = Professions:Name(line),
-			tooltip = L["This character only."],
-			default = false,
-			show = Learned,
-			get = function()
-				return Professions:IsTracked(line)
-			end,
-			set = function(value)
-				Professions:SetTracked(line, value == true)
-			end,
-		})
-
 		if path then
 			local get, set = self:ColorAccess(path)
 
-			self:Add(bars, "Color", KEY, { id = "color" .. line, label = L["Bar Color"], default = self:Default(path),
-				show = Learned, get = get, set = set })
+			self:Add(colors, "Color", KEY, {
+				id = "color" .. line,
+				label = Professions:Name(line),
+				default = self:Default(path),
+				show = function()
+					return Professions:Find(line) ~= nil
+				end,
+				get = get,
+				set = set,
+			})
 		end
 	end
 

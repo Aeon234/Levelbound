@@ -158,6 +158,16 @@ Equal("unlearned profession not found", Professions:Find(129), nil)
 
 Equal("sample without tracking is the first learned", Professions:Sample(), 164)
 
+-- Opt-in ---------------------------------------------------------------------------------------------------
+
+Professions:Create()
+Model:Sync()
+
+Equal("nothing tracked by default", next(LB.Profile.char.professions), nil)
+Equal("no profession bars by default", Joined(Model:Ids()), "xp")
+Equal("no profession source by default", Model:Source("profession186"), nil)
+Equal("nothing registered by default", next(registered), nil)
+
 -- Tracking ---------------------------------------------------------------------------------------------
 
 Professions:SetTracked(356, true)
