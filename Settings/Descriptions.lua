@@ -71,6 +71,7 @@ LB.SettingsDescriptions = {
 		decimals = L["Shows one decimal place on percentages."],
 
 		-- Visibility tab
+		keepText = L["Text stays fully visible while the bars are faded."],
 		focus = L["While you hover one bar, the others dim and hide their text."],
 	},
 	gain = {

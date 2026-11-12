@@ -885,12 +885,14 @@ function BarMixin:FadeOut(onFinished)
 	LB:Tween(self, FADE, function(eased)
 		self:SetAlpha(from * (1 - eased))
 		LB.Marker:FollowFade(self, 1 - eased)
+		LB.TextSlot:FollowFade(self, 1 - eased)
 	end, function()
 		self.fading = nil
 
 		self:Hide()
 		self:SetAlpha(1)
 		LB.Marker:FollowFade(self, 1)
+		LB.TextSlot:FollowFade(self, 1)
 
 		if onFinished then
 			onFinished()
@@ -908,6 +910,7 @@ function BarMixin:Appear()
 	if returning then
 		self:SetAlpha(1)
 		LB.Marker:FollowFade(self, 1)
+		LB.TextSlot:FollowFade(self, 1)
 	end
 
 	self:Show()

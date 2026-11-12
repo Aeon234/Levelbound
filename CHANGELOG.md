@@ -1,5 +1,10 @@
 # Levelbound
 
+## Unreleased
+
+- Bar text now fades with the bars when Fade Until Hovered is on, including the text above and below Segmented
+  and Connected bars. Turn on Keep Text Visible to keep it at full opacity.
+
 ## 1.3.0
 
 Party bars:

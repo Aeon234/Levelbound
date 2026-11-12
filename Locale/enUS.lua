@@ -232,6 +232,7 @@ L["Show Decimals"] = "Show Decimals"
 -- Settings window: Visibility
 L["Visibility"] = "Visibility"
 L["Fading"] = "Fading"
+L["Keep Text Visible"] = "Keep Text Visible"
 L["Focus Mode"] = "Focus Mode"
 L["Dim Other Bars on Hover"] = "Dim Other Bars on Hover"
 L["Dimmed Opacity"] = "Dimmed Opacity"
@@ -418,6 +419,7 @@ L["Shortens large numbers, such as 12.4K for 12,400."] = "Shortens large numbers
 L["Shows one decimal place on percentages."] = "Shows one decimal place on percentages."
 L["While you hover one bar, the others dim and hide their text."] =
 	"While you hover one bar, the others dim and hide their text."
+L["Text stays fully visible while the bars are faded."] = "Text stays fully visible while the bars are faded."
 L["Moves each indicator as it fades. When off, it appears in place and fades."] =
 	"Moves each indicator as it fades. When off, it appears in place and fades."
 L["Gathers every bar's gains in one stack away from the bars."] =

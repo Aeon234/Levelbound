@@ -408,6 +408,8 @@ function Settings:DeclareVisibility(page)
 		end })
 	self:Add(fading, "Checkbox", KEY, { id = "fullWithTarget", label = L["Fully Visible with a Target"],
 		path = "visibility.fullWithTarget", depends = "fade" })
+	self:Add(fading, "Checkbox", KEY, { id = "keepText", label = L["Keep Text Visible"],
+		path = "visibility.textIgnoresFade", depends = "fade" })
 
 	local focus = page:Section("focus", L["Focus Mode"])
 

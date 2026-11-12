@@ -571,6 +571,37 @@ function TextSlot:SetHovered(bar, hovered)
 	self:UpdateTicker()
 end
 
+---@param bar LBBar
+---@param exempt boolean the text keeps full opacity whatever the bar's own
+function TextSlot:SetFadeExempt(bar, exempt)
+	local host = self.hosts[bar]
+
+	if host then
+		host.layer:SetIgnoreParentAlpha(exempt)
+	end
+end
+
+---Carries a bar's fade-out to its text while that text ignores the bar's opacity.
+---@param bar LBBar
+---@param factor number
+function TextSlot:FollowFade(bar, factor)
+	local host = self.hosts[bar]
+
+	if host and host.layer:IsIgnoringParentAlpha() then
+		host.layer:SetAlpha(factor)
+	end
+end
+
+---@param alpha number the outer slots' opacity in segmented and connected layouts
+---@param animated boolean?
+function TextSlot:SetGroupAlpha(alpha, animated)
+	local layer = self.group and self.group.layer
+
+	if layer then
+		LB.Visibility:SetAlpha(layer, layer, alpha, animated and layer:IsVisible())
+	end
+end
+
 function TextSlot:Refit()
 	for _, host in pairs(self.hosts) do
 		if host == self.group then

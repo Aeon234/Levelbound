@@ -101,6 +101,7 @@ local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 ---@field fadedAlpha number
 ---@field fullInCombat boolean
 ---@field fullWithTarget boolean
+---@field textIgnoresFade boolean
 ---@field focus { enabled: boolean, alpha: number }
 
 ---@class LBGainSettings
@@ -252,6 +253,7 @@ local defaults = {
 		fadedAlpha = 0.25,
 		fullInCombat = false,
 		fullWithTarget = false,
+		textIgnoresFade = false,
 		focus = { enabled = false, alpha = 0.40 },
 	},
 	gain = {

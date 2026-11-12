@@ -152,12 +152,14 @@ function Visibility:Apply(animated)
 	end
 
 	local brightest = 0
+	local textExempt = settings.fadeUntilHovered == true and settings.textIgnoresFade == true
 
 	for id, bar in pairs(group.bars) do
 		if bar:IsShown() and not bar.fading then
 			local alpha, dimmed = self:Resolve(settings, self.state, id)
 
 			bar.textSuppressed = dimmed
+			LB.TextSlot:SetFadeExempt(bar, textExempt)
 			LB.TextSlot:SetHovered(bar, bar.hovered == true)
 			self:SetAlpha(bar, bar.alphaDriver, alpha, animated)
 			brightest = math.max(brightest, alpha)
@@ -167,6 +169,8 @@ function Visibility:Apply(animated)
 	if group.border then
 		self:SetAlpha(group.border, group.border, brightest, animated)
 	end
+
+	LB.TextSlot:SetGroupAlpha(textExempt and 1 or brightest, animated)
 
 	LB.Marker:ApplyOpacity(animated)
 end
