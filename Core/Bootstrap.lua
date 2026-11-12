@@ -35,6 +35,7 @@ frame:SetScript("OnEvent", function(self, event, ...)
 		self:UnregisterEvent(event)
 
 		LB.Capabilities:Resolve()
+		LB.Professions:Create()
 		LB.Media:Register()
 		LB.BarGroup:Create()
 		LB.BlizzardBar:Hide()

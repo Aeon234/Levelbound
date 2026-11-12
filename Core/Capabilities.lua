@@ -20,6 +20,7 @@ LB.Capabilities = Capabilities
 ---@field renownRewards boolean renown reward tooltip lines
 ---@field compartment boolean the addon compartment entry point
 ---@field statusTrackingBar boolean Blizzard's status tracking bar, which the addon can hide
+---@field professions boolean Forever's profession ranks
 LB.can = {}
 
 ---@return LBCapabilityFlags
@@ -43,6 +44,7 @@ function Capabilities:Resolve()
 	can.renownRewards = RenownRewardUtil ~= nil and RenownRewardUtil.AddRenownRewardsToTooltip ~= nil
 	can.compartment = AddonCompartmentFrame ~= nil
 	can.statusTrackingBar = StatusTrackingBarManager ~= nil
+	can.professions = WOW_PROJECT_ID == WOW_PROJECT_CAMELOT and GetProfessions ~= nil and GetProfessionInfo ~= nil
 
 	self.resolved = true
 

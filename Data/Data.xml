@@ -9,4 +9,5 @@
 	<Script file="Endeavor.lua" />
 	<Script file="TravelerPoints.lua" />
 	<Script file="Honor.lua" />
+	<Script file="Professions.lua" />
 </Ui>

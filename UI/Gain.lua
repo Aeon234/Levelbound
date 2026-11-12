@@ -142,8 +142,9 @@ end
 ---@return LBColor
 local function TypeColor(id)
 	local colors = Settings().colors
+	local source = LB.Model:Source(id)
 
-	return colors[id] or colors.xp
+	return colors[id] or source and source.Color and source:Color() or colors.xp
 end
 
 ---@param id string
@@ -294,7 +295,7 @@ function Gain:DetachedSize()
 
 	LB.Media:SetFont(measure, settings.text)
 
-	for _, id in ipairs(LB.Model:Order()) do
+	for _, id in ipairs(LB.Model:Ids()) do
 		measure:SetText(Text(id, PREVIEW_AMOUNT, true))
 		width = math.max(width, measure:GetStringWidth())
 	end

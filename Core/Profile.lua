@@ -80,6 +80,7 @@ local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 ---@field restedColor LBColor
 ---@field background LBColor
 ---@field typeColors table<string, LBColor>
+---@field professionColors table<string, LBColor> keyed by Enum.Profession key
 ---@field standingColors table<string, LBColor> overrides on Blizzard's FACTION_BAR_COLORS
 ---@field border { style: string, width: integer, color: LBColor, customColor: boolean } width: the Pixel style's line in physical pixels
 ---@field separatorColor LBColor? the segmented layout's separators; absent, they take the border's color
@@ -187,6 +188,7 @@ local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 ---@field useCharacterProfile boolean
 ---@field key string? this character's key in profileKeys, worked out once and kept
 ---@field run LBRun? the dungeon or delve under way
+---@field professions table<number, boolean> tracked professions, keyed by skill line
 
 local GAIN_GREEN = { 0.226, 1.0, 0.006 }
 
@@ -230,6 +232,23 @@ local defaults = {
 			house = { 0.851, 0.710, 0.435 },
 			travelers = { 0.035, 0.647, 0.733 },
 			endeavor = { 0.294, 0.365, 0.106 },
+		},
+		professionColors = {
+			Alchemy = { 63 / 255, 191 / 255, 95 / 255 },
+			Blacksmithing = { 224 / 255, 102 / 255, 42 / 255 },
+			Enchanting = { 163 / 255, 92 / 255, 255 / 255 },
+			Engineering = { 201 / 255, 162 / 255, 39 / 255 },
+			Herbalism = { 125 / 255, 191 / 255, 58 / 255 },
+			Leatherworking = { 156 / 255, 107 / 255, 60 / 255 },
+			Mining = { 140 / 255, 140 / 255, 153 / 255 },
+			Skinning = { 181 / 255, 131 / 255, 90 / 255 },
+			Tailoring = { 201 / 255, 79 / 255, 124 / 255 },
+			Jewelcrafting = { 47 / 255, 184 / 255, 201 / 255 },
+			Inscription = { 74 / 255, 111 / 255, 209 / 255 },
+			Cooking = { 232 / 255, 163 / 255, 61 / 255 },
+			Fishing = { 58 / 255, 143 / 255, 217 / 255 },
+			FirstAid = { 210 / 255, 59 / 255, 59 / 255 },
+			Archaeology = { 168 / 255, 138 / 255, 94 / 255 },
 		},
 		standingColors = {},
 		border = { style = "NONE", width = 1, color = { 1, 1, 1, 1 }, customColor = false },
@@ -374,6 +393,7 @@ defaults.text.slots.party = {
 
 defaults.text.slots.house.INSIDE_LEFT = Slot("[standing]")
 defaults.text.slots.travelers.INSIDE_RIGHT = Slot("[cur] / [max]")
+defaults.text.slots.profession = { INSIDE_LEFT = Slot("[name]"), INSIDE_RIGHT = Slot("[cur] / [max]") }
 
 ---@type LBDatabase
 local globalDefaults = {
@@ -389,6 +409,7 @@ local globalDefaults = {
 ---@type LBCharacterDatabase
 local characterDefaults = {
 	useCharacterProfile = false,
+	professions = {},
 }
 
 ---@class LBProfile

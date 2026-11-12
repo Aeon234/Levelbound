@@ -225,8 +225,11 @@ LB.Format = {
 	end,
 }
 LB.Model = {
-	Order = function()
+	Ids = function()
 		return { "xp", "reputation" }
+	end,
+	Source = function()
+		return nil
 	end,
 	Label = function(_, id)
 		return id

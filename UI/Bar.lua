@@ -365,6 +365,12 @@ function BarMixin:FillColors()
 		return snapshot.color, nil
 	end
 
+	local source = LB.Model:Source(self.id)
+
+	if source and source.Color then
+		return source:Color(), nil
+	end
+
 	return appearance.typeColors[self.id] or appearance.xpGradient[1] or WHITE, nil
 end
 

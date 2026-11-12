@@ -278,7 +278,7 @@ function LB:PrintDiagnostics()
 		layout.strata
 	)
 
-	for _, id in ipairs(self.Model:Order()) do
+	for _, id in ipairs(self.Model:Ids()) do
 		local source = self.Model:Source(id)
 
 		if source then

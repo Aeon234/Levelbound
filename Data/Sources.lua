@@ -33,6 +33,7 @@ local Events = LB.Events
 ---@class LBSourceSpec
 ---@field label string
 ---@field shortLabel string
+---@field textKey? string the text layout it draws, when not its own id
 ---@field Read fun(self: LBSource, snapshot: LBSnapshot): boolean
 ---@field IsAvailable? fun(self: LBSource): boolean
 ---@field Capability? fun(self: LBSource): boolean
@@ -42,6 +43,7 @@ local Events = LB.Events
 ---@field Click? fun(self: LBSource)
 ---@field ClickHint? fun(self: LBSource): string?
 ---@field Tooltip? fun(self: LBSource, tip: GameTooltip)
+---@field Color? fun(self: LBSource): LBColor the bar and gain color, in place of the type's saved colors
 
 ---@class LBSourceMixin : LBSourceFields, LBSourceSpec
 local SourceMixin = {}
@@ -118,8 +120,10 @@ end
 
 ---@class LBModel
 ---@field sources table<string, LBSource>
+---@field extra string[] ids added at run time, drawn after the fixed types
 local Model = {
 	sources = {},
+	extra = {},
 }
 LB.Model = Model
 
@@ -168,7 +172,31 @@ function Model:Source(id)
 	return self.sources[id]
 end
 
----@return string[] order every type id, whether visible or not
+---@param ids string[] the run-time ids, in display order
+function Model:SetExtra(ids)
+	self.extra = ids
+end
+
+---@return string[] ids every fixed and run-time id, in display order
+function Model:Ids()
+	local ids = self:Order()
+
+	for _, id in ipairs(self.extra) do
+		ids[#ids + 1] = id
+	end
+
+	return ids
+end
+
+---@param id string
+---@return string key the text layout the type draws
+function Model:TextKey(id)
+	local source = self.sources[id]
+
+	return source and source.textKey or id
+end
+
+---@return string[] order every fixed type id, whether visible or not
 function Model:Order()
 	local order = {}
 
@@ -210,7 +238,7 @@ end
 function Model:VisibleOrder()
 	local visible = {}
 
-	for _, id in ipairs(ORDER) do
+	for _, id in ipairs(self:Ids()) do
 		local source = self.sources[id]
 
 		if source and source.visible then
@@ -306,7 +334,7 @@ end
 function Model:Sync()
 	local changed = false
 
-	for _, id in ipairs(ORDER) do
+	for _, id in ipairs(self:Ids()) do
 		local source = self.sources[id]
 
 		if source and not source.failed then
@@ -346,7 +374,7 @@ function Model:Sync()
 end
 
 function Model:Seed()
-	for _, id in ipairs(ORDER) do
+	for _, id in ipairs(self:Ids()) do
 		local source = self.sources[id]
 
 		if source and not source.failed then
