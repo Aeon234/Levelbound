@@ -57,6 +57,7 @@ Media.sidebar = {
 	endeavor = PATH .. [[Textures\SidebarEndeavor.tga]],
 	travelers = PATH .. [[Textures\SidebarTravel.tga]],
 	honor = PATH .. [[Textures\SidebarHonor.tga]],
+	profession = PATH .. [[Textures\SidebarProfessions.tga]],
 	markers = PATH .. [[Textures\SidebarPartyProgress.tga]],
 	levelups = PATH .. [[Textures\SidebarLevelUps.tga]],
 	profiles = PATH .. [[Textures\SidebarProfiles.tga]],

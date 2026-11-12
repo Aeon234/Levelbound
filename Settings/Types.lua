@@ -53,6 +53,8 @@ function Settings:DeclareProfessions(window)
 	local Professions = LB.Professions
 	local page = window:Page("type.profession", {
 		title = TRADE_SKILLS or "Professions",
+		icon = LB.Media.sidebar.profession,
+		iconTint = true,
 		under = "types",
 	})
 	local colors = page:Section("colors", L["Colors"], {
