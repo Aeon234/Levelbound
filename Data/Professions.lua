@@ -144,6 +144,33 @@ function Professions:SetTracked(skillLine, on)
 	LB.Model:Sync()
 end
 
+---Opens the profession's window, or closes it while that profession's window shows; a profession with no crafting
+---window opens the profession book instead.
+---@param skillLine number
+function Professions:Open(skillLine)
+	local index = self:Find(skillLine)
+	local spellOffset = index and select(6, GetProfessionInfo(index))
+	local info = spellOffset and C_SpellBook.GetSpellBookItemInfo(spellOffset + 1, Enum.SpellBookSpellBank.Player)
+
+	if not info or not info.spellID or not C_TradeSkillUI.CanTradeSkillShowCraftingUI(info.spellID) then
+		if ToggleProfessionsBook then
+			ToggleProfessionsBook()
+		end
+
+		return
+	end
+
+	local open = C_TradeSkillUI.GetBaseProfessionInfo()
+	local frame = ProfessionsFrame
+
+	if frame and frame:IsShown() and frame.CraftingPage and frame.CraftingPage:IsShown() and open
+		and open.professionID == skillLine then
+		HideUIPanel(frame)
+	else
+		C_TradeSkillUI.OpenTradeSkill(skillLine)
+	end
+end
+
 ---@param skillLine number
 ---@return string? path the profile path of the profession's color, nil when it has no saved color
 function Professions:ColorPath(skillLine)
@@ -190,6 +217,14 @@ function Professions:Ensure(skillLine)
 
 		Color = function()
 			return Professions:Color(skillLine)
+		end,
+
+		---@param source LBSource
+		ClickHint = function(source)
+			return LB.L["Click to Open %s"]:format(source.label)
+		end,
+		Click = function()
+			Professions:Open(skillLine)
 		end,
 
 		---@param source LBSource

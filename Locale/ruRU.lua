@@ -66,6 +66,7 @@ L["Click to Open the PvP Window"] = "Щелкните, чтобы открыть
 L["Click to Open the Traveler's Log"] = "Щелкните, чтобы открыть журнал путешественника"
 L["Click to Open Journeys."] = "Щелкните, чтобы открыть «Путешествия»."
 L["Click to Open the Reputation Panel"] = "Щелкните, чтобы открыть окно репутации"
+L["Click to Open %s"] = "Щелкните, чтобы открыть %s"
 L["Shift-Click to Share"] = "Shift-щелчок: поделиться"
 
 -- Honor level display hint in the PvP window (UI/BlizzardWatch.lua)
