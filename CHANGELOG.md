@@ -1,6 +1,6 @@
 # Levelbound
 
-## Unreleased
+## 1.5.0
 
 Profession bars (WoW: Forever):
 
