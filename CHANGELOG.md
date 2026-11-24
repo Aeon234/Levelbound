@@ -1,6 +1,6 @@
 # Levelbound
 
-## Unreleased
+## 1.6.0
 
 Bar text:
 
