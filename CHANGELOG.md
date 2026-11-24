@@ -1,5 +1,15 @@
 # Levelbound
 
+## Unreleased
+
+Bar text:
+
+- New Color Percent Signs option under Numbers, on by default: a `%` written right after a colored tag, such as
+  `[restedpercent:color]%`, now takes the tag's color. The rested and completed-quest shares in the tooltip
+  color their `%` the same way.
+- All new text is translated into German, Spanish, French, Italian, Korean, Brazilian Portuguese, Russian and
+  Chinese.
+
 ## 1.5.0
 
 Profession bars (WoW: Forever):
