@@ -93,6 +93,7 @@ local EXPORT_PREFIX = "LB!" .. EXPORT_FORMAT .. "!"
 ---@class LBTextSettings
 ---@field compactNumbers boolean
 ---@field decimals boolean
+---@field colorPercentSigns boolean
 ---@field style LBTextStyle
 ---@field slots table<string, table<LBAnchor, LBTextSlot>>
 
@@ -260,6 +261,7 @@ local defaults = {
 	text = {
 		compactNumbers = true,
 		decimals = true,
+		colorPercentSigns = true,
 		style = { font = FONT, size = 12, color = { 1, 1, 1, 1 }, outline = "SLUG_OUTLINE" },
 		slots = {},
 	},

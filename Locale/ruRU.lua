@@ -220,6 +220,7 @@ L["Text Style"] = "Стиль текста"
 L["Numbers"] = "Числа"
 L["Compact Numbers"] = "Краткие числа"
 L["Show Decimals"] = "Показывать десятые"
+L["Color Percent Signs"] = "Окрашивать знаки процента"
 
 -- Settings window: Visibility
 L["Visibility"] = "Видимость"

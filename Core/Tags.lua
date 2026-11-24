@@ -263,10 +263,18 @@ end
 ---@return string
 function Tags:Render(parts, snapshot, source)
 	local out = {}
+	local previous
 
 	for index, part in ipairs(parts) do
-		if part.literal then
-			out[index] = part.literal
+		local color, literal = previous, part.literal
+		previous = nil
+
+		if literal then
+			if color and literal:sub(1, 1) == "%" and LB.Profile:Get("text.colorPercentSigns") == true then
+				literal = Tint(color, "%") .. literal:sub(2)
+			end
+
+			out[index] = literal
 		else
 			local resolver = part.tag and resolvers[part.tag]
 
@@ -277,7 +285,8 @@ function Tags:Render(parts, snapshot, source)
 				local colorKey = part.color and part.tag and COLORS[part.tag]
 
 				if colorKey then
-					value = Tint(LB.Profile:Get("appearance." .. colorKey), value)
+					previous = LB.Profile:Get("appearance." .. colorKey)
+					value = Tint(previous, value)
 				end
 
 				out[index] = value

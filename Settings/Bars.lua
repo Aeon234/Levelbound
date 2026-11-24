@@ -387,6 +387,8 @@ function Settings:DeclareText(page)
 
 	self:Add(numbers, "Checkbox", KEY, { id = "compact", label = L["Compact Numbers"], path = "text.compactNumbers" })
 	self:Add(numbers, "Checkbox", KEY, { id = "decimals", label = L["Show Decimals"], path = "text.decimals" })
+	self:Add(numbers, "Checkbox", KEY, { id = "percentSigns", label = L["Color Percent Signs"],
+		path = "text.colorPercentSigns" })
 end
 
 ---@param page table

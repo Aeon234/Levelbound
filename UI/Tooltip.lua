@@ -175,9 +175,17 @@ end
 
 ---@param value string
 ---@param fraction number
+---@param color number[]? the percent sign's color, under Color Percent Signs
 ---@return LBTooltipShare
-local function WithShare(value, fraction)
-	return { amount = value, share = Paint(DIM_COLOR, ("(%s)"):format(LB.Format:Percent(fraction))) }
+local function WithShare(value, fraction, color)
+	local share = ("(%s)"):format(LB.Format:Percent(fraction))
+	local before, after = share:match("^(.-)%%(.*)$")
+
+	if color and before and LB.Profile:Get("text.colorPercentSigns") == true then
+		return { amount = value, share = Paint(DIM_COLOR, before) .. Paint(color, "%") .. Paint(DIM_COLOR, after) }
+	end
+
+	return { amount = value, share = Paint(DIM_COLOR, share) }
 end
 
 ---@param text string
@@ -337,13 +345,15 @@ local function Progress(tip, snapshot, source, experience, compared)
 	if overlays.rested > 0 then
 		local rested = Paint(appearance.restedColor, Format:Number(overlays.rested))
 
-		Add(bonus, L["Rested XP"], WithShare(rested, ShareOf(snapshot, overlays.rested)), "tooltipRested")
+		Add(bonus, L["Rested XP"], WithShare(rested, ShareOf(snapshot, overlays.rested), appearance.restedColor),
+			"tooltipRested")
 	end
 
 	if overlays.quest > 0 then
 		local completed = Paint(appearance.questColor, Format:Number(overlays.quest))
 
-		Add(bonus, L["Ready to Turn In"], WithShare(completed, ShareOf(snapshot, overlays.quest)), "tooltipQuest")
+		Add(bonus, L["Ready to Turn In"], WithShare(completed, ShareOf(snapshot, overlays.quest), appearance.questColor),
+			"tooltipQuest")
 		Add(bonus, L["After Turn-In"], Format:Value("PERCENT_WITH_QUESTS", snapshot, source))
 	end
 

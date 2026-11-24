@@ -220,6 +220,7 @@ L["Text Style"] = "텍스트 스타일"
 L["Numbers"] = "숫자"
 L["Compact Numbers"] = "숫자 축약"
 L["Show Decimals"] = "소수점 표시"
+L["Color Percent Signs"] = "퍼센트 기호 색상 적용"
 
 -- Settings window: Visibility
 L["Visibility"] = "표시 여부"

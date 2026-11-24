@@ -231,6 +231,7 @@ L["Text Style"] = "Text Style"
 L["Numbers"] = "Numbers"
 L["Compact Numbers"] = "Compact Numbers"
 L["Show Decimals"] = "Show Decimals"
+L["Color Percent Signs"] = "Color Percent Signs"
 
 -- Settings window: Visibility
 L["Visibility"] = "Visibility"
